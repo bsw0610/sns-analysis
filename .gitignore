@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Claude local state
+.claude/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Generated outputs
+outputs/
+
+# Large/raw datasets
+2025*.csv
+2026*.csv
+INPUT.csv
+INPUT_new.csv
+clean.csv
+clean3.csv
+data/
+
+# Word2Vec/model artifacts
+*.model
+*.model.*
+*.npy
+*.wakati
+vector.tsv
+metadata.tsv
+
+# Generated report artifacts
+sns_sentiment_analysis_guide.html
