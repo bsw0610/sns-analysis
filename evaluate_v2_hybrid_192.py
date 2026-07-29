@@ -55,6 +55,87 @@ def prf(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
     return p, r, f
 
 
+def summarize_confusions(
+    counts: dict[str, dict[str, int]],
+) -> dict[str, object]:
+    """Summarize category confusion counts with micro and macro PRF."""
+    tp_sum = sum(counts[cat]["tp"] for cat in CATEGORIES)
+    fp_sum = sum(counts[cat]["fp"] for cat in CATEGORIES)
+    fn_sum = sum(counts[cat]["fn"] for cat in CATEGORIES)
+    micro_p, micro_r, micro_f1 = prf(tp_sum, fp_sum, fn_sum)
+    per_category = {
+        cat: {
+            **counts[cat],
+            **dict(
+                zip(
+                    ("precision", "recall", "f1"),
+                    prf(
+                        counts[cat]["tp"],
+                        counts[cat]["fp"],
+                        counts[cat]["fn"],
+                    ),
+                )
+            ),
+        }
+        for cat in CATEGORIES
+    }
+    macro = {
+        metric: sum(per_category[cat][metric] for cat in CATEGORIES)
+        / len(CATEGORIES)
+        for metric in ("precision", "recall", "f1")
+    }
+    return {
+        "per_category": per_category,
+        "micro": {
+            "tp": tp_sum,
+            "fp": fp_sum,
+            "fn": fn_sum,
+            "precision": micro_p,
+            "recall": micro_r,
+            "f1": micro_f1,
+        },
+        "macro": macro,
+    }
+
+
+def calculate_evaluation_metrics(rows: list[dict]) -> dict[str, object]:
+    """Return the two established evaluation definitions for the same rows."""
+    lenient_counts = {
+        category: {"tp": 0, "fp": 0, "fn": 0}
+        for category in CATEGORIES
+    }
+    multi_counts = {
+        category: {"tp": 0, "fp": 0, "fn": 0}
+        for category in CATEGORIES
+    }
+    for row in rows:
+        gold, single, multi = row["gold"], row["single"], row["multi"]
+        for category in CATEGORIES:
+            if single == category:
+                lenient_counts[category][
+                    "tp" if category in gold else "fp"
+                ] += 1
+            elif category in gold:
+                lenient_counts[category]["fn"] += 1
+            if category in multi:
+                multi_counts[category][
+                    "tp" if category in gold else "fp"
+                ] += 1
+            elif category in gold:
+                multi_counts[category]["fn"] += 1
+    return {
+        "sample_size": len(rows),
+        "lenient": summarize_confusions(lenient_counts),
+        "multi": summarize_confusions(multi_counts),
+        "lenient_hits": sum(
+            row["single"] in row["gold"] for row in rows
+        ),
+        "multi_exact_matches": sum(
+            row["multi"] == row["gold"] for row in rows
+        ),
+    }
+
+
 def normal_ci(k: int, n: int) -> tuple[float, float]:
     """Normal approximation - the method used for the intervals in 2-3."""
     p = k / n
@@ -135,22 +216,29 @@ def main(
     rows, n_gold = load(gold_path, pred_path)
     n = len(rows)
 
-    lenient = {c: {"tp": 0, "fp": 0, "fn": 0} for c in CATEGORIES}
-    multi = {c: {"tp": 0, "fp": 0, "fn": 0} for c in CATEGORIES}
-    for r in rows:
-        g, s, m = r["gold"], r["single"], r["multi"]
-        for cat in CATEGORIES:
-            if s == cat:
-                lenient[cat]["tp" if cat in g else "fp"] += 1
-            elif cat in g:
-                lenient[cat]["fn"] += 1
-            if cat in m:
-                multi[cat]["tp" if cat in g else "fp"] += 1
-            elif cat in g:
-                multi[cat]["fn"] += 1
-
-    hit = sum(1 for r in rows if r["single"] in r["gold"])
-    exact = sum(1 for r in rows if r["multi"] == r["gold"])
+    metrics = calculate_evaluation_metrics(rows)
+    lenient = {
+        category: {
+            key: value
+            for key, value in metrics["lenient"]["per_category"][
+                category
+            ].items()
+            if key in {"tp", "fp", "fn"}
+        }
+        for category in CATEGORIES
+    }
+    multi = {
+        category: {
+            key: value
+            for key, value in metrics["multi"]["per_category"][
+                category
+            ].items()
+            if key in {"tp", "fp", "fn"}
+        }
+        for category in CATEGORIES
+    }
+    hit = metrics["lenient_hits"]
+    exact = metrics["multi_exact_matches"]
 
     L = [
         "# ハイブリッドコーパス ベースライン精度（正解セット192件）", "",

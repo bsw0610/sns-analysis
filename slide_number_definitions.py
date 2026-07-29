@@ -13,6 +13,7 @@ from collections.abc import Mapping
 
 EXCHANGE_CATEGORY = "交換・取引"
 EXCHANGE_ACCOUNT_KEY = "ユーザーID"
+WALD_95_Z = 1.96
 
 # Operational definition used for page 15:
 # - 【交換】【譲】【求】, with optional whitespace inside the brackets
@@ -67,7 +68,7 @@ def wald_interval(
     successes: int,
     sample_size: int,
     *,
-    z: float = 1.96,
+    z: float = WALD_95_Z,
 ) -> tuple[float, float]:
     """Return a two-sided Wald interval as proportions, clipped to [0, 1]."""
     if sample_size <= 0:
