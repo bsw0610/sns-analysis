@@ -5,15 +5,15 @@ Task 1: per-category agreement with the manual gold standard (page 13).
         Uses the lenient criterion, which is what page 13's text quotes.
 Task 2: composition of the 192-item gold standard with 95% intervals (page 14).
 
-Sources: data/output/gold_standard_192.csv
+Sources: data/output/gold_standard_192_normalized.csv
          data/output/sentiment_classified_hybrid.csv (SHA f273c9306507804a)
 Per slide_plan 1-1 / page 13, the word "F1" never appears in the output.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
-import json
 import math
 from pathlib import Path
 
@@ -23,9 +23,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
+from normalize_gold_standard_192 import (
+    DEFAULT_OUTPUT as NORMALIZED_GOLD_STANDARD,
+    validate_normalized_gold,
+)
+
 csv.field_size_limit(10**9)
 
-GOLD = Path("data/output/gold_standard_192.csv")
+GOLD = NORMALIZED_GOLD_STANDARD
 PRED = Path("data/output/sentiment_classified_hybrid.csv")
 OUT13 = Path("data/output/slides/p13_agreement.png")
 OUT14 = Path("data/output/slides/p14_composition.png")
@@ -55,9 +60,10 @@ def normal_ci(k: int, n: int) -> tuple[float, float]:
     return max(0.0, p - h), min(1.0, p + h)
 
 
-def load():
+def load(gold_path: Path = GOLD, pred_path: Path = PRED):
+    gold_path = Path(validate_normalized_gold(gold_path)["path"])
     gold = []
-    with GOLD.open("r", encoding="utf-8-sig", newline="") as f:
+    with gold_path.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             if row["要検討"] == "1":
                 continue
@@ -65,7 +71,7 @@ def load():
             gold.append({"post_id": row["post_id"], "gold": labels or {"中立"}})
     wanted = {g["post_id"] for g in gold}
     pred, hybrid_counts, hybrid_total = {}, {c: 0 for c in CATEGORIES}, 0
-    with PRED.open("r", encoding="utf-8-sig", newline="") as f:
+    with pred_path.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             hybrid_total += 1
             hybrid_counts[row["sentiment_category"]] += 1
@@ -75,8 +81,13 @@ def load():
     return rows, hybrid_counts, hybrid_total
 
 
-def main() -> None:
-    rows, hybrid_counts, hybrid_total = load()
+def main(
+    gold_path: Path = GOLD,
+    pred_path: Path = PRED,
+    out13: Path = OUT13,
+    out14: Path = OUT14,
+) -> None:
+    rows, hybrid_counts, hybrid_total = load(gold_path, pred_path)
     n = len(rows)
 
     # ---- Task 1: agreement (lenient F1, never named "F1" in the output) ----
@@ -94,7 +105,7 @@ def main() -> None:
     colors = [ACCENT if c == "交換・取引" else (FAINT if c == "中立" else GREY) for c in order]
 
     fig, ax = plt.subplots(figsize=(8.6, 4.9), dpi=200)
-    bars = ax.barh(range(len(order)), vals, color=colors, height=0.66)
+    ax.barh(range(len(order)), vals, color=colors, height=0.66)
     for i, (c, v) in enumerate(zip(order, vals)):
         ax.text(v + 0.014, i, f"{v:.2f}", va="center", fontsize=12,
                 fontweight="bold" if c == "交換・取引" else "normal",
@@ -119,8 +130,8 @@ def main() -> None:
     ax.grid(axis="x", alpha=0.25, linewidth=0.7)
     ax.set_axisbelow(True)
     fig.tight_layout(rect=(0, 0, 0.83, 1))
-    OUT13.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT13, facecolor="white")
+    out13.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out13, facecolor="white")
     plt.close(fig)
 
     # ---- Task 2: composition of the gold standard ----
@@ -159,7 +170,8 @@ def main() -> None:
     fig.text(0.012, 0.028,
              "※ 情報共有は広告除去の段階で66.9%が除かれているため、この比率は解釈しない",
              fontsize=10, color="#5A6570")
-    fig.savefig(OUT14, facecolor="white")
+    out14.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out14, facecolor="white")
     plt.close(fig)
 
     print("一致度（ページ13）")
@@ -174,9 +186,24 @@ def main() -> None:
     ase = hybrid_counts["焦り・競争"] / hybrid_total * 100
     print(f"焦り・競争 分類器判定: {hybrid_counts['焦り・競争']:,}/{hybrid_total:,} = {ase:.2f}%"
           f"  -> ページ14の「3.0%」{'は妥当' if abs(ase-3.0)<0.06 else 'と要確認'}")
-    for p in (OUT13, OUT14):
+    for p in (out13, out14):
         print(f"{p}")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gold", type=Path, default=GOLD)
+    parser.add_argument("--predictions", type=Path, default=PRED)
+    parser.add_argument("--output-page13", type=Path, default=OUT13)
+    parser.add_argument("--output-page14", type=Path, default=OUT14)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(
+        args.gold,
+        args.predictions,
+        args.output_page13,
+        args.output_page14,
+    )

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Task 6 — re-score v2 against the 192-item gold standard on the hybrid corpus.
+"""Task 6 — re-score v2 against the normalized 192-item gold standard.
 
-Gold : data/output/gold_standard_192.csv            (189 original + 3 supplement)
-Pred : data/output/sentiment_classified_hybrid.csv   (SHA f273c9306507804a)
+Gold : data/output/gold_standard_192_normalized.csv  (189 original + 3 supplement)
+Pred : data/output/sentiment_classified_hybrid.csv    (SHA f273c9306507804a)
 
 Both criteria from docs/baseline_v2.md are reproduced at n=192:
   (1) lenient - the single v2 label counts as a hit if it is in the gold set
@@ -14,14 +14,21 @@ No classifier code is modified.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import math
 from pathlib import Path
 
+from normalize_gold_standard_192 import (
+    DEFAULT_OUTPUT as NORMALIZED_GOLD_STANDARD,
+    validate_normalized_gold,
+)
+
 csv.field_size_limit(10**9)
 
-GOLD = Path("data/output/gold_standard_192.csv")
+PROJECT_ROOT = Path(__file__).resolve().parent
+GOLD = NORMALIZED_GOLD_STANDARD
 PRED = Path("data/output/sentiment_classified_hybrid.csv")
 OUT = Path("docs/baseline_hybrid.md")
 
@@ -55,9 +62,20 @@ def normal_ci(k: int, n: int) -> tuple[float, float]:
     return max(0.0, p - h), min(1.0, p + h)
 
 
-def load() -> list[dict]:
+def display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def load(
+    gold_path: Path = GOLD,
+    pred_path: Path = PRED,
+) -> tuple[list[dict], int]:
+    gold_path = Path(validate_normalized_gold(gold_path)["path"])
     gold = []
-    with GOLD.open("r", encoding="utf-8-sig", newline="") as f:
+    with gold_path.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             if row["要検討"] == "1":
                 continue
@@ -69,7 +87,7 @@ def load() -> list[dict]:
 
     wanted = {g["post_id"] for g in gold}
     pred = {}
-    with PRED.open("r", encoding="utf-8-sig", newline="") as f:
+    with pred_path.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             pid = row["投稿ID_文字列"]
             if pid not in wanted:
@@ -93,7 +111,9 @@ def table(counts, lines, title):
     for cat in CATEGORIES:
         c = counts[cat]
         p, r, f = prf(c["tp"], c["fp"], c["fn"])
-        tp_s += c["tp"]; fp_s += c["fp"]; fn_s += c["fn"]
+        tp_s += c["tp"]
+        fp_s += c["fp"]
+        fn_s += c["fn"]
         macro.append((p, r, f))
         lines.append(f"| {cat} | {c['tp']+c['fn']} | {c['tp']+c['fp']} | {c['tp']} | "
                      f"{c['fp']} | {c['fn']} | {p:.3f} | {r:.3f} | **{f:.3f}** |")
@@ -107,8 +127,12 @@ def table(counts, lines, title):
     return mf, Mf
 
 
-def main() -> None:
-    rows, n_gold = load()
+def main(
+    gold_path: Path = GOLD,
+    pred_path: Path = PRED,
+    output: Path = OUT,
+) -> None:
+    rows, n_gold = load(gold_path, pred_path)
     n = len(rows)
 
     lenient = {c: {"tp": 0, "fp": 0, "fn": 0} for c in CATEGORIES}
@@ -131,14 +155,15 @@ def main() -> None:
     L = [
         "# ハイブリッドコーパス ベースライン精度（正解セット192件）", "",
         "**測定日**: 2026-07-30",
-        "**正解セット**: `data/output/gold_standard_192.csv`（189件＋補充3件、多重ラベル）",
-        "**評価対象**: `data/output/sentiment_classified_hybrid.csv`"
+        f"**正解セット**: `{display_path(gold_path)}`"
+        "（189件＋補充3件、多重ラベル）",
+        f"**評価対象**: `{display_path(pred_path)}`"
         "（SHA-256 `f273c9306507804a`、v2.0.0、**未修正**）",
         "**評価スクリプト**: `evaluate_v2_hybrid_192.py`", "",
         "---", "", "## 0. 測定条件", "",
         f"- 正解セット {n_gold}件 / 予測との突合 **{n}件**（欠損 {n_gold - n}件）",
-        f"- 判断保留（要検討=1）: 0件（元の11件は189件側で既に除外済み）",
-        f"- 閾値 `MIN_PRIMARY_SCORE = 1.8`（v2のまま）", "",
+        "- 判断保留（要検討=1）: 0件（元の11件は189件側で既に除外済み）",
+        "- 閾値 `MIN_PRIMARY_SCORE = 1.8`（v2のまま）", "",
         "### 正解セットの分布（192件）", "",
         "| カテゴリ | 正解件数 | 割合 |", "|---|---:|---:|",
     ]
@@ -177,10 +202,10 @@ def main() -> None:
           "---", "", "## 4. 仕様書2-3節の構成比・信頼区間の検算", "",
           "| カテゴリ | 実測割合 | 仕様書2-3 | 95%CI（正規近似） | 仕様書2-3 | 判定 |",
           "|---|---:|---:|---|---|---|"]
-    spec = {"交換・取引": (28.1, "21.7 – 34.5%"), "中立": (25.0, "18.9 – 31.1%"),
-            "欲望・執着": (18.8, "13.2 – 24.3%"), "喜び・満足": (17.2, "11.8 – 22.5%"),
-            "焦り・競争": (14.1, "9.2 – 19.0%"), "不満・怒り": (7.3, "3.6 – 11.0%"),
-            "情報共有": (2.6, "0.4 – 4.8%")}
+    spec = {"交換・取引": (28.1, "21.8 – 34.5%"), "中立": (25.0, "18.9 – 31.1%"),
+            "欲望・執着": (18.8, "13.2 – 24.3%"), "喜び・満足": (17.2, "11.9 – 22.5%"),
+            "焦り・競争": (14.1, "9.1 – 19.0%"), "不満・怒り": (7.3, "3.6 – 11.0%"),
+            "情報共有": (2.6, "0.4 – 4.9%")}
     all_ok = True
     for c, (want_p, want_ci) in spec.items():
         k = gold_counts[c]
@@ -192,8 +217,8 @@ def main() -> None:
         L.append(f"| {c} | {p:.1f}% | {want_p}% | {got_ci} | {want_ci} | "
                  f"{'✓' if ok else '★不一致'} |")
     L += ["", f"**検算結果: {'2-3節の数値はすべて再現できた。' if all_ok else '不一致あり（上表）。'}**", ""]
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("\n".join(L) + "\n", encoding="utf-8")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(L).rstrip() + "\n", encoding="utf-8")
 
     print(f"n={n}  lenient micro F1={mf1:.3f} macro={Mf1:.3f}  hit={hit}/{n}")
     print(f"      multi   micro F1={mf2:.3f} macro={Mf2:.3f}  exact={exact}/{n}")
@@ -202,8 +227,17 @@ def main() -> None:
     for c in CATEGORIES:
         cc = lenient[c]
         print(f"   {c}: {prf(cc['tp'], cc['fp'], cc['fn'])[2]:.3f}")
-    print(f"-> {OUT}")
+    print(f"-> {output}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gold", type=Path, default=GOLD)
+    parser.add_argument("--predictions", type=Path, default=PRED)
+    parser.add_argument("--output", type=Path, default=OUT)
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.gold, args.predictions, args.output)

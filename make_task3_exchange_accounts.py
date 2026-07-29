@@ -12,9 +12,9 @@ It also re-checks every figure quoted in slide_plan 2-4.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
-import re
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -25,19 +25,18 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
+from slide_number_definitions import (
+    EXCHANGE_ACCOUNT_KEY,
+    EXCHANGE_CATEGORY,
+    is_exchange_template,
+    top_fraction_account_count,
+)
+
 csv.field_size_limit(10**9)
 
 SOURCE = Path("data/output/sentiment_classified_hybrid.csv")
 OUT_CSV = Path("data/output/exchange_accounts.csv")
 OUT_PNG = Path("data/output/slides/p15_new_accounts.png")
-
-CATEGORY = "交換・取引"
-ACCOUNT_KEY = "ユーザーID"
-
-# slide_plan 2-4 wording: 【交換】【譲】【求】 / 〈譲〉〈求〉 / 譲）求：
-TEMPLATE_RE = re.compile(
-    r"【\s*(?:交換|譲|求)\s*】|[〈《\[［]\s*(?:譲|求)\s*[〉》\]］]|(?:譲|求)\s*[)）：:]"
-)
 
 for name in ("Hiragino Sans", "Hiragino Maru Gothic Pro", "Arial Unicode MS"):
     if any(f.name == name for f in font_manager.fontManager.ttflist):
@@ -46,15 +45,19 @@ for name in ("Hiragino Sans", "Hiragino Maru Gothic Pro", "Arial Unicode MS"):
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def main() -> None:
+def main(
+    source: Path = SOURCE,
+    out_csv: Path = OUT_CSV,
+    out_png: Path = OUT_PNG,
+) -> None:
     posts = defaultdict(list)
     total = 0
-    with SOURCE.open("r", encoding="utf-8-sig", newline="") as f:
+    with source.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
-            if row["sentiment_category"] != CATEGORY:
+            if row["sentiment_category"] != EXCHANGE_CATEGORY:
                 continue
             total += 1
-            posts[row[ACCOUNT_KEY].strip()].append(row)
+            posts[row[EXCHANGE_ACCOUNT_KEY].strip()].append(row)
 
     accounts = []
     for uid, rows in posts.items():
@@ -75,14 +78,16 @@ def main() -> None:
                 "active_months": span + 1,
                 "first_post_month": first[:7],
                 "unique_texts": len({hashlib.sha1(t.encode()).hexdigest() for t in texts}),
-                "template_posts": sum(1 for t in texts if TEMPLATE_RE.search(t)),
+                "template_posts": sum(
+                    is_exchange_template(row["内容"]) for row in rows
+                ),
                 "repost_posts": sum(1 for t in texts if t.lstrip().lower().startswith("rt @")),
             }
         )
     accounts.sort(key=lambda a: (-a["posts"], a["first_post_date"]))
 
-    OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    with OUT_CSV.open("w", encoding="utf-8-sig", newline="") as f:
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    with out_csv.open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(accounts[0]))
         writer.writeheader()
         writer.writerows(accounts)
@@ -92,8 +97,8 @@ def main() -> None:
     template_total = sum(a["template_posts"] for a in accounts)
     singles = sum(1 for c in counts if c == 1)
     top30 = sum(counts[:30])
-    k1 = max(1, round(n_acc * 0.01))
-    k10 = max(1, round(n_acc * 0.10))
+    k1 = top_fraction_account_count(n_acc, 0.01)
+    k10 = top_fraction_account_count(n_acc, 0.10)
 
     checks = [
         ("投稿数", total, 24316),
@@ -106,8 +111,8 @@ def main() -> None:
         ("上位30シェア(%)", round(top30 / total * 100, 1), 7.4),
         ("上位1%シェア(%)", round(sum(counts[:k1]) / total * 100, 1), 14.9),
         ("上位10%シェア(%)", round(sum(counts[:k10]) / total * 100, 1), 45.6),
-        ("定型書式件数", template_total, 12181),
-        ("定型書式割合(%)", round(template_total / total * 100, 1), 50.1),
+        ("定型書式件数", template_total, 12411),
+        ("定型書式割合(%)", round(template_total / total * 100, 1), 51.0),
     ]
     print(f"{'項目':<22}{'実測':>10}{'仕様書2-4':>12}  判定")
     for label, got, want in checks:
@@ -119,7 +124,7 @@ def main() -> None:
     values = [new_by_month[m] for m in months]
 
     fig, ax = plt.subplots(figsize=(9, 4.6), dpi=200)
-    bars = ax.bar(range(len(months)), values, color="#2E6FBE", width=0.62)
+    ax.bar(range(len(months)), values, color="#2E6FBE", width=0.62)
     for i, v in enumerate(values):
         ax.text(i, v + max(values) * 0.02, f"{v:,}", ha="center", va="bottom", fontsize=11)
     ax.set_xticks(range(len(months)))
@@ -142,16 +147,25 @@ def main() -> None:
              "※ 収集期間は2026年4月30日まで。4月が最大なのは観測の終端であり、"
              "その後に減少したかどうかは本データからは判断できない",
              fontsize=10, color="#5A6570")
-    OUT_PNG.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT_PNG, facecolor="white")
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, facecolor="white")
     plt.close(fig)
 
     print()
     print("月別 新規交換アカウント数")
     for m, v in zip(months, values):
         print(f"  {m}  {v:>6,}  ({v / n_acc * 100:>4.1f}%)")
-    print(f"\n{OUT_CSV} / {OUT_PNG}")
+    print(f"\n{out_csv} / {out_png}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, default=SOURCE)
+    parser.add_argument("--output-csv", type=Path, default=OUT_CSV)
+    parser.add_argument("--output-png", type=Path, default=OUT_PNG)
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.input, args.output_csv, args.output_png)
