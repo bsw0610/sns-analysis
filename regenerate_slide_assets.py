@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Regenerate page 13-15 PNG candidates from the locked slide definitions.
+"""Regenerate page 13-16 PNG candidates from the locked slide definitions.
 
-The output directory is required and must be outside the repository.  This
-prevents an exploratory or validation run from overwriting the checked final
-PNG files under ``data/output/slides``.
+Outputs are written only to an explicit directory outside the repository or
+to a newly created system temporary directory.  This prevents validation runs
+from overwriting the checked final PNG files under ``data/output/slides``.
 """
 
 from __future__ import annotations
@@ -12,6 +12,8 @@ import argparse
 import csv
 import hashlib
 import json
+import tempfile
+import textwrap
 import statistics
 import warnings
 from collections import Counter, defaultdict
@@ -38,7 +40,11 @@ from slide_number_definitions import (
     EXCHANGE_ACCOUNT_KEY,
     EXCHANGE_CATEGORY,
     WALD_95_Z,
+    has_exchange_ratio,
+    has_formal_greeting,
+    has_honorific_consideration,
     is_exchange_template,
+    is_platform_reply,
     top_fraction_account_count,
     wald_interval,
 )
@@ -50,6 +56,15 @@ GOLD_STANDARD = NORMALIZED_GOLD_STANDARD
 CLASSIFIED = PROJECT_ROOT / "data/output/sentiment_classified_hybrid.csv"
 HYBRID_CORPUS = PROJECT_ROOT / "data/output/2511-2604_hybrid.csv"
 SOURCE_GOLD = PROJECT_ROOT / "data/output/gold_standard_192.csv"
+NEGOTIATION_SAMPLE_PATHS = (
+    PROJECT_ROOT
+    / (
+        "outputs/negotiation-unclassified-20260728/"
+        "negotiation_expressions_not_exchange_random50.csv"
+    ),
+    PROJECT_ROOT
+    / "data/output/random_sample_50_negotiation_not_exchange_202511_202604.csv",
+)
 
 FIGSIZE = (12, 6.75)
 DPI = 160
@@ -64,6 +79,18 @@ GOLD_ACCENT = "#C68B2C"
 ORANGE = "#C55A2D"
 PAPER = "#FFFFFF"
 CARD = "#F5F7F9"
+NEUTRAL_BAR = "#D9DEE4"
+
+P16_QUOTE_EXCERPTS = (
+    (
+        "ベイマックス＞ズートピア＞キティ赤＞キティピンクの順番で"
+        "求めておりますが、交換可能なものはございますか？"
+    ),
+    (
+        "2:3の交換は可能でしょうか。差額が気になる場合フリマサイトでの"
+        "レート計算になりますが差額分お支払い可能です"
+    ),
+)
 
 
 def sha256(path: Path) -> str:
@@ -208,8 +235,7 @@ def page13_metrics(
 
     lenient_micro = evaluation["lenient"]["micro"]
     multi_micro = evaluation["multi"]["micro"]
-    exchange = evaluation["lenient"]["per_category"][EXCHANGE_CATEGORY]
-    displayed = [
+    overall = [
         {
             "key": "lenient_micro_f1",
             "label": "緩和基準（micro）",
@@ -224,7 +250,7 @@ def page13_metrics(
         },
         {
             "key": "multi_micro_f1",
-            "label": "多重ラベル基準（micro）",
+            "label": "多ラベル基準（micro）",
             "definition": (
                 f"score >= {MIN_PRIMARY_SCORE:g} "
                 "の全カテゴリを予測集合とする"
@@ -237,30 +263,53 @@ def page13_metrics(
             "value": multi_micro["f1"],
             "display": f"{multi_micro['f1']:.3f}",
         },
-        {
-            "key": "exchange_lenient_f1",
-            "label": "交換・取引（緩和基準）",
-            "definition": "交換・取引カテゴリだけの緩和基準",
-            "scope": "カテゴリ別",
-            "tp": exchange["tp"],
-            "fp": exchange["fp"],
-            "fn": exchange["fn"],
-            "formula": "2TP / (2TP + FP + FN)",
-            "value": exchange["f1"],
-            "display": f"{exchange['f1']:.3f}",
-        },
     ]
+    categories = []
+    for category in CATEGORIES:
+        item = evaluation["lenient"]["per_category"][category]
+        categories.append(
+            {
+                "category": category,
+                "criterion": "lenient",
+                "tp": item["tp"],
+                "fp": item["fp"],
+                "fn": item["fn"],
+                "precision": item["precision"],
+                "recall": item["recall"],
+                "f1": item["f1"],
+                "display": f"{item['f1']:.3f}",
+            }
+        )
+    exchange = next(
+        item for item in categories if item["category"] == EXCHANGE_CATEGORY
+    )
     return {
         "page": 13,
         "sample_size": len(rows),
         "gold_rows": gold_count,
         "classification_join": len(rows),
         "threshold": MIN_PRIMARY_SCORE,
-        "displayed_metrics": displayed,
-        "note": (
-            "micro F1は全カテゴリ集計、交換・取引F1はカテゴリ別であり、"
-            "集計単位が異なる。"
-        ),
+        "overall_metrics": overall,
+        "category_metrics": categories,
+        "highlight": {
+            "primary_category": EXCHANGE_CATEGORY,
+            "primary_display": exchange["display"],
+            "secondary_category": "中立",
+        },
+        "visible_copy": {
+            "title": "カテゴリによって分類性能に差が見られた",
+            "subtitle": (
+                f"人手ラベル{len(rows)}件との比較・"
+                f"{len(categories)}カテゴリ別F1（緩和基準）"
+            ),
+            "interpretation": (
+                "交換・取引は比較的安定して判定できた一方、"
+                "他のカテゴリには改善の余地が残った。"
+            ),
+            "footnote": (
+                "評価指標はF1。全体値は7カテゴリを合算したmicro F1。"
+            ),
+        },
     }
 
 
@@ -268,89 +317,106 @@ def render_page13(
     metrics: dict[str, object],
     output_path: Path,
 ) -> dict[str, object]:
-    displayed = metrics["displayed_metrics"]
-    ordered = [displayed[2], displayed[1], displayed[0]]
-    labels = [item["label"] for item in ordered]
-    values = [item["value"] for item in ordered]
-    colors = [GOLD_ACCENT, BLUE, BLUE_LIGHT]
-    hatches = ["///", "", ".."]
+    categories = sorted(
+        metrics["category_metrics"],
+        key=lambda item: item["f1"],
+    )
+    labels = [item["category"] for item in categories]
+    values = [item["f1"] for item in categories]
+    colors = []
+    hatches = []
+    for item in categories:
+        if item["category"] == metrics["highlight"]["primary_category"]:
+            colors.append(GOLD_ACCENT)
+            hatches.append("///")
+        elif item["category"] == metrics["highlight"]["secondary_category"]:
+            colors.append(BLUE_LIGHT)
+            hatches.append("..")
+        else:
+            colors.append(NEUTRAL_BAR)
+            hatches.append("")
 
     fig = plt.figure(figsize=FIGSIZE, dpi=DPI, layout="constrained")
-    grid = fig.add_gridspec(3, 1, height_ratios=[0.7, 5.0, 0.5])
+    grid = fig.add_gridspec(3, 1, height_ratios=[1.0, 4.8, 0.8])
     header_ax = fig.add_subplot(grid[0])
     ax = fig.add_subplot(grid[1])
     note_ax = fig.add_subplot(grid[2])
     header_ax.axis("off")
     note_ax.axis("off")
     header_ax.text(
-        -0.24,
-        0.98,
-        "評価方法ごとの F1",
+        0,
+        0.96,
+        metrics["visible_copy"]["title"],
         ha="left",
         va="top",
-        fontsize=22,
+        fontsize=24,
         fontweight="bold",
-        clip_on=False,
     )
     header_ax.text(
-        -0.24,
-        0.02,
-        "正規化した人手ラベル"
-        f"{metrics['gold_rows']}件と分類結果"
-        f"{metrics['classification_join']}件を照合",
+        0,
+        0.08,
+        metrics["visible_copy"]["subtitle"],
         ha="left",
         va="bottom",
-        fontsize=13,
+        fontsize=12.5,
         color=SUBTLE,
-        clip_on=False,
     )
-    positions = [0, 1.4, 2.8]
+    for index, item in enumerate(metrics["overall_metrics"]):
+        header_ax.text(
+            0.72 + index * 0.19,
+            0.5,
+            f"{item['label']}\nF1 {item['display']}",
+            ha="center",
+            va="center",
+            fontsize=10.5,
+            fontweight="bold",
+            color=BLUE if index else INK,
+        )
+    positions = list(range(len(categories)))
     bars = ax.barh(
         positions,
         values,
         color=colors,
         edgecolor=INK,
         linewidth=1.2,
-        height=0.52,
+        height=0.58,
     )
     for bar, hatch in zip(bars, hatches):
         bar.set_hatch(hatch)
-    for position, value, item in zip(positions, values, ordered):
+    for position, value, item in zip(positions, values, categories):
         ax.text(
-            value + 0.018,
+            max(value + 0.018, 0.018),
             position,
             item["display"],
             va="center",
-            fontsize=20,
+            fontsize=15,
             fontweight="bold",
             color=INK,
         )
-        ax.text(
-            0.02,
-            position - 0.4,
-            item["definition"],
-            va="top",
-            fontsize=11.5,
-            color=SUBTLE,
-        )
-    ax.set_yticks(positions, labels=labels, fontsize=16)
-    ax.set_ylim(-0.65, 3.35)
+    ax.set_yticks(positions, labels=labels, fontsize=14.5)
     ax.set_xlim(0, 1)
     ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
-    ax.set_xlabel("F1（1.000 が完全一致）", fontsize=14, labelpad=12)
+    ax.set_xlabel("F1（1.000 が完全一致）", fontsize=12.5, labelpad=8)
     ax.grid(axis="x", color=GRID, linewidth=0.9)
     ax.set_axisbelow(True)
     ax.spines[["top", "right", "left"]].set_visible(False)
-    ax.tick_params(axis="y", length=0, pad=12)
+    ax.tick_params(axis="y", length=0, pad=10)
     note_ax.text(
-        -0.24,
-        0.5,
-        "注：交換・取引はカテゴリ別F1、micro F1は全カテゴリの"
-        "TP・FP・FNを合算するため、集計単位が異なる。",
+        0,
+        0.72,
+        metrics["visible_copy"]["interpretation"],
         va="center",
-        fontsize=12,
+        fontsize=12.5,
+        fontweight="bold",
+        color=INK,
+    )
+    note_ax.text(
+        0,
+        0.18,
+        metrics["visible_copy"]["footnote"],
+        va="center",
+        fontsize=10.5,
         color=SUBTLE,
-        clip_on=False,
     )
     return save_figure(fig, output_path)
 
@@ -385,16 +451,22 @@ def page14_metrics(
         for row in classified_rows
     )
     classifier_total = len(classified_rows)
+    extended_label_count = sum(
+        category["numerator"] for category in categories
+    )
+    sum_of_category_percentages = sum(
+        category["percent"] for category in categories
+    )
+    urgency = next(
+        item for item in categories if item["category"] == "焦り・競争"
+    )
+    classifier_percent = classifier_count / classifier_total * 100
     return {
         "page": 14,
         "sample_size": sample_size,
         "multi_label": True,
-        "extended_label_count": sum(
-            category["numerator"] for category in categories
-        ),
-        "sum_of_category_percentages": sum(
-            category["percent"] for category in categories
-        ),
+        "extended_label_count": extended_label_count,
+        "sum_of_category_percentages": sum_of_category_percentages,
         "confidence_interval": {
             "method": "Wald",
             "confidence_level": 0.95,
@@ -408,13 +480,30 @@ def page14_metrics(
             "category": "焦り・競争",
             "numerator": classifier_count,
             "denominator": classifier_total,
-            "percent": classifier_count / classifier_total * 100,
-            "display": (
-                f"{classifier_count / classifier_total * 100:.1f}%"
-            ),
+            "percent": classifier_percent,
+            "display": f"{classifier_percent:.1f}%",
             "definition": "分類器の単一ラベル判定",
         },
-        "note": "多重ラベルのため、カテゴリ構成比の合計は100%を超えうる。",
+        "visible_copy": {
+            "title": "人手ラベルから見えたカテゴリ構成",
+            "subtitle": (
+                f"人手ラベル{sample_size}件・カテゴリ別二値比率・"
+                f"Wald 95%信頼区間（z={WALD_95_Z:.2f}）"
+            ),
+            "callout": (
+                "焦り・競争：人手ラベル"
+                f"{urgency['percent']:.1f}%／自動分類"
+                f"{classifier_percent:.1f}%"
+            ),
+            "multi_label_note": (
+                "1投稿に複数ラベルを付与したため、構成比の合計は"
+                f"{sum_of_category_percentages:.1f}%。"
+            ),
+            "information_bias_note": (
+                "「情報共有」は広告除去条件の影響が大きく、"
+                "低い実態比率とは断定できない。"
+            ),
+        },
     }
 
 
@@ -443,47 +532,59 @@ def render_page14(
     header_ax.text(
         0,
         0.98,
-        "人手ラベルによる実際のカテゴリ構成比",
+        metrics["visible_copy"]["title"],
         ha="left",
         va="top",
-        fontsize=22,
+        fontsize=24,
         fontweight="bold",
     )
     header_ax.text(
         0,
         0.02,
-        f"一般ユーザー投稿{metrics['sample_size']}件・Wald "
-        f"{metrics['confidence_interval']['confidence_level'] * 100:.0f}%"
-        "信頼区間"
-        f"（z={metrics['confidence_interval']['z']:.2f}）",
+        metrics["visible_copy"]["subtitle"],
         ha="left",
         va="bottom",
-        fontsize=13,
+        fontsize=12.5,
         color=SUBTLE,
     )
-    y_positions = range(len(categories))
-    ax.errorbar(
-        values,
-        y_positions,
-        xerr=[lower_errors, upper_errors],
-        fmt="o",
-        markersize=11,
-        markerfacecolor=PAPER,
-        markeredgecolor=BLUE,
-        markeredgewidth=3,
-        ecolor=INK,
-        elinewidth=2,
-        capsize=6,
-        capthick=2,
-        zorder=3,
+    header_ax.text(
+        1,
+        0.08,
+        metrics["visible_copy"]["callout"],
+        ha="right",
+        va="bottom",
+        fontsize=12.5,
+        fontweight="bold",
+        color=ORANGE,
     )
+    y_positions = range(len(categories))
+    for index, item in enumerate(categories):
+        point_color = ORANGE if item["category"] == "焦り・競争" else BLUE
+        if item["category"] == "情報共有":
+            point_color = SUBTLE
+        ax.errorbar(
+            [values[index]],
+            [index],
+            xerr=[[lower_errors[index]], [upper_errors[index]]],
+            fmt="o",
+            markersize=10,
+            markerfacecolor=PAPER,
+            markeredgecolor=point_color,
+            markeredgewidth=2.5,
+            ecolor=INK,
+            elinewidth=1.8,
+            capsize=5,
+            capthick=1.8,
+            zorder=3,
+        )
     for index, item in enumerate(categories):
         ax.text(
             item["ci_high_percent"] + 0.9,
             index,
-            f"{item['percent_display']}  [{item['ci_display']}]",
+            f"{item['percent_display']}（{item['numerator']}件）"
+            f"  [{item['ci_display']}]",
             va="center",
-            fontsize=13,
+            fontsize=12.5,
             color=INK,
         )
 
@@ -507,8 +608,8 @@ def render_page14(
     ax.text(
         6.2,
         focus_index - 0.45,
-        f"分類器の判定 {classifier['display']}",
-        fontsize=11.5,
+        f"自動分類 {classifier['display']}",
+        fontsize=11,
         color=ORANGE,
         va="center",
     )
@@ -522,12 +623,19 @@ def render_page14(
     ax.tick_params(axis="y", length=0, pad=10)
     note_ax.text(
         0,
-        0.5,
-        "注：1投稿に複数カテゴリを付与できるため、構成比の合計は"
-        f"{metrics['sum_of_category_percentages']:.1f}%（100%超）となる。",
+        0.7,
+        metrics["visible_copy"]["multi_label_note"],
         va="center",
-        fontsize=12,
+        fontsize=10.8,
         color=SUBTLE,
+    )
+    note_ax.text(
+        0,
+        0.2,
+        metrics["visible_copy"]["information_bias_note"],
+        va="center",
+        fontsize=10.8,
+        color=ORANGE,
     )
     return save_figure(fig, output_path)
 
@@ -606,6 +714,8 @@ def page15_metrics(
             "share_percent": template_posts / post_total * 100,
         },
     }
+    observation_year = int(observation_end_date[:4])
+    observation_month = int(observation_end_date[5:7])
     return {
         "page": 15,
         "account_key": EXCHANGE_ACCOUNT_KEY,
@@ -616,10 +726,24 @@ def page15_metrics(
             item["new_accounts"] for item in monthly
         ),
         "observation_end_date": observation_end_date,
-        "note": (
-            "月別新規数は、各ユーザーIDの最初の交換・取引投稿月で集計。"
-            f"収集は{observation_end_date}で終了。"
-        ),
+        "visible_copy": {
+            "title": "「交換・取引」カテゴリの投稿構造",
+            "connection": (
+                "7カテゴリの中で比較的安定していた「交換・取引」を対象に、"
+                "投稿とアカウントの構造を確認した。"
+            ),
+            "interpretation": (
+                "投稿は一部の活発なアカウントに集中しつつ、"
+                "多数の単発参加アカウントにも広がっていた。"
+            ),
+            "partial_period_note": (
+                f"※{observation_year}年{observation_month}月は収集終了月であり、"
+                "その後の増減は判断できない。"
+            ),
+            "monthly_definition": (
+                "月別新規数はユーザーIDごとの最初の交換・取引投稿月。"
+            ),
+        },
     }
 
 
@@ -685,15 +809,15 @@ def render_page15(
     months = [item["month"] for item in monthly]
     values = [item["new_accounts"] for item in monthly]
     top_1 = summary["top_1_percent"]
-    template = summary["template"]
+    single_accounts = summary["single_post_accounts"]
+    single_share = summary["single_post_account_share_percent"]
     observation_end_date = metrics["observation_end_date"]
-    observation_end_month = int(observation_end_date[5:7])
 
     fig = plt.figure(figsize=FIGSIZE, dpi=DPI, layout="constrained")
     grid = fig.add_gridspec(
         4,
         1,
-        height_ratios=[0.55, 1.25, 3.8, 0.35],
+        height_ratios=[0.9, 1.25, 3.4, 0.75],
     )
     header_ax = fig.add_subplot(grid[0])
     cards_ax = fig.add_subplot(grid[1])
@@ -704,12 +828,21 @@ def render_page15(
     note_ax.axis("off")
     header_ax.text(
         0,
-        0.62,
-        "交換・取引投稿を支えるアカウント構造",
+        0.96,
+        metrics["visible_copy"]["title"],
         ha="left",
-        va="center",
-        fontsize=23,
+        va="top",
+        fontsize=24,
         fontweight="bold",
+    )
+    header_ax.text(
+        0,
+        0.05,
+        metrics["visible_copy"]["connection"],
+        ha="left",
+        va="bottom",
+        fontsize=11.5,
+        color=SUBTLE,
     )
     card_width = 0.225
     add_kpi_card(
@@ -727,7 +860,7 @@ def render_page15(
         card_width,
         "投稿したアカウント",
         f"{summary['accounts']:,}",
-        f"集計キー：{metrics['account_key']}",
+        f"{metrics['account_key']}で集計",
         accent=BLUE,
         hatch="..",
     )
@@ -735,9 +868,9 @@ def render_page15(
         cards_ax,
         0.51,
         card_width,
-        "上位1%の投稿比率",
-        f"{top_1['share_percent']:.1f}%",
-        f"{top_1['accounts']}アカウント・{top_1['posts']:,}件",
+        "1回のみ投稿",
+        f"{single_share:.1f}%",
+        f"{single_accounts:,} / {summary['accounts']:,}アカウント",
         accent=GOLD_ACCENT,
         hatch="///",
     )
@@ -745,9 +878,9 @@ def render_page15(
         cards_ax,
         0.765,
         card_width,
-        "定型交換書式",
-        f"{template['share_percent']:.1f}%",
-        f"{template['posts']:,} / {template['denominator_posts']:,}件",
+        "上位1%の投稿比率",
+        f"{top_1['share_percent']:.1f}%",
+        f"{top_1['accounts']}アカウント・{top_1['posts']:,}件",
         accent=ORANGE,
         hatch="xx",
     )
@@ -805,12 +938,354 @@ def render_page15(
     )
     note_ax.text(
         0,
-        0.5,
-        "注：月別新規数はユーザーIDごとの最初の交換・取引投稿月。"
-        f"{observation_end_month}月以降の増減は本データから判断できない。",
+        0.78,
+        metrics["visible_copy"]["interpretation"],
         va="center",
         fontsize=11.5,
+        fontweight="bold",
+        color=INK,
+    )
+    note_ax.text(
+        0,
+        0.24,
+        metrics["visible_copy"]["monthly_definition"]
+        + metrics["visible_copy"]["partial_period_note"],
+        va="center",
+        fontsize=10.4,
         color=SUBTLE,
+    )
+    return save_figure(fig, output_path)
+
+
+def load_negotiation_sample(
+    paths: tuple[Path, ...] = NEGOTIATION_SAMPLE_PATHS,
+) -> list[dict[str, str]]:
+    """Load and deduplicate the fixed negotiation-expression sample."""
+    deduplicated: dict[str, dict[str, str]] = {}
+    for path in paths:
+        for row_number, row in enumerate(read_dicts(path), start=2):
+            post_id = (
+                row.get("投稿ID_文字列")
+                or row.get("post_id")
+                or row.get("投稿ID")
+                or ""
+            ).strip()
+            if not post_id:
+                raise AssertionError(f"Missing post ID in {path}:{row_number}")
+            enriched = dict(row)
+            enriched["_source_path"] = display_path(path)
+            enriched["_source_row_number"] = str(row_number)
+            deduplicated[post_id] = enriched
+    return list(deduplicated.values())
+
+
+def verified_anonymized_quotes(
+    sample_rows: list[dict[str, str]],
+) -> list[dict[str, object]]:
+    """Return exact source excerpts with account-identifying fields omitted."""
+    quotes = []
+    for excerpt in P16_QUOTE_EXCERPTS:
+        matching_rows = [
+            row
+            for row in sample_rows
+            if excerpt in (row.get("内容") or row.get("clean_text") or "")
+        ]
+        if not matching_rows:
+            quotes.append(
+                {
+                    "text": "［匿名化した原文例を確認後に挿入］",
+                    "verified": False,
+                    "source_path": None,
+                    "source_row_number": None,
+                    "anonymization": (
+                        "原文照合ができないため、内容を推測せず"
+                        "プレースホルダーを表示"
+                    ),
+                }
+            )
+            continue
+        row = matching_rows[0]
+        quotes.append(
+            {
+                "text": excerpt,
+                "verified": True,
+                "source_path": row["_source_path"],
+                "source_row_number": int(row["_source_row_number"]),
+                "anonymization": (
+                    "原文の連続部分をそのまま抜粋し、アカウント名・"
+                    "相手メンション・URL・画像リンクを表示対象から除外"
+                ),
+            }
+        )
+    return quotes
+
+
+def page16_metrics(
+    page15_data: dict[str, object],
+    sample_rows: list[dict[str, str]],
+    sample_paths: tuple[Path, ...] = NEGOTIATION_SAMPLE_PATHS,
+) -> dict[str, object]:
+    """Calculate page 16 full-corpus and fixed-sample evidence."""
+    texts = [
+        row.get("内容") or row.get("clean_text") or ""
+        for row in sample_rows
+    ]
+    sample_size = len(sample_rows)
+    fixed_sample = {
+        "posts": sample_size,
+        "reply_posts": sum(is_platform_reply(row) for row in sample_rows),
+        "formal_greeting_posts": sum(
+            has_formal_greeting(text) for text in texts
+        ),
+        "honorific_consideration_posts": sum(
+            has_honorific_consideration(text) for text in texts
+        ),
+        "exchange_ratio_posts": sum(
+            has_exchange_ratio(text) for text in texts
+        ),
+        "definitions": {
+            "reply_posts": "slide_number_definitions.is_platform_reply",
+            "formal_greeting_posts": (
+                "slide_number_definitions.has_formal_greeting"
+            ),
+            "honorific_consideration_posts": (
+                "slide_number_definitions.has_honorific_consideration"
+            ),
+            "exchange_ratio_posts": (
+                "slide_number_definitions.has_exchange_ratio"
+            ),
+        },
+    }
+    template = page15_data["summary"]["template"]
+    return {
+        "page": 16,
+        "template": template,
+        "fixed_sample": fixed_sample,
+        "displayed_expressions": [
+            "譲",
+            "求",
+            "郵送",
+            "手渡し",
+            "交換比率",
+            "差額精算",
+            "ご検討／御検討",
+        ],
+        "quotes": verified_anonymized_quotes(sample_rows),
+        "sample_sources": {
+            "paths": [display_path(path) for path in sample_paths],
+            "sha256": {
+                display_path(path): sha256(path) for path in sample_paths
+            },
+            "deduplication_key": (
+                "投稿ID_文字列（なければpost_idまたは投稿ID）"
+            ),
+        },
+        "visible_copy": {
+            "title": "「交換・取引」投稿に見られた定型表現",
+            "conclusion": (
+                "交換投稿の多くで、条件を簡潔に提示する"
+                "共通の表現形式が使われていた。"
+            ),
+            "scope_limit": (
+                "固定標本の分析であり、すべての交換投稿を"
+                "代表するものではない。"
+            ),
+            "anonymization": "アカウント情報は匿名化した。",
+            "transition": (
+                "次に、これらの結果を他の分析と合わせて検討する。"
+            ),
+        },
+    }
+
+
+def add_quote_panel(
+    ax: plt.Axes,
+    quote: dict[str, object],
+    index: int,
+) -> None:
+    """Draw one verified quote or a non-speculative placeholder."""
+    panel = FancyBboxPatch(
+        (0.03, 0.05),
+        0.94,
+        0.88,
+        boxstyle="round,pad=0.015,rounding_size=0.025",
+        linewidth=1.2,
+        edgecolor=GRID,
+        facecolor=CARD,
+        transform=ax.transAxes,
+    )
+    ax.add_patch(panel)
+    ax.text(
+        0.05,
+        0.82,
+        f"匿名化した原文例 {index}",
+        transform=ax.transAxes,
+        fontsize=11,
+        color=SUBTLE,
+        va="top",
+    )
+    wrapped = "\n".join(textwrap.wrap(str(quote["text"]), width=32))
+    ax.text(
+        0.05,
+        0.52,
+        f"「{wrapped}」",
+        transform=ax.transAxes,
+        fontsize=12.2,
+        color=INK,
+        va="center",
+        linespacing=1.35,
+    )
+
+
+def render_page16(
+    metrics: dict[str, object],
+    output_path: Path,
+) -> dict[str, object]:
+    template = metrics["template"]
+    sample = metrics["fixed_sample"]
+    copy = metrics["visible_copy"]
+
+    fig = plt.figure(figsize=FIGSIZE, dpi=DPI, layout="constrained")
+    grid = fig.add_gridspec(
+        4,
+        1,
+        height_ratios=[0.72, 2.25, 1.75, 1.0],
+    )
+    header_ax = fig.add_subplot(grid[0])
+    evidence_grid = grid[1].subgridspec(1, 2, width_ratios=[0.9, 1.1])
+    main_ax = fig.add_subplot(evidence_grid[0])
+    sample_ax = fig.add_subplot(evidence_grid[1])
+    quote_grid = grid[2].subgridspec(1, 2, wspace=0.08)
+    quote_axes = [
+        fig.add_subplot(quote_grid[0]),
+        fig.add_subplot(quote_grid[1]),
+    ]
+    footer_ax = fig.add_subplot(grid[3])
+    for ax in (header_ax, main_ax, sample_ax, *quote_axes, footer_ax):
+        ax.axis("off")
+
+    header_ax.text(
+        0.03,
+        0.9,
+        copy["title"],
+        ha="left",
+        va="top",
+        fontsize=24,
+        fontweight="bold",
+    )
+    main_ax.text(
+        0.03,
+        0.95,
+        "定型的な交換形式",
+        fontsize=13,
+        color=SUBTLE,
+        va="top",
+    )
+    main_ax.text(
+        0.03,
+        0.62,
+        f"{template['posts']:,}件",
+        fontsize=31,
+        fontweight="bold",
+        color=BLUE,
+        va="center",
+    )
+    main_ax.text(
+        0.03,
+        0.34,
+        f"交換投稿の {template['share_percent']:.1f}%",
+        fontsize=18,
+        fontweight="bold",
+        color=INK,
+        va="center",
+    )
+    main_ax.text(
+        0.03,
+        0.08,
+        "主な表現："
+        + "／".join(metrics["displayed_expressions"]),
+        fontsize=11,
+        color=SUBTLE,
+        va="bottom",
+        wrap=True,
+    )
+
+    sample_ax.text(
+        0.03,
+        0.95,
+        f"交渉表現を含む固定標本 {sample['posts']}件",
+        transform=sample_ax.transAxes,
+        fontsize=14,
+        fontweight="bold",
+        color=INK,
+        va="top",
+    )
+    sample_rows = (
+        ("リプライ", sample["reply_posts"]),
+        ("定型的な挨拶", sample["formal_greeting_posts"]),
+        ("ご検討／御検討", sample["honorific_consideration_posts"]),
+        ("交換比率", sample["exchange_ratio_posts"]),
+    )
+    for index, (label, value) in enumerate(sample_rows):
+        y = 0.71 - index * 0.2
+        sample_ax.text(
+            0.03,
+            y,
+            label,
+            transform=sample_ax.transAxes,
+            fontsize=12.5,
+            color=SUBTLE,
+            va="center",
+        )
+        sample_ax.text(
+            0.92,
+            y,
+            f"{value}件",
+            transform=sample_ax.transAxes,
+            fontsize=16,
+            fontweight="bold",
+            color=INK,
+            va="center",
+            ha="right",
+        )
+        sample_ax.plot(
+            [0.03, 0.92],
+            [y - 0.09, y - 0.09],
+            color=GRID,
+            linewidth=0.8,
+            transform=sample_ax.transAxes,
+        )
+
+    for index, (ax, quote) in enumerate(
+        zip(quote_axes, metrics["quotes"]),
+        start=1,
+    ):
+        add_quote_panel(ax, quote, index)
+
+    footer_ax.text(
+        0.03,
+        0.86,
+        copy["conclusion"],
+        fontsize=12,
+        fontweight="bold",
+        color=INK,
+        va="center",
+    )
+    footer_ax.text(
+        0.03,
+        0.53,
+        copy["scope_limit"] + " " + copy["anonymization"],
+        fontsize=10.4,
+        color=SUBTLE,
+        va="center",
+    )
+    footer_ax.text(
+        0.03,
+        0.17,
+        copy["transition"],
+        fontsize=11,
+        color=BLUE,
+        va="center",
     )
     return save_figure(fig, output_path)
 
@@ -869,7 +1344,15 @@ def build_assets(
     p13_data = page13_metrics(gold_path, classified_path)
     p14_data = page14_metrics(evaluation_rows, classified_rows)
     p15_data = page15_metrics(classified_rows)
-    for data in (p13_data, p14_data, p15_data):
+    negotiation_rows = load_negotiation_sample()
+    p16_data = page16_metrics(p15_data, negotiation_rows)
+    page_data = {
+        13: p13_data,
+        14: p14_data,
+        15: p15_data,
+        16: p16_data,
+    }
+    for data in page_data.values():
         data["sources"] = common_sources
         data["render"] = {
             "font_family": font_family,
@@ -883,26 +1366,30 @@ def build_assets(
         13: output_dir / "p13_metrics.json",
         14: output_dir / "p14_metrics.json",
         15: output_dir / "p15_metrics.json",
+        16: output_dir / "p16_metrics.json",
     }
-    for page, data in zip((13, 14, 15), (p13_data, p14_data, p15_data)):
+    for page, data in page_data.items():
         write_json(metric_paths[page], data)
 
     png_paths = {
         13: output_dir / "p13_agreement.png",
         14: output_dir / "p14_composition.png",
         15: output_dir / "p15_new_accounts.png",
+        16: output_dir / "p16_expressions.png",
     }
     renders = {
         13: render_page13(p13_data, png_paths[13]),
         14: render_page14(p14_data, png_paths[14]),
         15: render_page15(p15_data, png_paths[15]),
+        16: render_page16(p16_data, png_paths[16]),
     }
     if any(render["width_px"] < MIN_WIDTH for render in renders.values()):
         raise AssertionError(f"All PNG files must be at least {MIN_WIDTH}px")
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "sources": common_sources,
+        "qualitative_sample_sources": p16_data["sample_sources"],
         "gold_validation": {
             key: gold_validation[key]
             for key in (
@@ -930,7 +1417,7 @@ def build_assets(
                     "sha256": sha256(metric_paths[page]),
                 },
             }
-            for page in (13, 14, 15)
+            for page in (13, 14, 15, 16)
         },
     }
     manifest_path = output_dir / "slide_assets_manifest.json"
@@ -945,13 +1432,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        required=True,
-        help="Temporary output directory outside the repository",
+        help=(
+            "Output directory outside the repository. If omitted, a new "
+            "system temporary directory is created."
+        ),
     )
     parser.add_argument("--gold", type=Path, default=GOLD_STANDARD)
     parser.add_argument("--classified", type=Path, default=CLASSIFIED)
     parser.add_argument("--hybrid-corpus", type=Path, default=HYBRID_CORPUS)
-    return parser.parse_args()
+    arguments = parser.parse_args()
+    if arguments.output_dir is None:
+        arguments.output_dir = Path(
+            tempfile.mkdtemp(prefix="bonbon_slides_10_16_rework_")
+        )
+    return arguments
 
 
 if __name__ == "__main__":

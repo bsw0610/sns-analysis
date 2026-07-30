@@ -31,6 +31,7 @@ EXCHANGE_TEMPLATE_RE = re.compile(
 
 HONORIFIC_CONSIDERATION_RE = re.compile(r"(?:ご|御)検討")
 EXCHANGE_RATIO_RE = re.compile(r"\d\s*[:：]\s*\d")
+FORMAL_GREETING_RE = re.compile(r"検索(?:より|から)")
 
 
 def is_exchange_template(text: str) -> bool:
@@ -62,6 +63,11 @@ def has_honorific_consideration(text: str) -> bool:
 def has_exchange_ratio(text: str) -> bool:
     """Match an explicit Arabic-digit n:m exchange ratio."""
     return EXCHANGE_RATIO_RE.search(text or "") is not None
+
+
+def has_formal_greeting(text: str) -> bool:
+    """Match the fixed-sample greeting beginning with 検索より/から."""
+    return FORMAL_GREETING_RE.search(text or "") is not None
 
 
 def wald_interval(

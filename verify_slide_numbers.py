@@ -29,6 +29,7 @@ from slide_number_definitions import (
     EXCHANGE_ACCOUNT_KEY,
     EXCHANGE_CATEGORY,
     has_exchange_ratio,
+    has_formal_greeting,
     has_honorific_consideration,
     is_exchange_template,
     is_platform_reply,
@@ -265,7 +266,7 @@ def main(
               sum(1 for v in cat.values() if v == "中立"), HYBRID.name)
         string_checks = [
             ("「検索より/から失礼いたします」", 48,
-             lambda text: re.search(r"検索(?:より|から)", text) is not None,
+             has_formal_greeting,
              r"検索(?:より|から)"),
             ("「ご検討」", 42, has_honorific_consideration, r"(?:ご\|御)検討"),
             ("「初めまして」", 31,

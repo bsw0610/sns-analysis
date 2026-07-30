@@ -7,6 +7,7 @@ import unittest
 
 from slide_number_definitions import (
     has_exchange_ratio,
+    has_formal_greeting,
     has_honorific_consideration,
     is_exchange_template,
     is_platform_reply,
@@ -64,6 +65,9 @@ class SlideNumberDefinitionTests(unittest.TestCase):
         self.assertTrue(has_exchange_ratio("2 : 2"))
         self.assertTrue(has_exchange_ratio("1：3"))
         self.assertFalse(has_exchange_ratio("n:m"))
+        self.assertTrue(has_formal_greeting("検索より失礼いたします"))
+        self.assertTrue(has_formal_greeting("検索から失礼します"))
+        self.assertFalse(has_formal_greeting("はじめまして"))
 
     def test_wald_interval_rounding(self) -> None:
         expected = {
