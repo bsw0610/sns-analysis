@@ -1,0 +1,41 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # The classifier and its tests use only the standard library. Nothing is
+      # installed here, so a failure means the code broke, not the environment.
+      - name: Run regression tests
+        run: |
+          python -m unittest -v \
+            test_sentiment_classifier.py \
+            test_slide_number_definitions.py
+
+      # Proves the claim the README makes: the classifier runs on a fresh clone
+      # with no dataset present.
+      - name: Classify the synthetic sample
+        run: |
+          python classify_sns_rule_based.py \
+            --input sample_data/sample_posts.csv \
+            --output sample_output.csv
+
+      - name: Check the sample result against the recorded outcome
+        run: python sample_data/check_sample_output.py sample_output.csv

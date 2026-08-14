@@ -1,5 +1,7 @@
 # Bonbon Drop Seal Social Media Analysis
 
+[![tests](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml)
+
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
 ## 日本語概要
@@ -51,7 +53,8 @@ information-sharing category scoring F1 0.000, and indirect expressions that
 match no rule — so the limitations described below can be watched happening
 rather than taken on trust. [`sample_data/README.md`](sample_data/README.md)
 maps each one to its cause, and `check_sample_output.py` pins the exact outcome
-so a behaviour change fails loudly instead of passing unnoticed.
+so a behaviour change fails loudly instead of passing unnoticed. CI runs this
+same sequence on every push.
 
 The older Word2Vec path and several legacy presentation artifacts are documented for provenance, but parts of their preprocessing history are incomplete. The two lab-provided notebooks are intentionally excluded from the public repository because their redistribution terms could not be verified. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
 
@@ -232,6 +235,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 .
 ├── README.md
 ├── requirements.txt
+├── .github/workflows/test.yml      # runs the tests and the sample on every push
 ├── assets/portfolio/               # README figures, regenerated from data/output
 ├── baselines/
 │   └── hybrid_final_exclusions.csv
