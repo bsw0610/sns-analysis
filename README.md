@@ -178,24 +178,33 @@ The classifier is most reliable for exchange posts. It performs poorly on urgenc
 
 ## Tech Stack
 
+Current repository scripts:
+
 - Python 3
-- Jupyter Notebook for the historical workflow; the lab-provided source notebooks are not redistributed
+- Matplotlib 3.10.6
+- Pillow 12.0.0
+- CSV and JSON processing with the Python standard library
+
+Historical notebook workflow, documented but not redistributed or reconstructed:
+
+- Jupyter Notebook
 - Gensim / Word2Vec
 - MeCab with `mecab-ipadic-neologd`
-- Matplotlib
-- Pillow
-- CSV and JSON processing with the Python standard library
 - TensorFlow Embedding Projector
+
+Supporting tools:
+
 - Git for provenance and reproducibility work
 - AI coding agents for repository inspection, pipeline tracing, code revision, and verification
 
-No complete dependency lockfile is currently available.
+A pinned `requirements.txt` is provided for the current repository scripts. It does not reconstruct the historical notebook-based Word2Vec environment.
 
 ## Repository Structure
 
 ```text
 .
 ├── README.md
+├── requirements.txt
 ├── baselines/
 │   └── hybrid_final_exclusions.csv
 ├── data/output/                    # local generated data; ignored by Git
@@ -226,6 +235,12 @@ Important documentation:
 ## Reproducibility and How to Run
 
 ### Requirements
+
+Install the dependencies used by the current repository scripts:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
 
 The reproducible hybrid path requires the six monthly CSV exports and local files under `data/output/`. These files are ignored by Git and are therefore not available in a fresh clone.
 
@@ -294,7 +309,7 @@ python3 -m unittest \
 - Replace shell-based CSV concatenation and field extraction with schema-aware parsing.
 - Create a representative evaluation sample directly from the hybrid corpus and document the annotation policy.
 - Improve Japanese linguistic coverage and compare the rule-based baseline with alternative classifiers.
-- Reconstruct the MeCab preprocessing environment and investigate the repeated Word2Vec corpus blocks.
+- Reconstruct and separately pin the historical MeCab and Word2Vec environment, and investigate the repeated corpus blocks.
 - Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
-- Add a dependency lockfile and a manifest for local, non-Git data assets.
+- Add a fully resolved lockfile for the current scripts if exact transitive dependency reproduction is required, and add a manifest for local, non-Git data assets.
 - Reimplement suitable extraction and aggregation steps in SQL while retaining Python for NLP and visualization.

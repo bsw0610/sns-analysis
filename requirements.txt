@@ -1,0 +1,4 @@
+# Dependencies for the scripts in the current repository.
+# The historical notebook-based Word2Vec environment is intentionally excluded.
+matplotlib==3.10.6
+Pillow==12.0.0
