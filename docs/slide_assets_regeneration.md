@@ -88,13 +88,13 @@ If `--output-dir` is omitted, `tempfile.mkdtemp()` creates a new temporary
 directory.
 
 ```bash
-/opt/anaconda3/bin/python3 regenerate_slide_assets.py
+python3 regenerate_slide_assets.py
 ```
 
 To use an explicit temporary directory:
 
 ```bash
-/opt/anaconda3/bin/python3 regenerate_slide_assets.py \
+python3 regenerate_slide_assets.py \
   --output-dir /private/tmp/bonbon_slides_10_16_rework_run1
 ```
 
@@ -106,17 +106,17 @@ accidental overwrite of existing PNGs.
 Run the verifier on one output directory:
 
 ```bash
-/opt/anaconda3/bin/python3 verify_slide_assets.py \
+python3 verify_slide_assets.py \
   --assets-dir /private/tmp/bonbon_slides_10_16_rework_run1
 ```
 
 Verify reproducibility across two runs:
 
 ```bash
-/opt/anaconda3/bin/python3 regenerate_slide_assets.py \
+python3 regenerate_slide_assets.py \
   --output-dir /private/tmp/bonbon_slides_10_16_rework_run2
 
-/opt/anaconda3/bin/python3 verify_slide_assets.py \
+python3 verify_slide_assets.py \
   --assets-dir /private/tmp/bonbon_slides_10_16_rework_run1 \
   --comparison-dir /private/tmp/bonbon_slides_10_16_rework_run2
 ```
@@ -141,13 +141,13 @@ Verification covers:
 Additional regression checks:
 
 ```bash
-/opt/anaconda3/bin/python3 verify_slide_numbers.py \
+python3 verify_slide_numbers.py \
   --output /private/tmp/slide_numbers_check_after.md
 
-/opt/anaconda3/bin/python3 -m unittest -v \
+python3 -m unittest -v \
   test_slide_number_definitions.py test_sentiment_classifier.py
 
-/opt/anaconda3/bin/ruff check \
+ruff check \
   regenerate_slide_assets.py verify_slide_assets.py \
   slide_number_definitions.py verify_slide_numbers.py \
   test_slide_number_definitions.py test_sentiment_classifier.py

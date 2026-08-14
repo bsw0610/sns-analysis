@@ -86,22 +86,20 @@ The normalization script does not recreate labels from the supplemental file. It
 Run the following commands from the repository root with the specified Python interpreter.
 
 ```bash
-/opt/anaconda3/bin/python3 build_hybrid_corpus.py \
-  --root /Users/bsw0610/Desktop/data \
+python3 build_hybrid_corpus.py \
   --output /private/tmp/bonbon_rebuild/2511-2604_hybrid.csv
 
-/opt/anaconda3/bin/python3 classify_sns_rule_based.py \
+python3 classify_sns_rule_based.py \
   --input /private/tmp/bonbon_rebuild/2511-2604_hybrid.csv \
   --output /private/tmp/bonbon_rebuild/sentiment_classified_hybrid.csv
 
-/opt/anaconda3/bin/python3 normalize_gold_standard_192.py \
+python3 normalize_gold_standard_192.py \
   --input data/output/gold_standard_192.csv \
   --output /private/tmp/bonbon_rebuild/gold_standard_192_normalized.csv \
   --supplement data/output/gold_supplement_11.csv \
   --hybrid /private/tmp/bonbon_rebuild/sentiment_classified_hybrid.csv
 
-/opt/anaconda3/bin/python3 verify_hybrid_rebuild.py \
-  --root /Users/bsw0610/Desktop/data \
+python3 verify_hybrid_rebuild.py \
   --rebuild-dir /private/tmp/bonbon_rebuild
 ```
 

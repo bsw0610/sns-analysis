@@ -154,26 +154,26 @@ use Wald intervals. It documents and aligns the calculation and display rules.
 ## Execution and Automated Verification
 
 ```bash
-/opt/anaconda3/bin/python3 normalize_gold_standard_192.py \
+python3 normalize_gold_standard_192.py \
   --input data/output/gold_standard_192.csv \
   --output data/output/gold_standard_192_normalized.csv
 
-/opt/anaconda3/bin/python3 audit_slide_number_definitions.py \
+python3 audit_slide_number_definitions.py \
   --output-dir /private/tmp/bonbon_slide_numbers/run1 \
   --gold data/output/gold_standard_192_normalized.csv
 
-/opt/anaconda3/bin/python3 verify_slide_numbers.py \
+python3 verify_slide_numbers.py \
   --output /private/tmp/bonbon_slide_numbers/slide_numbers_check_after.md
 
-/opt/anaconda3/bin/python3 make_task3_exchange_accounts.py \
+python3 make_task3_exchange_accounts.py \
   --input data/output/sentiment_classified_hybrid.csv \
   --output-csv /private/tmp/bonbon_slide_numbers/exchange_accounts_after.csv \
   --output-png /private/tmp/bonbon_slide_numbers/p15_after.png
 
-/opt/anaconda3/bin/python3 -m unittest -v \
+python3 -m unittest -v \
   test_slide_number_definitions.py test_sentiment_classifier.py
 
-/opt/anaconda3/bin/ruff check \
+ruff check \
   normalize_gold_standard_192.py make_task1_task2_figures.py \
   slide_number_definitions.py audit_slide_number_definitions.py \
   make_task3_exchange_accounts.py verify_slide_numbers.py \
