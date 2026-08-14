@@ -30,8 +30,8 @@
   "figures": [
     {
       "file": "01_pipeline.png",
-      "sha256": "b441998a8505f04c73c0ab181a898382aa98bd4e34637596f22c9ce6fb9d6e81",
-      "bytes": 124836
+      "sha256": "f86c245db40b3f81c380f45c5b61400675bffdaeecdc961436e16a7da4eea9f0",
+      "bytes": 128886
     },
     {
       "file": "02_filter_audit.png",
@@ -40,8 +40,8 @@
     },
     {
       "file": "03_exchange_concentration.png",
-      "sha256": "effe2a795eae88edc8a1b0fdc47afc550751fa695e66a48b33fd10bc5f2d46db",
-      "bytes": 190354
+      "sha256": "7e0fa335458f48ef73480b8741358b130f0bcbadabb5fa1697dc81c6870477f6",
+      "bytes": 195416
     }
   ]
 }

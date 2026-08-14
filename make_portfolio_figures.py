@@ -42,7 +42,11 @@ ACCENT_SOFT = "#A8CCC1"
 LOCK = "#B4532A"
 GREYS = ("#C6C6C0", "#B0B0A9", "#9B9B94")
 
+# Dataset label value, kept in Japanese because that is what the corpus and the
+# classifier output contain.  Figures may be viewed outside the README, so they
+# carry the English gloss used in the README category table.
 EXCHANGE_CATEGORY = "交換・取引"
+EXCHANGE_CATEGORY_GLOSS = "exchange or trade"
 
 # Published baseline.  Sources: docs/hybrid_rebuild.md, docs/baseline_evaluation.md
 # and the repository README.  The renderer refuses to draw if the data no
@@ -279,12 +283,13 @@ def node(
     )
     ax.text(
         x + width / 2,
-        y + height * 0.26,
+        y + height * 0.27,
         label,
-        fontsize=10,
+        fontsize=9.5,
         color=label_color,
         ha="center",
         va="center",
+        linespacing=1.45,
     )
 
 
@@ -319,7 +324,11 @@ def render_pipeline(metrics: Metrics, path: Path) -> None:
     stages = [
         (f"{metrics['source_rows']:,}", "raw posts", False),
         (f"{metrics['hybrid_rows']:,}", "hybrid corpus", True),
-        (f"{metrics['exchange_posts']:,}", f"{EXCHANGE_CATEGORY} posts", False),
+        (
+            f"{metrics['exchange_posts']:,}",
+            f"{EXCHANGE_CATEGORY} posts\n({EXCHANGE_CATEGORY_GLOSS})",
+            False,
+        ),
         (f"{metrics['exchange_accounts']:,}", "unique user IDs", False),
     ]
     width, height, gap = 18.0, 24.0, 7.0
@@ -500,7 +509,8 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
     title_block(
         head,
         "Exchange activity is spread across many one-off accounts",
-        f"{metrics['exchange_posts']:,} {EXCHANGE_CATEGORY} posts from "
+        f"{metrics['exchange_posts']:,} {EXCHANGE_CATEGORY} "
+        f"({EXCHANGE_CATEGORY_GLOSS}) posts from "
         f"{metrics['exchange_accounts']:,} unique user IDs.",
     )
     footnote(
