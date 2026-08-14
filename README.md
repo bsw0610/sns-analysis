@@ -500,4 +500,4 @@ python3 -m unittest \
 - Reconstruct and separately pin the historical MeCab and Word2Vec environment, and investigate the repeated corpus blocks.
 - Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
 - Add a fully resolved lockfile for the current scripts if exact transitive dependency reproduction is required, and add a manifest for local, non-Git data assets.
-- Reimplement suitable extraction and aggregation steps in SQL while retaining Python for NLP and visualization.
+
