@@ -4,6 +4,10 @@
 > the speaker script for a Japanese presentation. For the English technical
 > specification and verified values, see `docs/slide_plan_10-16.md`.
 
+> **担当範囲について:** 本ファイルはリポジトリ所有者が作成した原稿案であり、
+> ゼミで実際に発表した資料ではありません。実際の発表資料は4人のチームによる
+> 共同成果物で、本リポジトリには含まれていません。
+
 想定時間は約5分。角括弧内は発表時の動作や画面上の注目箇所を示す。
 
 ## 10ページ　感情・行動カテゴリ分析の進め方

@@ -1,5 +1,11 @@
 # Regenerating and Verifying Slide 13–16 PNG Assets
 
+> **Provenance.** The Bonbon Drop presentation itself was produced by the
+> four-person seminar team, and this document does not claim authorship of it.
+> What is recorded here is the later individual follow-up: auditing the metrics
+> quoted on these slides, correcting the calculation definitions, and
+> regenerating the analytical assets from validated data.
+
 ## Purpose
 
 `regenerate_slide_assets.py` regenerates the data visuals required for slides

@@ -17,6 +17,19 @@ The reconstruction is based on a read-only investigation completed on
 operations guide. The investigation did not run Python scripts or notebooks and
 did not modify the existing code, data, or documentation.
 
+**Two phases, and what this document can attribute.** The first phase was
+conducted as a four-person university seminar project: data acquisition,
+initial preprocessing, the initial advertising removal, the notebook-based
+Word2Vec exploration, and the seminar presentation. The second phase primarily records
+the repository owner's subsequent audit, reconstruction, validation, and
+reproducibility work.
+
+Version control begins on 2026-07-30, in the middle of the second phase.
+Everything before that point therefore has no per-file authorship record in this
+repository, and this document does not assign those tasks to any individual. The
+`[UNCERTAIN]` label on the earlier sections reflects missing process evidence,
+not a claim about who performed the work.
+
 ## 2. Evidence and Confidence Labels
 
 | Label | Meaning |
@@ -75,6 +88,15 @@ historical artifacts and must not be mixed with the current baseline.
 | 2026-08-14 | Portfolio documentation and public-release hygiene | English documentation, Japanese README summary, source-notebook exclusion | Confirmed by Git and documentation |
 
 ## 5. Detailed Timeline
+
+### Phase 1 — Four-person Seminar Project
+
+Sections 5.1 to 5.4 cover the collaborative seminar phase. Data acquisition,
+initial preprocessing, the initial advertising removal, the notebook-based
+Word2Vec exploration, and the seminar presentation were carried out by the team
+as a whole. Except where a script is identified as the repository owner's own
+code, the repository holds no record of which member performed a given task, so
+none is attributed below.
 
 ### 5.1 2025-11–2026-04 — Monthly Source Data from UserLocal
 
@@ -358,6 +380,15 @@ The 2026-07-16 outputs used 109,037 records as the analysis baseline. Removing
 
 Trustworthy presentation metrics required an audit of ad-removal and classifier
 bias and a performance evaluation against human-labeled Gold labels. [DOC]
+
+### Phase 2 — Individual Audit, Reconstruction, and Reproducibility Work
+
+Sections 5.5 onward record the repository owner's later individual work:
+investigating the existing pipeline and data lineage, reassessing the previous
+advertising-filter decisions, reconstructing and validating the hybrid corpus,
+normalizing and evaluating Gold 192, analysing classifier errors and exchange
+activity, verifying the presentation metrics, and building the reproducibility
+scripts, regression tests, synthetic sample, CI, and public documentation.
 
 ### 5.5 2026-07-28 — Classifier Audit and Gold 189 Evaluation
 

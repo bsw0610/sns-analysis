@@ -6,6 +6,13 @@ dataset label, a metric definition, or presentation copy.
 
 Start with the [repository README](../README.md) for the results and figures.
 
+The project ran in two phases: a four-person university seminar project, and the
+repository owner's later individual audit, reconstruction, and reproducibility
+work. [Project Timeline](01_PROJECT_TIMELINE.md) marks where each section falls,
+and the README's Team Project Context and My Contributions sections state the
+boundary. Documents about the presentation record collaborative seminar output;
+the metric audits and regenerated assets are individual follow-up work.
+
 ## Read in this order
 
 | # | Document | What it answers |

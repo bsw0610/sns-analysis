@@ -20,6 +20,12 @@ The Gold Standard files have the following roles:
   12 columns, 192 rows, equality with the source, supplemental labels, and a
   192/192 join.
 
+> **Provenance.** The Bonbon Drop presentation itself was produced by the
+> four-person seminar team, and this document does not claim authorship of it.
+> What is recorded here is the later individual follow-up: auditing the metrics
+> quoted on these slides, correcting the calculation definitions, and
+> regenerating the analytical assets from validated data.
+
 ## Reference Inputs
 
 - `data/output/2511-2604_hybrid.csv`

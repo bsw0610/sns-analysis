@@ -4,6 +4,11 @@ This document is written in English for repository readers. Japanese text in
 inline code is final or candidate copy intended to appear in the Japanese
 presentation and is therefore preserved.
 
+> **Provenance.** This document is the repository owner's own draft for
+> revising slides 10–16. It was not the material delivered in the seminar
+> presentation, which was produced by the four-person team and is not included
+> here.
+
 ## 0. Scope and Evidence
 
 This plan covers only slides 10–16 of the Canva presentation, which address the
