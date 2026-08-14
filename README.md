@@ -211,7 +211,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 ├── docs/
 │   ├── 01_PROJECT_TIMELINE.md
 │   ├── hybrid_rebuild.md
-│   ├── baseline_hybrid.md
+│   ├── baseline_evaluation.md
 │   └── slide_assets_regeneration.md
 ├── outputs/                        # local presentation artifacts; ignored by Git
 ├── build_hybrid_corpus.py
@@ -230,7 +230,7 @@ Important documentation:
 - [Project Timeline](docs/01_PROJECT_TIMELINE.md)
 - [Sentiment Analysis Methodology](sns_sentiment_analysis_guide.md)
 - [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md)
-- [Hybrid Gold 192 Evaluation](docs/baseline_hybrid.md)
+- [Classifier Baseline Evaluation](docs/baseline_evaluation.md)
 - [Slide Asset Regeneration](docs/slide_assets_regeneration.md)
 
 ## Reproducibility and How to Run

@@ -388,7 +388,7 @@ and the priorities documented in the guide did not match the code's behavior.
 
 - `data/output/gold_standard_200.csv`
 - `data/output/gold_standard_labeled_189of200.csv`
-- `docs/baseline_v2.md`
+- `docs/baseline_evaluation.md` (formerly `baseline_v2.md`)
 - `data/output/classification_audit_report.md`
 - Non-exchange negotiation-expression sample [DATA][DOC]
 
@@ -780,8 +780,8 @@ document should follow these principles:
 - `README.md`
 - `docs/task0_total_count.md`
 - `data/output/classification_audit_report.md`
-- `docs/baseline_v2.md`
-- `docs/baseline_hybrid.md`
+- `docs/baseline_evaluation.md` (merged from the former
+  `baseline_v2.md` and `baseline_hybrid.md`)
 - `docs/hybrid_rebuild.md`
 - `docs/slide_number_definition_audit.md`
 - `docs/slide_numbers_check.md`

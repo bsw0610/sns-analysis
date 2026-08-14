@@ -44,7 +44,7 @@ GREYS = ("#C6C6C0", "#B0B0A9", "#9B9B94")
 
 EXCHANGE_CATEGORY = "交換・取引"
 
-# Published baseline.  Sources: docs/hybrid_rebuild.md, docs/baseline_hybrid.md
+# Published baseline.  Sources: docs/hybrid_rebuild.md, docs/baseline_evaluation.md
 # and the repository README.  The renderer refuses to draw if the data no
 # longer reproduces these values.
 EXPECTED = {

@@ -4,7 +4,7 @@
 Gold : data/output/gold_standard_192_normalized.csv  (189 original + 3 supplement)
 Pred : data/output/sentiment_classified_hybrid.csv    (SHA f273c9306507804a)
 
-Both criteria from docs/baseline_v2.md are reproduced at n=192:
+Both criteria from the earlier 189-row baseline are reproduced at n=192:
   (1) lenient - the single v2 label counts as a hit if it is in the gold set
   (2) multi   - prediction set = every category scoring >= 1.8
 Task 6 asks for (2); (1) is kept because slide page 13 quotes it.
@@ -30,7 +30,9 @@ csv.field_size_limit(10**9)
 PROJECT_ROOT = Path(__file__).resolve().parent
 GOLD = NORMALIZED_GOLD_STANDARD
 PRED = Path("data/output/sentiment_classified_hybrid.csv")
-OUT = Path("docs/baseline_hybrid.md")
+# Generated scoring report.  The curated document is docs/baseline_evaluation.md,
+# which is maintained in English by hand; writing there would overwrite it.
+OUT = Path("data/output/baseline_gold192_generated.md")
 
 MIN_PRIMARY_SCORE = 1.8
 
@@ -276,7 +278,7 @@ def main(
     mf1, Mf1 = table(lenient, L, "緩和基準")
     lo, hi = normal_ci(hit, n)
     L += [f"**緩和基準の的中率: {hit}/{n} = {hit/n:.3f}**（95%CI {lo:.3f}–{hi:.3f}）", "",
-          "---", "", "## 3. 189件版（`docs/baseline_v2.md`）との差分", "",
+          "---", "", "## 3. 189件版との差分", "",
           "| 指標 | 189件版 | 192件版 | 差 |", "|---|---:|---:|---:|",
           f"| 緩和 micro F1 | 0.576 | {mf1:.3f} | {mf1-0.576:+.3f} |",
           f"| 緩和 macro F1 | 0.451 | {Mf1:.3f} | {Mf1-0.451:+.3f} |",
