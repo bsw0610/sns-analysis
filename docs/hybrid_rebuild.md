@@ -1,22 +1,19 @@
-# 하이브리드 최종 기준선 재현
+# Reproducing the Final Hybrid Baseline
 
-이 문서는 2025년 11월부터 2026년 4월까지의 월별 원본에서 최종
-하이브리드 코퍼스와 v2.0.0 분류 결과를 재현하고, 기존 기준 파일을
-덮어쓰지 않은 채 검증하는 절차를 고정한다.
+This document fixes the procedure for rebuilding the final hybrid corpus and the v2.0.0 classification output from the November 2025 through April 2026 monthly exports. The procedure verifies rebuilt outputs without overwriting the preserved baseline files.
 
-## 입력과 기준 파일
+## Inputs and Baseline Files
 
-재생성 입력:
+Rebuild inputs:
 
-- `202511.csv` ~ `202604.csv`: 월별 원본 6개
-- `filter_ads_202511_202604.py`: 보존된 키워드 및 추가 광고 필터
-- `baselines/hybrid_final_exclusions.csv`: 소스가 남아 있지 않은 final
-  필터 결정 391건의 ID 잠금
-- `classify_sns_rule_based.py`: 변경하지 않은 v2.0.0 분류기
-- `data/output/gold_standard_192.csv`: 수동 라벨을 보존할 정답셋 원본
-- `data/output/gold_supplement_11.csv`: 보충 표본 ID의 출처
+- `202511.csv` through `202604.csv`: six monthly source exports
+- `filter_ads_202511_202604.py`: preserved keyword and additional-advertising filters
+- `baselines/hybrid_final_exclusions.csv`: an ID lock for 391 final-filter decisions whose source implementation is missing
+- `classify_sns_rule_based.py`: unchanged v2.0.0 classifier
+- `data/output/gold_standard_192.csv`: source Gold dataset whose human labels must be preserved
+- `data/output/gold_supplement_11.csv`: provenance for the supplemental sample IDs
 
-읽기 전용 비교 기준:
+Read-only comparison baselines:
 
 - `data/output/2511-2604_hybrid.csv`
   - SHA-256:
@@ -28,80 +25,65 @@
   - SHA-256:
     `fbaa615cf9dc2599df93287857be584223f46f3f20ca901ca09fe5fb7d305815`
 
-빌드 및 정규화 스크립트는 위 기준 파일 경로로 출력하려 하면
-중단한다. 재생성 파일은 `/private/tmp/bonbon_rebuild/`에만 만든 뒤
-비교한다.
+The build and normalization scripts stop if asked to write to any of these baseline paths. Rebuilt files are written only to `/private/tmp/bonbon_rebuild/` and then compared with the baselines.
 
-## 하이브리드 선택 규칙의 복원 근거
+## Evidence for the Reconstructed Hybrid Selection Rules
 
-월별 원본 136,288건은 `投稿ID_文字列` 기준으로 모두 유일하며, old,
-final, hybrid는 모두 이 원본 순서를 유지한다. 실제 ID 집합을 대조하면
-다음 관계가 성립한다.
+All 136,288 rows in the monthly exports have unique `投稿ID_文字列` values. The old, final, and hybrid datasets all preserve the source order. Comparing the actual ID sets establishes the following relationships:
 
-- 보존된 광고 필터 결과(old): 109,037건
-- `final − old`: 5,615건
-- `old − final`: 134건
-- 기존 추가 광고 ID: 5,874건
-- `additional ∩ final`: 3,600건
-- `hybrid = final − additional`: 110,918건이며 순서도 동일
-- `hybrid − old`: 2,015건
+- preserved advertising-filter result (old): 109,037 rows
+- `final − old`: 5,615 rows
+- `old − final`: 134 rows
+- existing additional-advertising IDs: 5,874
+- `additional ∩ final`: 3,600
+- `hybrid = final − additional`: 110,918 rows, with identical order
+- `hybrid − old`: 2,015 rows
 
-보존된 필터의 키워드 판정을 행별로 대조한 결과, hybrid가 old에 복원한
-2,015건은 다음 세 경우로 정확히 분해된다.
+A row-by-row comparison with the preserved keyword filter divides the 2,015 rows restored by hybrid into exactly three cases:
 
-- 다른 키워드 없이 `第弾` 확장 판정만 받은 행: 2,002건
-- `本日…抽選開始…ラインナップ` 확장 판정만 받은 행: 12건
-- NFKC 정규화 후에만 `リポスト`가 되는 반각 문자열 행: 1건
+- rows matched only by the expanded `第弾` keyword rule: 2,002
+- rows matched only by the expanded `本日…抽選開始…ラインナップ` rule: 12
+- a half-width string that becomes `リポスト` only after NFKC normalization: 1
 
-현재 저장소에는 `2511-2604_final.csv`를 만든 필터 버전의 소스가 없다.
-따라서 남아 있지 않은 규칙을 정규식으로 추측하지 않았다. 실제 ID
-차이에서 확인된 아래 391건을
-`baselines/hybrid_final_exclusions.csv`에 고정했다.
+The repository does not contain the filter version that created `2511-2604_final.csv`. The missing rules were therefore not guessed and reimplemented as regular expressions. Instead, the following 391 decisions established from the actual ID differences are locked in `baselines/hybrid_final_exclusions.csv`:
 
-- 완화 대상이지만 final에서도 제외된 ID: 257건
-- old에는 남고 final에서 새로 제외된 ID: 134건
+- relaxation candidates that were still excluded from final: 257 IDs
+- IDs retained by old but newly excluded from final: 134 IDs
 
-최종 재생성의 상호 배타적 선택 계수는 다음과 같다.
+The final rebuild produces these mutually exclusive selection counts:
 
-- 기존 키워드 제외: 19,105건
-- 완화 후보 중 ID 잠금 제외: 257건
-- 기존 추가 광고 분류 제외: 5,874건
-- final 전용 ID 잠금 제외: 134건
-- 유지: 110,918건
+- excluded by existing keywords: 19,105
+- relaxation candidates excluded by the ID lock: 257
+- excluded by the existing additional-advertising classification: 5,874
+- excluded by the final-only ID lock: 134
+- retained: 110,918
 
-앞의 두 제외를 합치면 기존 문서의 “final 키워드 제외” 19,362건과
-일치한다. 빌드 스크립트는 각 계수와 잠금 파일의 사유별 건수를 모두
-검사하며 하나라도 달라지면 출력하지 않는다.
+The first two exclusions total 19,362, matching the “final keyword exclusions” recorded in the existing documentation. The build script checks every selection count and each reason count in the lock file. It refuses to write output if any value differs.
 
-## 정답셋 12열 정규화
+## Normalizing the Gold Dataset to 12 Columns
 
-기준 `gold_standard_192.csv`는 CSV상 20열이지만 의미 있는 열은 앞의
-12열이고 뒤의 이름 없는 8열은 모든 행에서 비어 있다.
-`normalize_gold_standard_192.py`는 다음 조건에서만 앞 12열을 그대로
-복사한다.
+The baseline `gold_standard_192.csv` has 20 CSV columns. The first 12 are meaningful, while all values in the eight unnamed trailing columns are empty.
 
-- 192행
-- 정상 12개 열 이름과 순서 일치
-- 뒤의 8개 열 이름과 값이 모두 빈 값
-- `post_id` 중복 0건
+`normalize_gold_standard_192.py` copies the first 12 columns only when all of the following conditions hold:
 
-보충 3건의 ID는 다음과 같다.
+- 192 rows
+- the expected 12 column names and order
+- empty names and values for all eight trailing columns
+- no duplicate `post_id`
+
+The three supplemental IDs are:
 
 - `ID:2013861610389966862`
 - `ID:2015459135006126271`
 - `ID:2046838197989282094`
 
-`gold_supplement_11.csv`에는 이 3건의 수동 라벨이 비어 있지만, 현재
-기준 `gold_standard_192.csv`에는 세 행 모두 `交換取引=1`로 저장되어
-있다. 저장소 안에서는 이 수동 라벨을 부여한 별도 근거 파일을 찾을 수
-없으므로 출처는 불명이다. 정규화 스크립트는 보충 파일에서 라벨을
-재생성하지 않고, 기준 정답셋의 기존 12개 값을 그대로 보존한다. 기존
-`make_task5_task6_files.py`는 보충 3건을 빈 라벨로 쓰므로 이 정규화
-절차에는 사용하지 않는다.
+The human labels for these IDs are empty in `gold_supplement_11.csv`, but all three rows have `交換取引=1` in the current `gold_standard_192.csv` baseline. No separate evidence identifying when or by whom these labels were assigned was found in the repository.
 
-## 실행 절차
+The normalization script does not recreate labels from the supplemental file. It preserves the 12 values already present in the baseline Gold dataset. The older `make_task5_task6_files.py` writes the three supplemental rows with empty labels and is therefore not used in this normalization procedure.
 
-프로젝트 루트에서 지정된 Python으로 실행한다.
+## Execution
+
+Run the following commands from the repository root with the specified Python interpreter.
 
 ```bash
 /opt/anaconda3/bin/python3 build_hybrid_corpus.py \
@@ -123,12 +105,16 @@ final, hybrid는 모두 이 원본 순서를 유지한다. 실제 ID 집합을 �
   --rebuild-dir /private/tmp/bonbon_rebuild
 ```
 
-검증 스크립트는 코퍼스와 분류 결과의 행 수, 열, 모든 셀, ID 집합,
-ID 순서, 전체 SHA-256을 기준과 대조한다. 또한 정답셋의 192행 × 12열,
-ID 유일성, 192/192 결합, 보충 3건의 `交換取引=1`, 전체 수동 라벨
-보존을 검사한다. 마지막으로 별도 `repeat/` 디렉터리에 전 과정을 다시
-실행해 세 출력의 SHA-256이 첫 실행과 같은지 확인한다.
+The verifier compares row counts, columns, every cell, ID sets, ID order, and full SHA-256 hashes for the rebuilt corpus and classification output. It also checks:
 
-정규화 결과의 고정 SHA-256은 다음과 같다.
+- 192 rows × 12 columns in the normalized Gold dataset
+- unique IDs
+- a 192/192 join with predictions
+- `交換取引=1` for the three supplemental rows
+- preservation of all existing human labels
+
+Finally, it reruns the complete process in a separate `repeat/` directory and verifies that the SHA-256 values of all three outputs match the first run.
+
+The fixed SHA-256 for the normalized output is:
 
 `ed4afaadf102e21973d4b7cbfd1b4cbdd49040230ac5c26f6d0d2750e3982c2c`

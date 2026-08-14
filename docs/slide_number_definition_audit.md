@@ -1,134 +1,142 @@
-# 발표 수치 및 페이지 15 계산 정의 감사
+# Audit of Presentation Metrics and Page 15 Calculation Definitions
 
-감사일: 2026-07-30
+Audit date: 2026-07-30
 
-이 문서는 `verify_slide_numbers.py`가 보고했던 불일치 10개와 페이지 15
-계산 정의를 고정한다. 기준 코퍼스, 분류 결과, 정답셋의 라벨 및 분류
-규칙은 변경하지 않았다. 게시물 본문을 포함하는 표본 파일은 저장소가
-아닌 `/private/tmp/bonbon_slide_numbers/`에만 생성한다.
+This document resolves the 10 discrepancies previously reported by
+`verify_slide_numbers.py` and fixes the calculation definitions used on page 15.
+The reference corpus, classification results, Gold Standard labels, and
+classification rules were not changed. Sample files containing post text are
+created only in `/private/tmp/bonbon_slide_numbers/`, outside the repository.
 
-정답셋의 역할은 다음처럼 구분한다.
+The Gold Standard files have the following roles:
 
-- `data/output/gold_standard_192.csv`: 변경하지 않는 20열 원본 보존 파일
-- `data/output/gold_standard_192_normalized.csv`: 평가·수치 검증·발표
-  산출물의 공식 입력
-- 정규화본은 원본의 첫 12열과 모든 셀을 그대로 보존한 파생 파일이다.
-  기본 평가 경로는 원본으로 자동 대체되지 않는다. 정규화본이 없거나
-  12열 구조·192행·원본 동일성·보충 라벨·192/192 결합 검사를 통과하지
-  못하면 생성 명령을 포함한 오류로 중단한다.
+- `data/output/gold_standard_192.csv`: unchanged 20-column source archive
+- `data/output/gold_standard_192_normalized.csv`: authoritative input for
+  evaluation, metric verification, and presentation assets
+- The normalized file is derived from the source while preserving every cell in
+  its first 12 columns. The default evaluation path does not silently fall back
+  to the source file. Processing stops with an error that includes the generation
+  command if the normalized file is missing or fails any of the following checks:
+  12 columns, 192 rows, equality with the source, supplemental labels, and a
+  192/192 join.
 
-## 기준 입력
+## Reference Inputs
 
 - `data/output/2511-2604_hybrid.csv`
-  - 110,918행
-  - SHA-256
+  - 110,918 rows
+  - SHA-256:
     `3bf78817892b356b0a4b1ea693a3f66d94e78f03196401832fd2b6e397b51c8e`
 - `data/output/sentiment_classified_hybrid.csv`
-  - 110,918행
-  - SHA-256
+  - 110,918 rows
+  - SHA-256:
     `f273c9306507804ae0dc1e2ed28292f9b2bc5f4100f7564c984117a3a8b6371d`
 - `data/output/gold_standard_192_normalized.csv`
-  - 192행 × 12열
-  - SHA-256
+  - 192 rows × 12 columns
+  - SHA-256:
     `ed4afaadf102e21973d4b7cbfd1b4cbdd49040230ac5c26f6d0d2750e3982c2c`
 
-## 불일치 10개 원인 분석표
+## Root-Cause Analysis of the 10 Discrepancies
 
-여기서 “수정 전 실행값”은 이 작업을 시작할 때의
-`verify_slide_numbers.py` 결과다. 차이는 `수정 전 실행값 - 사양서 값`이다.
+“Pre-fix result” refers to the output of `verify_slide_numbers.py` at the
+beginning of this audit. Difference = pre-fix result − specification value.
 
-| # | 항목 | 사양서 값 | 수정 전 실행값 | 차이 | 입력 파일 | 수정 전 판정식 | 분자 / 분모 | 반올림 | 원인 분류와 근거 | 권장 최종값 |
+| # | Metric | Specification | Pre-fix result | Difference | Input | Pre-fix rule | Numerator / denominator | Rounding | Root cause and evidence | Adopted value |
 |---:|---|---:|---:|---:|---|---|---|---|---|---:|
-| 1 | `第弾` 과잉 제거 | 2,002 | 1,042 | -960 | 월별 CSV 6개, `2511-2604_final.csv`, `2511-2604.csv` | NFKC 후 아라비아 숫자만 제거하고 `第弾` 부분문자열 검색 | 2,002 / `final-old` 5,615 | 없음 | **계산 정의 오류.** 기존 광고 필터는 아라비아 숫자와 일본식 숫자를 모두 허용한다. 필터의 실제 `keyword_matches(text)==["第弾"]`를 쓰면 2,002건이다. | 2,002 |
-| 2 | 交換・取引 95% CI | 21.7–34.5% | 21.8–34.5% | 하한 +0.1%p | 정규화 정답셋 | Wald: `p ± 1.96√(p(1-p)/n)` | 54 / 192 | 백분율 `.1f` | **사양서 오기/반올림 불일치.** 하한 원값은 21.765241…%다. | 21.8–34.5% |
-| 3 | 喜び・満足 95% CI | 11.8–22.5% | 11.9–22.5% | 하한 +0.1%p | 정규화 정답셋 | 위와 같음 | 33 / 192 | 백분율 `.1f` | **사양서 오기/반올림 불일치.** 하한 원값은 11.850960…%다. | 11.9–22.5% |
-| 4 | 焦り・競争 95% CI | 9.2–19.0% | 9.1–19.0% | 하한 -0.1%p | 정규화 정답셋 | 위와 같음 | 27 / 192 | 백분율 `.1f` | **사양서 오기/반올림 불일치.** 하한 원값은 9.145184…%다. | 9.1–19.0% |
-| 5 | 情報共有 95% CI | 0.4–4.8% | 0.4–4.9% | 상한 +0.1%p | 정규화 정답셋 | 위와 같음 | 5 / 192 | 백분율 `.1f` | **사양서 오기/반올림 불일치.** 상한 원값은 4.856901…%다. | 0.4–4.9% |
-| 6 | 정형 교환 서식 건수 | 12,181 | 12,298 | +117 | 최종 분류 결과 중 `交換・取引` | 공백 허용, `〈〉/《》` 허용, 대괄호 제외 | 12,298 / 24,316 | 없음 | **계산 정의 불일치 및 사양서 근거 부재.** 사양 문구의 완전 리터럴 구현은 12,099건, 검증기는 12,298건, 페이지 15 생성기는 12,411건이다. 12,181건을 만드는 저장소 내 판정식은 없다. | 12,411 |
-| 7 | 정형 교환 서식 비중 | 50.1% | 50.6% | +0.5%p | 위와 같음 | 위와 같음 | 12,298 / 24,316 | 백분율 소수 1자리 | **건수 정의의 파생 불일치.** 공통 정의의 실제 값은 12,411 / 24,316 = 51.040467…%다. | 51.0% |
-| 8 | 리플라이 건수 | 79 | 80 | +1 | 교섭 표현 CSV 2개 | 답글 메타데이터 또는 본문 선두 `@` | 80 / ID 중복 제거 98 | 없음 | **문자열 판정식 오류.** 추가 1건은 답글 메타데이터가 없는 단순 멘션이었다. 플랫폼 답글은 `リプライ先の投稿ID`가 비어 있지 않은 경우로 한정한다. | 79 |
-| 9 | “ご検討” 건수 | 42 | 41 | -1 | 교섭 표현 CSV 2개 | `ご検討` | 41 / ID 중복 제거 98 | 없음 | **표기 변형 누락.** `御検討` 1건이 확인됐다. 동일한 존경 표현의 두 표기를 `(?:ご|御)検討`로 센다. | 42 |
-| 10 | 교환 비율 `n:m` 건수 | 18 | 17 | -1 | 교섭 표현 CSV 2개 | `\d\s*[:：]\s*\d` | 17 / ID 중복 제거 98 | 없음 | **사양서 집계 오류.** 원본은 100행, 중복 ID 2개이며 두 중복 게시물 모두 비율을 포함한다. 원본 출현은 19회이고 완전 중복 제거 후에는 17건이므로 18은 일관된 중복 처리로 만들 수 없다. | 17 |
+| 1 | Over-removal by `第弾` | 2,002 | 1,042 | -960 | Six monthly CSVs, `2511-2604_final.csv`, `2511-2604.csv` | After NFKC, remove only Arabic numerals and search for the `第弾` substring | 2,002 / `final-old` 5,615 | None | **Calculation-definition error.** The actual ad filter accepts both Arabic and Japanese numerals. Using the filter's actual `keyword_matches(text)==["第弾"]` condition returns 2,002. | 2,002 |
+| 2 | 交換・取引 95% CI | 21.7–34.5% | 21.8–34.5% | lower bound +0.1%p | Normalized Gold Standard | Wald: `p ± 1.96√(p(1-p)/n)` | 54 / 192 | Percentage `.1f` | **Specification typo/rounding mismatch.** The unrounded lower bound is 21.765241…%. | 21.8–34.5% |
+| 3 | 喜び・満足 95% CI | 11.8–22.5% | 11.9–22.5% | lower bound +0.1%p | Normalized Gold Standard | Same as above | 33 / 192 | Percentage `.1f` | **Specification typo/rounding mismatch.** The unrounded lower bound is 11.850960…%. | 11.9–22.5% |
+| 4 | 焦り・競争 95% CI | 9.2–19.0% | 9.1–19.0% | lower bound -0.1%p | Normalized Gold Standard | Same as above | 27 / 192 | Percentage `.1f` | **Specification typo/rounding mismatch.** The unrounded lower bound is 9.145184…%. | 9.1–19.0% |
+| 5 | 情報共有 95% CI | 0.4–4.8% | 0.4–4.9% | upper bound +0.1%p | Normalized Gold Standard | Same as above | 5 / 192 | Percentage `.1f` | **Specification typo/rounding mismatch.** The unrounded upper bound is 4.856901…%. | 0.4–4.9% |
+| 6 | Structured exchange-format count | 12,181 | 12,298 | +117 | `交換・取引` rows in the final classification output | Allow whitespace and `〈〉/《》`; exclude square brackets | 12,298 / 24,316 | None | **Definition mismatch with no supporting rule in the specification.** A literal implementation of the specification returns 12,099; the verifier returns 12,298; and the page 15 generator returns 12,411. No rule in the repository produces 12,181. | 12,411 |
+| 7 | Structured exchange-format share | 50.1% | 50.6% | +0.5%p | Same as above | Same as above | 12,298 / 24,316 | One decimal place | **Derived mismatch from the count definition.** The shared definition returns 12,411 / 24,316 = 51.040467…%. | 51.0% |
+| 8 | Reply count | 79 | 80 | +1 | Two negotiation-expression CSVs | Reply metadata or leading `@` | 80 / 98 deduplicated IDs | None | **String-rule error.** The additional row was a plain mention with no reply metadata. A platform reply is limited to rows where `リプライ先の投稿ID` is not empty. | 79 |
+| 9 | “ご検討” count | 42 | 41 | -1 | Two negotiation-expression CSVs | `ご検討` | 41 / 98 deduplicated IDs | None | **Missing orthographic variant.** One `御検討` instance was confirmed. Count both honorific forms with `(?:ご\|御)検討`. | 42 |
+| 10 | Exchange ratio `n:m` count | 18 | 17 | -1 | Two negotiation-expression CSVs | `\d\s*[:：]\s*\d` | 17 / 98 deduplicated IDs | None | **Specification aggregation error.** The source has 100 rows and two duplicate IDs; both duplicate posts contain a ratio. There are 19 raw occurrences and 17 after exact deduplication, so no consistent deduplication method produces 18. | 17 |
 
-## 페이지 15 정의 비교와 채택값
+## Page 15 Definition Comparison and Adopted Values
 
-### 상위 계정 비중
+### Share of Top Accounts
 
-계정 키는 기간 중 변경되지 않는 `ユーザーID`이고, 분모는
-`交換・取引` 24,316건이다.
+The account key is `ユーザーID`, which does not change during the period. The
+denominator is 24,316 `交換・取引` posts.
 
-| 구현 | 상위 1% 계정 수 | 게시물 분자 | 비중 원값 | 소수 1자리 |
+| Implementation | Top 1% account count | Post numerator | Unrounded share | One decimal place |
 |---|---:|---:|---:|---:|
 | `floor(10,677×0.01)` | 106 | 3,619 | 14.883204…% | **14.9%** |
 | `round(10,677×0.01)` | 107 | 3,638 | 14.961342…% | 15.0% |
 
-“상위 1%를 넘지 않는 완전한 계정 수”로 정의해 `floor`를 채택한다.
-상위 10%도 같은 정의를 사용해 1,067계정, 11,082/24,316 = 45.6%다.
+`floor` was adopted to represent the largest whole number of accounts that does
+not exceed 1%. The same definition gives 1,067 accounts and
+11,082/24,316 = 45.6% for the top 10%.
 
-### 정형 교환 서식
+### Structured Exchange Format
 
-| 구현 | 공백 | `〈〉/《》` | `[]/［］` | 건수 | 비중 |
+| Implementation | Whitespace | `〈〉/《》` | `[]/［］` | Count | Share |
 |---|---|---|---|---:|---:|
-| 사양 문구의 완전 리터럴 구현 | 불허 | 허용 | 제외 | 12,099 | 49.8% |
-| 수정 전 `verify_slide_numbers.py` | `\s*` | 허용 | 제외 | 12,298 | 50.6% |
-| 수정 전 `make_task3_exchange_accounts.py` 및 최종 채택 | `\s*` | 허용 | `譲/求`에 허용 | **12,411** | **51.0%** |
+| Literal implementation of the specification wording | Not allowed | Allowed | Excluded | 12,099 | 49.8% |
+| Pre-fix `verify_slide_numbers.py` | `\s*` | Allowed | Excluded | 12,298 | 50.6% |
+| Pre-fix `make_task3_exchange_accounts.py` and final adopted rule | `\s*` | Allowed | Allowed for `譲/求` | **12,411** | **51.0%** |
 
-최종 정규식은 `slide_number_definitions.py` 한 곳에만 둔다.
+The final regular expression is defined only once, in
+`slide_number_definitions.py`.
 
 ```regex
 【\s*(?:交換|譲|求)\s*】|[〈《\[［]\s*(?:譲|求)\s*[〉》\]］]|(?:譲|求)\s*[)）：:]
 ```
 
-포함 기준은 다음과 같다.
+The inclusion criteria are:
 
-| 표현 | 포함 기준 |
+| Expression | Inclusion criterion |
 |---|---|
-| `求`, `譲` | 허용 괄호 안에 있거나 닫는 괄호·콜론이 뒤따를 때만 정형 서식으로 포함 |
-| `交換` | `【交換】` 계열에서만 정형 서식으로 포함 |
-| `郵送`, `手渡し` | 거래 방식 설명일 뿐이며 단독으로 정형 서식이나 교섭 표현 건수를 증가시키지 않음 |
-| 구분자와 줄바꿈 | `【】`, `〈〉`, `《》`, `[]`, `［］`, `)`, `）`, `:`, `：`를 허용. 내부의 공백·전각 공백·탭·줄바꿈은 `\s*`로 허용 |
-| 리플라이 | `リプライ先の投稿ID`가 비어 있지 않을 때만 포함. 선두 `@`만으로는 포함하지 않음 |
-| “ご検討” | `(?:ご\|御)検討`의 두 표기를 포함 |
-| 교환 비율 | ID 중복 제거 후 `\d\s*[:：]\s*\d`를 포함하는 게시물 |
-| 교섭 표현 표본 | 기존 두 50건 파일의 ID 합집합 98건을 고정. 현재 재현 가능한 추출기는 `求めて…`, 교환 희망·가능·의뢰, 거래 가능·희망, `郵送…希望`, 검토 의뢰 등의 좁은 표현을 사용하며 단독 `求/譲/交換/手渡し`는 사용하지 않음 |
+| `求`, `譲` | Count as a structured format only when enclosed in an allowed bracket pair or followed by a closing bracket or colon. |
+| `交換` | Count as a structured format only in the `【交換】` pattern family. |
+| `郵送`, `手渡し` | Describe transaction methods and do not independently increase the structured-format or negotiation-expression counts. |
+| Separators and line breaks | Allow `【】`, `〈〉`, `《》`, `[]`, `［］`, `)`, `）`, `:`, and `：`. Allow internal spaces, full-width spaces, tabs, and line breaks through `\s*`. |
+| Reply | Include only when `リプライ先の投稿ID` is not empty. A leading `@` alone is insufficient. |
+| “ご検討” | Include both variants defined by `(?:ご\|御)検討`. |
+| Exchange ratio | After ID deduplication, include posts matching `\d\s*[:：]\s*\d`. |
+| Negotiation-expression sample | Fix the union of IDs from the two existing 50-row files at 98 records. The currently reproducible extractor uses narrow expressions such as `求めて…`, requests or offers for exchange, transaction availability or intent, `郵送…希望`, and requests for consideration. It does not use standalone `求/譲/交換/手渡し`. |
 
-## ID 차집합과 표본 검토
+## ID Differences and Sample Review
 
-`audit_slide_number_definitions.py`가 다음 임시 증거 파일을 만든다.
+`audit_slide_number_definitions.py` creates the following temporary evidence
+files:
 
-- `template_definition_id_differences.csv`: 판정식 차이 312개 ID
-  - 공백 변형 199개
-  - 대괄호 변형 113개
-- `template_definition_review_sample_40.csv`: 고정 시드 `20260730`
-  - 공백 변형 20건
-  - 대괄호 변형 20건
+- `template_definition_id_differences.csv`: 312 IDs on which the rules differ
+  - 199 whitespace variants
+  - 113 square-bracket variants
+- `template_definition_review_sample_40.csv`: fixed seed `20260730`
+  - 20 whitespace variants
+  - 20 square-bracket variants
 
-40건의 본문과 매치 조각을 직접 검토한 결과, 40/40가 `譲/求` 필드를
-사용한 정형 교환 게시물이었고 오탐은 0건이었다. 이 표본에는 `郵送`
-18건, `手渡し` 19건이 있었지만, 모두 괄호·구분자 판정으로 이미
-포함됐으며 배송 단어 때문에 포함된 것은 아니다.
+Manual review of the text and matching fragments found that 40/40 were structured
+exchange posts using `譲/求` fields, with 0 false positives. The sample contained
+18 `郵送` posts and 19 `手渡し` posts, but every post was already included by the
+bracket or separator rule; none was included because of a delivery-method word.
 
-정성 지표의 경계 사례도 확인했다.
+Boundary cases for the qualitative metrics were also reviewed:
 
-- 선두 `@`만 있고 답글 메타데이터가 없는 1건:
-  `ID:2010721471329706079` — 단순 정보 교환 상대 모집이므로 리플라이에서 제외
-- `御検討` 표기 1건:
-  `ID:2029913067061137884` — “ご検討” 지표에 포함
-- 두 표본 파일의 중복 ID:
-  `ID:2036404178151678416`, `ID:2047577298866704791`
-  — 둘 다 `n:m`을 포함하므로 원본 출현 19회, 고유 ID 17건
+- One post with a leading `@` but no reply metadata:
+  `ID:2010721471329706079` — excluded from replies because it recruits a partner
+  for a simple information exchange
+- One `御検討` variant:
+  `ID:2029913067061137884` — included in the “ご検討” metric
+- Duplicate IDs in the two sample files:
+  `ID:2036404178151678416` and `ID:2047577298866704791` — both contain `n:m`,
+  giving 19 raw occurrences and 17 unique IDs
 
-## 신뢰구간 정의
+## Confidence-Interval Definition
 
-- 방식: Wald 정규 근사
-- 신뢰수준: 95%
-- 파라미터: `z=1.96`
-- 표본 수: 정규화 정답셋 192건
-- 다중 라벨: 각 카테고리를 별도의 이진 변수로 계산하며 한 게시물이 여러
-  분자에 들어갈 수 있음
-- 반올림: 구간 계산 후 백분율로 변환하고 Python `.1f`로 소수 1자리 표시
+- Method: Wald normal approximation
+- Confidence level: 95%
+- Parameter: `z=1.96`
+- Sample size: 192 records in the normalized Gold Standard
+- Multi-label treatment: calculate each category as a separate binary variable;
+  one post may contribute to multiple numerators
+- Rounding: calculate the interval, convert to a percentage, and display one
+  decimal place with Python `.1f`
 
-| 카테고리 | 분자 / 분모 | 확정 95% CI |
+| Category | Numerator / denominator | Final 95% CI |
 |---|---:|---:|
 | 交換・取引 | 54 / 192 | 21.8–34.5% |
 | 中立 | 48 / 192 | 18.9–31.1% |
@@ -138,11 +146,12 @@
 | 不満・怒り | 14 / 192 | 3.6–11.0% |
 | 情報共有 | 5 / 192 | 0.4–4.9% |
 
-Wald 방식은 특히 5/192처럼 희소한 비율에서 한계가 있다. 그러나 기존
-평가 코드와 페이지 13 계산이 모두 같은 방식을 사용하므로 이번 작업에서는
-방법을 Wilson이나 bootstrap으로 바꾸지 않고 계산·표시 정의만 명시했다.
+The Wald method has limitations, especially for sparse proportions such as
+5/192. This audit does not replace it with Wilson intervals or bootstrap
+intervals because the existing evaluation code and the page 13 calculation both
+use Wald intervals. It documents and aligns the calculation and display rules.
 
-## 실행 및 자동 검증
+## Execution and Automated Verification
 
 ```bash
 /opt/anaconda3/bin/python3 normalize_gold_standard_192.py \
@@ -171,52 +180,57 @@ Wald 방식은 특히 5/192처럼 희소한 비율에서 한계가 있다. 그�
   evaluate_v2_hybrid_192.py test_slide_number_definitions.py
 ```
 
-검증 결과:
+Verification results:
 
-- 정의 감사 assertion: 모두 통과
-- 공식 정답셋: 192행 × 12열, ID 중복 0건
-- 원본 첫 12열과 모든 셀 동일, 보충 3건 `交換取引=1` 보존
-- 분류 결과와 정답셋 결합: 192/192
-- 사양서 수치 검증: 96 일치 / 0 불일치 / 0 검증 불가
-- 정규화본 누락 시 원본으로 대체하지 않고 생성 명령을 포함해 중단
-- 기본 수치 검증 재실행 전후 `docs/slide_numbers_check.md` SHA-256 동일:
+- Definition-audit assertions: all passed
+- Authoritative Gold Standard: 192 rows × 12 columns, 0 duplicate IDs
+- Every source cell in the first 12 columns matched; three supplemental
+  `交換取引=1` labels were preserved
+- Classification-to-Gold join: 192/192
+- Specification metric verification: 96 matched / 0 mismatched / 0 unverifiable
+- When the normalized file is missing, processing stops with the generation
+  command instead of falling back to the source
+- SHA-256 of the pre-translation `docs/slide_numbers_check.md` artifact was
+  unchanged before and after the default metric-verification rerun:
   `e4f500d1ef133067b3ab17849208bf09f382698e43503d4f250386d47754c2bf`
-- 페이지 15 생성기 자체 검증: 12개 지표 모두 일치
-- 단위 및 기존 분류기 회귀 테스트: 7개 통과
-- Ruff: 오류 0건
-- 임시 `exchange_accounts_after.csv`의 SHA-256:
+- Page 15 generator self-check: all 12 metrics matched
+- Unit and classifier regression tests: 7 passed
+- Ruff: 0 errors
+- SHA-256 of temporary `exchange_accounts_after.csv`:
   `f3f49ccf04b8ad3213310b654954f5fea451dfddd9ac7518a2b47808807075c6`
-- 기존 `data/output/exchange_accounts.csv`와 임시 CSV의 SHA-256 일치
-- 서로 다른 임시 디렉터리에 재실행한 감사 산출물의 SHA-256 일치
+- SHA-256 matched the existing `data/output/exchange_accounts.csv`
+- Audit artifacts generated in two different temporary directories had
+  identical SHA-256 values:
   - JSON:
     `9b979ee26097a9611be10f46b7fcec6a4ea422e4b421f5d76fabc98f30c1ccca`
-  - 312개 ID 차집합:
+  - 312-ID difference set:
     `5850f4f6439ce8fc788a850763cc2da998dd087fd1ffae9db0cc332f21e0f199`
-  - 40건 검토 표본:
+  - 40-record review sample:
     `24c0af75f71f4e1b5bb6d5aeddb844bf8a94a657fe24bab414fae3bb7d1b7f61`
 
-## 발표 문서 교체 목록
+## Presentation-Document Replacements
 
-`docs/slide_plan_10-16.md`에서 다음을 교체했다.
+The following values were replaced in `docs/slide_plan_10-16.md`:
 
 - 交換・取引 CI: 21.7–34.5% → **21.8–34.5%**
 - 喜び・満足 CI: 11.8–22.5% → **11.9–22.5%**
 - 焦り・競争 CI: 9.2–19.0% → **9.1–19.0%**
 - 情報共有 CI: 0.4–4.8% → **0.4–4.9%**
-- 정형 서식: 12,181건 / 50.1% → **12,411건 / 51.0%**
-- 교환 비율 `n:m`: 18건 → **17건**
+- Structured format: 12,181 / 50.1% → **12,411 / 51.0%**
+- Exchange ratio `n:m`: 18 → **17**
 
-사양서의 `第弾` 2,002건, 리플라이 79건, “ご検討” 42건은 값이
-맞으므로 숫자는 유지하고 검증 코드의 판정식만 바로잡았다. 상위 1%
-14.9%도 유지하고 생성기의 계정 수 절단 방식을 `floor`로 통일했다.
+The specification values for 2,002 `第弾` removals, 79 replies, and 42
+“ご検討” posts were already correct, so only the verification rules were fixed.
+The top 1% value of 14.9% was also retained, and the generator's account-count
+rounding was standardized on `floor`.
 
-## 남은 한계
+## Remaining Limitations
 
-- 12,181건의 원래 산출 코드나 ID 집합은 저장소에 없어 출처를 복원할 수
-  없다. 따라서 이 값을 맞추기 위한 새 정규식을 추측하지 않았다.
-- 정형 서식의 최종 12,411건은 운영 정의이며, 전체 12,411건에 대한
-  전수 수동 라벨은 아니다. 판정식 차이 312건 중 고정 표본 40건만
-  사람이 확인했다.
-- 첫 번째 교섭 표현 50건 파일을 만든 소스 코드는 저장소에서 확인되지
-  않는다. 이 작업은 두 기존 파일의 98개 고유 ID를 질적 표본으로
-  고정했으며 표본 자체를 재생성하지 않았다.
+- The repository contains neither the code nor the ID set that originally
+  produced 12,181. No new regular expression was guessed merely to reproduce it.
+- The final structured-format count of 12,411 is an operational definition, not
+  a manually labeled census of all 12,411 records. Only a fixed sample of 40 from
+  the 312 rule differences was manually reviewed.
+- The source code that created the first 50-row negotiation-expression file
+  could not be found in the repository. This audit fixes the 98 unique IDs in the
+  two existing files as a qualitative sample; it does not regenerate the sample.

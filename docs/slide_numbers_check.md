@@ -1,108 +1,112 @@
-# 仕様書 第2章 数値照合結果（タスク4）
+# Specification Chapter 2 Metric Verification Results (Task 4)
 
-**照合日**: 2026-07-30
-**照合対象仕様書**: `docs/slide_plan_10-16.md`（SHA-256 `ddc11216e18865e7`）
-**コーパス**: `data/output/2511-2604_hybrid.csv` / `data/output/sentiment_classified_hybrid.csv`
-**正解セット**: `gold_standard_192_normalized.csv`
+**Verification date**: 2026-07-30
 
-## 集計: 一致 96 / 不一致 0 / 検証不可 0（全 96 項目）
+**Verified specification**: `docs/slide_plan_10-16.md` (SHA-256 prefix
+`ddc11216e18865e7`, recorded for the pre-translation file audited on
+2026-07-30)
 
-| 節 | 項目 | 仕様書 | 実測 | 判定 | 照合元 |
+**Corpus**: `data/output/2511-2604_hybrid.csv` / `data/output/sentiment_classified_hybrid.csv`
+
+**Gold Standard**: `gold_standard_192_normalized.csv`
+
+## Summary: 96 Matched / 0 Mismatched / 0 Unverifiable (96 Total)
+
+| Section | Metric | Specification | Measured | Result | Evidence |
 |---|---|---:|---:|---|---|
-| 2-0 | SHA-256 コーパス | 3bf78817892b356b | 3bf78817892b356b | 一致 | 実ファイル |
-| 2-0 | SHA-256 分類結果 | f273c9306507804a | f273c9306507804a | 一致 | 実ファイル |
-| 2-0 | 月別原票（投稿ID一意） | 136288 | 136288 | 一致 | 月別CSV6件 |
-| 2-0 | ① 最終版キーワード除去 | 19362 | 19362 | 一致 | 集合演算 |
-| 2-0 | ② 旧版の追加広告分類 | 5874 | 5874 | 一致 | removed_additional_ads_with_reasons_202511_202604.csv |
-| 2-0 | ③ 最終版が新たに除去 | 134 | 134 | 一致 | old − final |
-| 2-0 | ①後の残数 | 116926 | 116926 | 一致 | 計算 |
-| 2-0 | ②後の残数 | 111052 | 111052 | 一致 | 計算 |
-| 2-0 | 分析対象 | 110918 | 110918 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去合計 | 25370 | 25370 | 一致 | 計算 |
-| 2-0 | 除去率(%) | 18.61 | 18.61 | 一致 | 計算 |
-| 2-0 | 3集合が相互排他 | 重複0 | 重複0 | 一致 | 集合演算 |
-| 2-0 | ①②③の合計＝除去合計 | 25370 | 25370 | 一致 | 計算 |
-| 2-0 | 復帰分（旧版除去→最終版で復活） | 5615 | 5615 | 一致 | final − old |
-| 2-0 | `第弾` の過剰除去 | 2002 | 2002 | 一致 | final − old のうち旧フィルタ一致が `第弾` のみ |
-| 2-0 | 最終版が取りこぼした広告 | 3600 | 3600 | 一致 | addl ∩ final |
-| 2-0 | 除去前 情報共有 | 12392 | 12392 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 情報共有 | 4106 | 4106 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 情報共有(%) | 66.87 | 66.87 | 一致 | 計算 |
-| 2-0 | 除去前 中立 | 58294 | 58294 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 中立 | 45418 | 45418 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 中立(%) | 22.09 | 22.09 | 一致 | 計算 |
-| 2-0 | 除去前 焦り・競争 | 4148 | 4148 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 焦り・競争 | 3272 | 3272 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 焦り・競争(%) | 21.12 | 21.12 | 一致 | 計算 |
-| 2-0 | 除去前 喜び・満足 | 15131 | 15131 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 喜び・満足 | 13002 | 13002 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 喜び・満足(%) | 14.07 | 14.07 | 一致 | 計算 |
-| 2-0 | 除去前 欲望・執着 | 10185 | 10185 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 欲望・執着 | 9513 | 9513 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 欲望・執着(%) | 6.6 | 6.6 | 一致 | 計算 |
-| 2-0 | 除去前 不満・怒り | 11586 | 11586 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 不満・怒り | 11291 | 11291 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 不満・怒り(%) | 2.55 | 2.55 | 一致 | 計算 |
-| 2-0 | 除去前 交換・取引 | 24552 | 24552 | 一致 | 136,288件をv2で分類 |
-| 2-0 | ハイブリッド 交換・取引 | 24316 | 24316 | 一致 | sentiment_classified_hybrid.csv |
-| 2-0 | 除去率 交換・取引(%) | 0.96 | 0.96 | 一致 | 計算 |
-| 2-0 | スライド3 収集(万件) | 13.6 | 13.6 | 一致 | 計算 |
-| 2-0 | スライド3 広告(万件) | 2.5 | 2.5 | 一致 | 計算 |
-| 2-0 | スライド3 分析対象(万件) | 11.1 | 11.1 | 一致 | 計算 |
-| 2-1 | 焦り・競争 検討数 | 30 | 30 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 焦り・競争 緑 | 24 | 24 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 焦り・競争 黄 | 4 | 4 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 焦り・競争 赤 | 2 | 2 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 焦り・競争 一致率(%) | 80 | 80 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 喜び・満足 検討数 | 30 | 30 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 喜び・満足 緑 | 14 | 14 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 喜び・満足 黄 | 15 | 15 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 喜び・満足 赤 | 1 | 1 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 喜び・満足 一致率(%) | 47 | 47 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 情報共有 検討数 | 23 | 23 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 情報共有 緑 | 10 | 10 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 情報共有 黄 | 1 | 1 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 情報共有 赤 | 12 | 12 | 一致 | category_random_sample_30_each.xlsx |
-| 2-1 | 情報共有 一致率(%) | 43 | 43 | 一致 | category_random_sample_30_each.xlsx |
-| 2-3 | 正解セット件数 | 192 | 192 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 交換・取引 割合(%) | 28.1 | 28.1 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 交換・取引 95%CI | 21.8 – 34.5% | 21.8 – 34.5% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 中立 割合(%) | 25.0 | 25.0 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 中立 95%CI | 18.9 – 31.1% | 18.9 – 31.1% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 欲望・執着 割合(%) | 18.8 | 18.8 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 欲望・執着 95%CI | 13.2 – 24.3% | 13.2 – 24.3% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 喜び・満足 割合(%) | 17.2 | 17.2 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 喜び・満足 95%CI | 11.9 – 22.5% | 11.9 – 22.5% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 焦り・競争 割合(%) | 14.1 | 14.1 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 焦り・競争 95%CI | 9.1 – 19.0% | 9.1 – 19.0% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 不満・怒り 割合(%) | 7.3 | 7.3 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 不満・怒り 95%CI | 3.6 – 11.0% | 3.6 – 11.0% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | 情報共有 割合(%) | 2.6 | 2.6 | 一致 | gold_standard_192_normalized.csv |
-| 2-3 | 情報共有 95%CI | 0.4 – 4.9% | 0.4 – 4.9% | 一致 | Wald正規近似（95%, z=1.96, n=192, カテゴリ別二値） |
-| 2-3 | ハイブリッド追加分 | 2015 | 2015 | 一致 | hybrid − old |
-| 2-4 | 交換・取引 投稿数 | 24316 | 24316 | 一致 | sentiment_classified_hybrid.csv |
-| 2-4 | 一意 ユーザーID | 10677 | 10677 | 一致 | sentiment_classified_hybrid.csv |
-| 2-4 | 一意 アカウントID | 10715 | 10715 | 一致 | sentiment_classified_hybrid.csv |
-| 2-4 | 一意 (アカウントID,名前) | 10894 | 10894 | 一致 | sentiment_classified_hybrid.csv |
-| 2-4 | 一意 名前 | 8907 | 8907 | 一致 | sentiment_classified_hybrid.csv |
-| 2-4 | 平均投稿数 | 2.28 | 2.28 | 一致 | 計算 |
-| 2-4 | 中央値 | 1 | 1 | 一致 | 計算 |
-| 2-4 | 1件のみのアカウント | 7198 | 7198 | 一致 | 計算 |
-| 2-4 | 1件のみの割合(%) | 67.4 | 67.4 | 一致 | 計算 |
-| 2-4 | 上位30の合計 | 1796 | 1796 | 一致 | 計算 |
-| 2-4 | 上位30シェア(%) | 7.4 | 7.4 | 一致 | 計算 |
-| 2-4 | 上位1%のアカウント数 | 106 | 106 | 一致 | floor(10,677 × 0.01) |
-| 2-4 | 上位1%シェア(%) | 14.9 | 14.9 | 一致 | 3,619 / 24,316 |
-| 2-4 | 上位10%シェア(%) | 45.6 | 45.6 | 一致 | 11,082 / 24,316 |
-| 2-4 | 定型書式 件数 | 12411 | 12411 | 一致 | 共通の定型書式定義 |
-| 2-4 | 定型書式 割合(%) | 51.0 | 51.0 | 一致 | 12,411 / 24,316 |
-| 2-5 | 実質件数 | 98 | 98 | 一致 | negotiation_expressions_not_exchange_random50.csv+random_sample_50_negotiation_not_exchange_202511_202604.csv |
-| 2-5 | リプライ件数 | 79 | 79 | 一致 | リプライ先の投稿IDが非空 |
-| 2-5 | 中立と分類されていた件数 | 90 | 90 | 一致 | sentiment_classified_hybrid.csv |
-| 2-5 | 「検索より/から失礼いたします」 | 48 | 48 | 一致 | 検索(?:より|から) |
-| 2-5 | 「ご検討」 | 42 | 42 | 一致 | (?:ご\|御)検討 |
-| 2-5 | 「初めまして」 | 31 | 31 | 一致 | 初めまして\|はじめまして |
-| 2-5 | 🙇 | 31 | 31 | 一致 | 本文に 🙇 |
-| 2-5 | 交換比率(n:m) | 17 | 17 | 一致 | \d\s*[:：]\s*\d |
-| 2-5 | 「比率違い」 | 3 | 3 | 一致 | 本文に 比率違い |
-
+| 2-0 | Corpus SHA-256 | 3bf78817892b356b | 3bf78817892b356b | Match | File |
+| 2-0 | Classification-output SHA-256 | f273c9306507804a | f273c9306507804a | Match | File |
+| 2-0 | Monthly source records (unique post IDs) | 136288 | 136288 | Match | Six monthly CSVs |
+| 2-0 | ① Final keyword removals | 19362 | 19362 | Match | Set operation |
+| 2-0 | ② Additional ad classification by the old version | 5874 | 5874 | Match | removed_additional_ads_with_reasons_202511_202604.csv |
+| 2-0 | ③ New removals by the final version | 134 | 134 | Match | old − final |
+| 2-0 | Remaining after ① | 116926 | 116926 | Match | Calculation |
+| 2-0 | Remaining after ② | 111052 | 111052 | Match | Calculation |
+| 2-0 | Analysis corpus | 110918 | 110918 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | Total removed | 25370 | 25370 | Match | Calculation |
+| 2-0 | Removal rate (%) | 18.61 | 18.61 | Match | Calculation |
+| 2-0 | Three sets are mutually exclusive | 0 overlap | 0 overlap | Match | Set operation |
+| 2-0 | ①+②+③ = total removed | 25370 | 25370 | Match | Calculation |
+| 2-0 | Restored (old-version removal → retained by final version) | 5615 | 5615 | Match | final − old |
+| 2-0 | Over-removal by `第弾` | 2002 | 2002 | Match | Rows in final − old for which the only old-filter match is `第弾` |
+| 2-0 | Ads missed by the final version | 3600 | 3600 | Match | addl ∩ final |
+| 2-0 | Pre-removal 情報共有 | 12392 | 12392 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 情報共有 | 4106 | 4106 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 情報共有 removal rate (%) | 66.87 | 66.87 | Match | Calculation |
+| 2-0 | Pre-removal 中立 | 58294 | 58294 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 中立 | 45418 | 45418 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 中立 removal rate (%) | 22.09 | 22.09 | Match | Calculation |
+| 2-0 | Pre-removal 焦り・競争 | 4148 | 4148 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 焦り・競争 | 3272 | 3272 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 焦り・競争 removal rate (%) | 21.12 | 21.12 | Match | Calculation |
+| 2-0 | Pre-removal 喜び・満足 | 15131 | 15131 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 喜び・満足 | 13002 | 13002 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 喜び・満足 removal rate (%) | 14.07 | 14.07 | Match | Calculation |
+| 2-0 | Pre-removal 欲望・執着 | 10185 | 10185 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 欲望・執着 | 9513 | 9513 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 欲望・執着 removal rate (%) | 6.6 | 6.6 | Match | Calculation |
+| 2-0 | Pre-removal 不満・怒り | 11586 | 11586 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 不満・怒り | 11291 | 11291 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 不満・怒り removal rate (%) | 2.55 | 2.55 | Match | Calculation |
+| 2-0 | Pre-removal 交換・取引 | 24552 | 24552 | Match | v2 classification of 136,288 records |
+| 2-0 | Hybrid 交換・取引 | 24316 | 24316 | Match | sentiment_classified_hybrid.csv |
+| 2-0 | 交換・取引 removal rate (%) | 0.96 | 0.96 | Match | Calculation |
+| 2-0 | Slide 3 collected (10,000 posts) | 13.6 | 13.6 | Match | Calculation |
+| 2-0 | Slide 3 ads (10,000 posts) | 2.5 | 2.5 | Match | Calculation |
+| 2-0 | Slide 3 analysis corpus (10,000 posts) | 11.1 | 11.1 | Match | Calculation |
+| 2-1 | 焦り・競争 reviewed | 30 | 30 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 焦り・競争 green | 24 | 24 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 焦り・競争 yellow | 4 | 4 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 焦り・競争 red | 2 | 2 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 焦り・競争 agreement rate (%) | 80 | 80 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 喜び・満足 reviewed | 30 | 30 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 喜び・満足 green | 14 | 14 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 喜び・満足 yellow | 15 | 15 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 喜び・満足 red | 1 | 1 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 喜び・満足 agreement rate (%) | 47 | 47 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 情報共有 reviewed | 23 | 23 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 情報共有 green | 10 | 10 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 情報共有 yellow | 1 | 1 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 情報共有 red | 12 | 12 | Match | category_random_sample_30_each.xlsx |
+| 2-1 | 情報共有 agreement rate (%) | 43 | 43 | Match | category_random_sample_30_each.xlsx |
+| 2-3 | Gold Standard records | 192 | 192 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 交換・取引 share (%) | 28.1 | 28.1 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 交換・取引 95% CI | 21.8 – 34.5% | 21.8 – 34.5% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 中立 share (%) | 25.0 | 25.0 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 中立 95% CI | 18.9 – 31.1% | 18.9 – 31.1% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 欲望・執着 share (%) | 18.8 | 18.8 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 欲望・執着 95% CI | 13.2 – 24.3% | 13.2 – 24.3% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 喜び・満足 share (%) | 17.2 | 17.2 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 喜び・満足 95% CI | 11.9 – 22.5% | 11.9 – 22.5% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 焦り・競争 share (%) | 14.1 | 14.1 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 焦り・競争 95% CI | 9.1 – 19.0% | 9.1 – 19.0% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 不満・怒り share (%) | 7.3 | 7.3 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 不満・怒り 95% CI | 3.6 – 11.0% | 3.6 – 11.0% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | 情報共有 share (%) | 2.6 | 2.6 | Match | gold_standard_192_normalized.csv |
+| 2-3 | 情報共有 95% CI | 0.4 – 4.9% | 0.4 – 4.9% | Match | Wald normal approximation (95%, z=1.96, n=192, per-category binary variable) |
+| 2-3 | Records added by the hybrid corpus | 2015 | 2015 | Match | hybrid − old |
+| 2-4 | 交換・取引 posts | 24316 | 24316 | Match | sentiment_classified_hybrid.csv |
+| 2-4 | Unique ユーザーID | 10677 | 10677 | Match | sentiment_classified_hybrid.csv |
+| 2-4 | Unique アカウントID | 10715 | 10715 | Match | sentiment_classified_hybrid.csv |
+| 2-4 | Unique (アカウントID, 名前) | 10894 | 10894 | Match | sentiment_classified_hybrid.csv |
+| 2-4 | Unique 名前 | 8907 | 8907 | Match | sentiment_classified_hybrid.csv |
+| 2-4 | Mean posts per account | 2.28 | 2.28 | Match | Calculation |
+| 2-4 | Median | 1 | 1 | Match | Calculation |
+| 2-4 | One-post accounts | 7198 | 7198 | Match | Calculation |
+| 2-4 | One-post account share (%) | 67.4 | 67.4 | Match | Calculation |
+| 2-4 | Top-30 total | 1796 | 1796 | Match | Calculation |
+| 2-4 | Top-30 share (%) | 7.4 | 7.4 | Match | Calculation |
+| 2-4 | Top-1% account count | 106 | 106 | Match | floor(10,677 × 0.01) |
+| 2-4 | Top-1% share (%) | 14.9 | 14.9 | Match | 3,619 / 24,316 |
+| 2-4 | Top-10% share (%) | 45.6 | 45.6 | Match | 11,082 / 24,316 |
+| 2-4 | Structured-format count | 12411 | 12411 | Match | Shared structured-format definition |
+| 2-4 | Structured-format share (%) | 51.0 | 51.0 | Match | 12,411 / 24,316 |
+| 2-5 | Effective record count | 98 | 98 | Match | negotiation_expressions_not_exchange_random50.csv+random_sample_50_negotiation_not_exchange_202511_202604.csv |
+| 2-5 | Reply count | 79 | 79 | Match | Nonempty リプライ先の投稿ID |
+| 2-5 | Classified as 中立 | 90 | 90 | Match | sentiment_classified_hybrid.csv |
+| 2-5 | “検索より/から失礼いたします” | 48 | 48 | Match | 検索(?:より\|から) |
+| 2-5 | “ご検討” | 42 | 42 | Match | (?:ご\|御)検討 |
+| 2-5 | “初めまして” | 31 | 31 | Match | 初めまして\|はじめまして |
+| 2-5 | 🙇 | 31 | 31 | Match | 🙇 in post text |
+| 2-5 | Exchange ratio (n:m) | 17 | 17 | Match | \d\s*[:：]\s*\d |
+| 2-5 | “比率違い” | 3 | 3 | Match | 比率違い in post text |

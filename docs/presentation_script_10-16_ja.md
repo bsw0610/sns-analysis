@@ -1,5 +1,9 @@
 # 発表原稿案：感情・行動カテゴリ分析（10〜16ページ）
 
+> **Language note:** This file intentionally remains in Japanese because it is
+> the speaker script for a Japanese presentation. For the English technical
+> specification and verified values, see `docs/slide_plan_10-16.md`.
+
 想定時間は約5分。角括弧内は発表時の動作や画面上の注目箇所を示す。
 
 ## 10ページ　感情・行動カテゴリ分析の進め方

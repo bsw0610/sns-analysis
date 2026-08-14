@@ -1,115 +1,117 @@
-# タスク0 — 総件数の不一致の確認
+# Task 0: Investigating the Total-count Discrepancy
 
-**実施日**: 2026-07-29
-**目的**: 現行スライドの約136,301件と、検証対象の109,037件の差の特定。発表で名乗る総件数を1つに確定する。
-**方針**: `slide_plan_10-16.md` §4 の指示どおり、**どちらの数値も書き換えていない**。報告のみ。
+**Audit date**: 2026-07-29
+
+**Objective**: identify the difference between approximately 136,301 posts in the then-current slides and the 109,037-post evaluation corpus, and select one total for the presentation.
+
+**Policy**: as required by Section 4 of `slide_plan_10-16.md` at the time, neither number was changed during this audit; the work was report-only.
+
+> **Historical status:** this document records the 2026-07-29 conclusion. The later hybrid baseline uses 110,918 posts and supersedes 109,037 as the current authoritative corpus.
 
 ---
 
-## 1. 結論（先に）
+## 1. Conclusion at the Time
 
-| 項目 | 結論 |
+| Item | Conclusion |
 |---|---|
-| **発表で名乗るべき総件数** | **109,037件**（ただし下記§5の但し書きを必ず添える） |
-| 136,301 の正体 | **本リポジトリのどのファイルからも再現できない**。広告除去前・かつ現存しない旧分類器による数値 |
-| 33,988（交換・取引）の正体 | 同上。現存する v1/v2 のどちらでも、どの母集団でも再現不可 |
-| スライド3「13万に減らした」 | **109,037（10.9万）とは整合しない。** 13万は広告除去**前**の136,288を指していると見られる |
+| **Total to report in the presentation** | **109,037**, with the caveats in Section 5 |
+| Origin of 136,301 | **Not reproducible from any file in this repository.** It appears to be a pre-advertising-removal result from an unavailable older classifier. |
+| Origin of 33,988 (`交換・取引`) | Same issue. No available v1/v2 and population combination reproduces it. |
+| Slide 3: `13万に減らした` (“reduced to 130,000”) | **Inconsistent with 109,037 (`10.9万`; 109 thousand).** It appears to refer to the pre-filter total of 136,288. |
 
 ---
 
-## 2. 件数の系譜（実ファイルで独立に再現済み）
+## 2. Count Lineage Reproduced from Preserved Files
 
-```
-月別CSV 6ファイル                      136,288件
+```text
+Six monthly CSV files                    136,288 posts
   202511:12,907 / 202512:17,037 / 202601:24,721
   202602:31,597 / 202603:20,260 / 202604:29,766
-  重複ID: 0 ／ ユニークID: 136,288
-        │
-        │  ① キーワード広告除去   −21,377  (−15.7%)
-        ▼
-                                     114,911件
-        │
-        │  ② 追加広告除去(12分類) − 5,874  (− 4.3%)
-        ▼
-  data/output/2511-2604.csv          109,037件
-        │
-        ▼
-  sentiment_classified_2511-2604.csv 109,037件
+  duplicate IDs: 0 / unique IDs: 136,288
+        |
+        |  1. keyword advertising removal    -21,377 (-15.7%)
+        v
+                                            114,911 posts
+        |
+        |  2. additional removal, 12 reasons  -5,874 (-4.3%)
+        v
+  data/output/2511-2604.csv                  109,037 posts
+        |
+        v
+  sentiment_classified_2511-2604.csv         109,037 posts
 ```
 
-- `ad_filter_summary_202511_202604.json` の `reconciled: true` を独立に検算し、**136,288 − 21,377 − 5,874 = 109,037** が厳密に成立することを確認した。
-- 除外分27,251件を月別CSVから再構成し、件数が一致することも確認済み。
-- **除去率は合計20.0%。** 5件に1件が広告として落とされている。
+- An independent check of `reconciled: true` in `ad_filter_summary_202511_202604.json` confirmed that **136,288 − 21,377 − 5,874 = 109,037** exactly.
+- The 27,251 excluded rows were reconstructed from the monthly CSV files and matched the recorded count.
+- The total removal rate was **20.0%**, or one in five posts.
 
-### 2-1. パイプラインは2系統に分岐している
+### 2.1 The pipeline has two separate branches
 
-`filter_ads_202511_202604.py:17` は月別CSVを直接読む（`SOURCE_NAMES`）。**`INPUT.csv` を経由していない。**
+`filter_ads_202511_202604.py:17` reads the monthly CSV files directly through `SOURCE_NAMES`. It does **not** use `INPUT.csv`.
 
-| 系統 | 経路 | 用途 |
+| Track | Path | Purpose |
 |---|---|---|
-| 感情分析系（本件） | 月別CSV → 広告除去 → `2511-2604.csv` (109,037) | 分類・検証 |
-| Word2Vec系 | `INPUT.csv` (136,293) → `INPUT_new.csv` (143,921) → `clean.csv` | 単語ベクトル |
+| Sentiment and behavior analysis | monthly CSV → advertising removal → `2511-2604.csv` (109,037) | classification and validation |
+| Word2Vec | `INPUT.csv` (136,293) → `INPUT_new.csv` (143,921) → `clean.csv` | word vectors |
 
-この2系統は**件数が最初から一致していない**（136,288 vs 136,293）。
-`INPUT.csv` はユニークID 136,289・重複行4件を含み、月別CSVに存在しないIDを1件持つ。ノートブックで作られた別系統の結合物であり、広告除去の対象になっていない。
+The two tracks differ from the start: 136,288 vs 136,293. `INPUT.csv` contains 136,289 unique IDs and four duplicate rows, including one ID value not present among the monthly post IDs. Later provenance work showed that the raw `cat *.csv` procedure retained five additional header rows.
 
-> 補足：`INPUT_new.csv` は本文1列で143,921行あり、`INPUT.csv` より7,628行多い。月別原本・INPUT.csv とも本文に改行を含む投稿は0件のため、行分割では説明がつかない。**W2V系の入力件数は出所不明**。感情分析の結論には影響しないが、発表でW2Vの母数に言及する場合は要注意。
+> `INPUT_new.csv` contains 143,921 one-column body rows, 7,628 more than `INPUT.csv`. This historical audit reported no multiline post bodies in the monthly sources or `INPUT.csv`, so line splitting did not explain the difference at the time. The Word2Vec input count therefore remained unresolved. This does not affect the sentiment-analysis conclusion, but it prevents a reliable statement about the Word2Vec population.
 
 ---
 
-## 3. 136,301 と 33,988 の追跡結果
+## 3. Tracing 136,301 and 33,988
 
-### 3-1. リポジトリ内に存在しない
+### 3.1 The values do not exist in the repository evidence
 
-`136301` / `136,301` / `33988` / `33,988` を全ファイル（json / md / py / html / ndjson / txt / ipynb出力）で検索した結果、**ヒットしたのは `slide_plan_10-16.md` のみ**。
+A search for `136301`, `136,301`, `33988`, and `33,988` across JSON, Markdown, Python, HTML, NDJSON, text, and Notebook output found matches only in `slide_plan_10-16.md`.
 
-旧スライド生成データ `outputs/sentiment-analysis-20260716/sentiment_slide_analysis_data.json` は既に
-`total_posts = 109,037` / 交換・取引 `23,134` を使用している。
-つまり**現行Canvaスライドの図表は、20260716の成果物より更に古い**。
+The older slide data at `outputs/sentiment-analysis-20260716/sentiment_slide_analysis_data.json` already uses `total_posts = 109,037` and `交換・取引 = 23,134`. The Canva figures were therefore older than the July 16, 2026 artifacts.
 
-### 3-2. 現存する分類器では再現できない
+### 3.2 Available classifiers do not reproduce the values
 
-除外27,251件を復元し、v1・v2の両方で分類して全パターンを検算した。
+The audit restored the 27,251 excluded rows and evaluated all available v1/v2 and population combinations.
 
-| 母集団 | 分類器 | 交換・取引 | 総数 |
+| Population | Classifier | 交換・取引 | Total |
 |---|---|---:|---:|
-| 109,037（現行） | **v2** | **23,134** | 109,037 |
+| 109,037 (then-current) | **v2** | **23,134** | 109,037 |
 | 109,037 | v1 (legacy) | 28,950 | 109,037 |
-| 136,288（広告除去前） | v2 | 24,552 | 136,288 |
-| 136,288（広告除去前） | v1 (legacy) | 40,205 | 136,288 |
-| — | — | **33,988 ← 該当なし** | **136,301 ← 該当なし** |
+| 136,288 (before filtering) | v2 | 24,552 | 136,288 |
+| 136,288 (before filtering) | v1 (legacy) | 40,205 | 136,288 |
+| — | — | **33,988: no match** | **136,301: no match** |
 
-**4通りのいずれとも一致しない。** さらに総数も136,288と13件ずれる。
+None of the four combinations matches, and 136,301 is 13 rows higher than 136,288.
 
-結論：現行スライドの数値は、**(a) 現存しない旧分類器**を、**(b) 現存しない13件多い母集団**に適用した結果であり、**現在のコードとデータからは再現不能**。
+The conclusion was that the slide figures came from an unavailable older classifier applied to an unavailable population with 13 additional rows. They cannot be reproduced with the current code and data.
 
-> なお `classify_sns_rule_based.py` の `LEGACY_KEYWORDS` は「以前の実装との再現比較用」と注記されているが、**これは再構成であって当時の実行結果そのものではない**。上表で v1 が33,988を出さないことは、この再構成が当時の実装と異なることを示唆する。
+`LEGACY_KEYWORDS` in `classify_sns_rule_based.py` is documented as a reconstruction for comparison with an older implementation. It is not the original historical output. Its failure to produce 33,988 suggests that it differs from the unavailable implementation.
 
 ---
 
-## 4. スライド3「13万に減らした」との整合
+## 4. Consistency with Slide 3: “Reduced to 130,000”
 
-| 候補 | 件数 | 「13万」と言えるか |
+| Candidate | Count | Reasonably described as 130,000? |
 |---|---:|---|
-| 月別原本合計 | 136,288 | ○（13.6万） |
-| INPUT.csv | 136,293 | ○（13.6万） |
-| キーワード除去後 | 114,911 | △（11.5万） |
-| **広告除去後（検証対象）** | **109,037** | **×（10.9万）** |
+| Monthly-source total | 136,288 | Yes (`13.6万`; 136 thousand) |
+| `INPUT.csv` | 136,293 | Yes (`13.6万`; 136 thousand) |
+| After keyword removal | 114,911 | Marginal (`11.5万`; 115 thousand) |
+| **After all advertising removal** | **109,037** | **No (`10.9万`; 109 thousand)** |
 
-**「13万に減らした」は109,037を指し得ない。** 136,288 を指していると解釈するのが自然である。
+“Reduced to 130,000” cannot refer to 109,037. The most natural interpretation is the pre-filter total of 136,288.
 
-これが意味すること：**現行スライドには広告除去の工程が一切反映されていない。**
-20.0%（27,251件）を落とした事実が、スライド3の時点でも図表でも表現されていない。
+This means that the then-current slide did not represent the advertising-removal step. Neither the 20.0% removal rate nor the 27,251 excluded posts appeared in the explanation.
 
 ---
 
-## 5. 発表で109,037を名乗る場合に必須の但し書き
+## 5. Required Caveats When Reporting 109,037
 
-109,037を採用することを推奨するが、**この母集団は中立的な「全投稿」ではない**。以下は口頭でも触れるべきである。
+The audit recommended 109,037 at the time, but this population is not a neutral set of “all posts.”
 
-### 5-1. キーワード除去21,377件の内訳（ヒット語・重複計上）
+### 5.1 Breakdown of 21,377 keyword removals
 
-| キーワード | ヒット |
+Hits overlap across keywords.
+
+| Keyword | Hits |
 |---|---:|
 | 名様 | 9,839 |
 | リポスト | 8,343 |
@@ -127,13 +129,13 @@
 | **再入荷情報** | 108 |
 | 準備資金 | 1 |
 
-`お知らせ` `詳しくは` `ご来店` `再入荷情報` `リポスト` は**広告以外の投稿も広く巻き込む語**である。とくに `再入荷情報` は、まさに 情報共有 カテゴリの中核語である。
+`お知らせ`, `詳しくは`, `ご来店`, `再入荷情報`, and `リポスト` can also appear in non-advertising posts. `再入荷情報` is especially central to the `情報共有` category.
 
-### 5-2. 【重要】広告除去は 情報共有 カテゴリを不均衡に削っている
+### 5.2 Advertising removal disproportionately reduces 情報共有
 
-除外27,251件を v2 で分類した結果:
+Classifying the 27,251 excluded posts with v2 produced:
 
-| カテゴリ | 除外分 | 保持分(109,037) | 除外率 |
+| Category | Excluded | Retained (109,037) | Removal rate |
 |---|---:|---:|---:|
 | **情報共有** | **8,395** | **3,997** | **67.7%** |
 | 中立 | 13,183 | 45,111 | 22.6% |
@@ -143,23 +145,22 @@
 | 欲望・執着 | 752 | 9,433 | 7.4% |
 | 不満・怒り | 348 | 11,238 | 3.0% |
 
-**情報共有と判定される投稿の3分の2以上が、分析前に除去されている。**
-追加広告除去の理由内訳にも `RESTOCK_STORE_NOTICE` 432件、`SALES_INFORMATION` 531件が含まれる。
+More than two thirds of posts classified as `情報共有` were removed before analysis. Additional-removal reasons also include `RESTOCK_STORE_NOTICE` for 432 rows and `SALES_INFORMATION` for 531 rows.
 
-これは発表内容に直接影響する:
+This affects two presentation claims:
 
-- ページ13「情報共有 精度43%」「情報を伝える投稿ではない」
-- ページ14「情報共有 2.6%」
+- Page 13: “情報共有 accuracy 43%” and “not posts that convey information”
+- Page 14: “情報共有 2.6%”
 
-この2.6%という低さは、**分類器の失敗だけでなく、広告フィルタが情報共有系の投稿を先に落としたことの結果でもある**。「分類器が情報共有を取れていない」とだけ述べると、原因の帰属を誤る。
+The 2.6% share reflects both classifier behavior and the removal of information-sharing posts before classification. Attributing the result only to classifier failure would be incorrect.
 
-一方、**交換・取引の除外率は5.8%と最も低い**。交換・取引が最大カテゴリとなる構図には、広告フィルタの選択性も寄与している。
+`交換・取引` has the lowest removal rate at 5.8%. The advertising filter's selectivity also contributes to exchange becoming the largest retained category.
 
 ---
 
-## 6. 報告事項（判断を仰ぐ点）
+## 6. Decisions Requested at the Time
 
-1. **総件数は109,037で確定してよいか。** 推奨するが、スライド3の「13万」との齟齬を解消する必要がある（例：「13.6万件を収集し、広告2.0万件を除いた10.9万件を分析対象とした」）。
-2. **現行スライドの136,301 / 33,988 は再現不能**。差し替え対象の10〜16ページ以外にもこれらの数値が使われている場合、そのページも整合が取れなくなる。10〜16ページ以外での使用状況を確認いただきたい。
-3. **§5-2 の情報共有バイアスを、ページ13・14に反映するか。** 反映しない場合、「分類器が情報共有を取れていない」という主張は原因を誤って帰属することになる。
-4. `slide_plan_10-16.md` §1-1 は「月別カテゴリ件数（生カウント）」を禁止しているが、**広告除去による情報共有の偏りは禁止リストに未記載**。追加すべきか。
+1. **Should the total be fixed at 109,037?** This document recommended it, provided that the conflict with `13万` on Slide 3 was resolved, for example: `13.6万件を収集し、広告2.0万件を除いた10.9万件を分析対象とした` (“Collected 136 thousand posts and analyzed 109 thousand after removing 20 thousand advertising posts”).
+2. **136,301 and 33,988 are not reproducible.** If they appeared outside replacement pages 10–16, those pages also required correction.
+3. **Should the information-sharing bias in Section 5.2 be reflected on Pages 13 and 14?** Omitting it would incorrectly attribute the result only to the classifier.
+4. Section 1-1 of `slide_plan_10-16.md` prohibited raw monthly category counts, but did not list the information-sharing bias caused by advertising removal. The audit asked whether it should be added.

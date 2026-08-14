@@ -1,109 +1,121 @@
-# ボンドロ最終発表：スライド10〜16差し替え計画
+# Bonbon Drop Final Presentation: Slide 10–16 Replacement Plan
 
-## 0. 適用範囲と根拠
+This document is written in English for repository readers. Japanese text in
+inline code is final or candidate copy intended to appear in the Japanese
+presentation and is therefore preserved.
 
-この計画の対象は、Canva発表資料のうち感情・行動カテゴリ分析を扱う
-10〜16ページだけである。1〜9ページと17ページ以降、Canva、PPTX、
-基準CSV、正解セット、分類結果、分類規則は変更しない。
+## 0. Scope and Evidence
 
-このパートの役割は、分類器の出力を研究全体の結論として提示すること
-ではなく、人手ラベルとの比較で利用可能な範囲を示したうえで、
-比較的安定していた「交換・取引」カテゴリ内部の構造を説明することに
-限定する。
+This plan covers only slides 10–16 of the Canva presentation, which address the
+emotion and behavior category analysis. It does not change slides 1–9, slide 17
+or later, Canva, the PPTX, reference CSVs, the Gold Standard, classification
+outputs, or classification rules.
 
-確定入力は次のとおり。
+This section does not present classifier output as the conclusion of the entire
+study. It first establishes the usable range through comparison with human
+labels, then describes the internal structure of the relatively stable
+`交換・取引` category.
 
-| 用途 | ファイル | SHA-256 |
+The fixed inputs are:
+
+| Purpose | File | SHA-256 |
 |---|---|---|
-| 正解セット原本 | `data/output/gold_standard_192.csv` | `fbaa615cf9dc2599df93287857be584223f46f3f20ca901ca09fe5fb7d305815` |
-| 正規化正解セット | `data/output/gold_standard_192_normalized.csv` | `ed4afaadf102e21973d4b7cbfd1b4cbdd49040230ac5c26f6d0d2750e3982c2c` |
-| ハイブリッドコーパス | `data/output/2511-2604_hybrid.csv` | `3bf78817892b356b0a4b1ea693a3f66d94e78f03196401832fd2b6e397b51c8e` |
-| 分類結果 | `data/output/sentiment_classified_hybrid.csv` | `f273c9306507804ae0dc1e2ed28292f9b2bc5f4100f7564c984117a3a8b6371d` |
+| Source Gold Standard | `data/output/gold_standard_192.csv` | `fbaa615cf9dc2599df93287857be584223f46f3f20ca901ca09fe5fb7d305815` |
+| Normalized Gold Standard | `data/output/gold_standard_192_normalized.csv` | `ed4afaadf102e21973d4b7cbfd1b4cbdd49040230ac5c26f6d0d2750e3982c2c` |
+| Hybrid corpus | `data/output/2511-2604_hybrid.csv` | `3bf78817892b356b0a4b1ea693a3f66d94e78f03196401832fd2b6e397b51c8e` |
+| Classification output | `data/output/sentiment_classified_hybrid.csv` | `f273c9306507804ae0dc1e2ed28292f9b2bc5f4100f7564c984117a3a8b6371d` |
 
-公式評価入力は192行×12列、投稿IDは192件すべて一意で、複数ラベルを
-許容する。分析対象と分類結果はいずれも110,918件である。
+The official evaluation input has 192 rows × 12 columns, all 192 post IDs are
+unique, and multi-label annotations are allowed. The analysis corpus and
+classification output both contain 110,918 records.
 
-全ページ共通の禁止事項:
+Rules that apply to every slide:
 
-- 研究全体の最終結論をこのパートで提示しない。
-- 流行全体の本質、社会的価値の創出、コミュニティ規範の形成を断定しない。
-- F1を正解率・一致率・accuracyと同一視しない。
-- 分類器の単一ラベル構成を実態構成とみなさない。
-- `109,037件`、`最終評価189件`、`焦り・競争3.0%`、
-  `交換投稿23,134件`、`定型書式12,181件／50.1%`、
-  `交換比率18件`、`リプライ80件`、`交換F1 0.872`、
-  `実用水準0.80`を使わない。
-- 広告除去影響の旧値`情報共有67.7%／交換5.8%`を使わない。
+- Do not present the final conclusion of the entire study in this section.
+- Do not claim to have established the essence of the overall trend, creation
+  of social value, or formation of community norms.
+- Do not equate F1 with accuracy or a simple agreement rate.
+- Do not treat the classifier's single-label composition as the true
+  composition.
+- Do not use `109,037件`, `最終評価189件`, `焦り・競争3.0%`,
+  `交換投稿23,134件`, `定型書式12,181件／50.1%`, `交換比率18件`,
+  `リプライ80件`, `交換F1 0.872`, or `実用水準0.80`.
+- Do not use the old ad-removal impact values
+  `情報共有67.7%／交換5.8%`.
 
-## 1. ページ10 — 感情・行動分析の手順
+## 1. Slide 10 — Emotion and Behavior Analysis Process
 
-### ページ目的
+### Purpose
 
-分類結果をそのまま結論にせず、人手ラベルを最終基準として利用範囲を
-確認した分析手順を示す。
+Show the process used to determine the usable range of classification results,
+with human labels as the final reference rather than treating automated output
+as a conclusion.
 
-### タイトル
+### Title
 
 `感情・行動カテゴリ分析の進め方`
 
-### 本文文案
+### Slide Copy
 
-画面の主フロー:
+Main flow:
 
 1. `7カテゴリを設定`
 2. `Codexで自動分類`
 3. `元投稿を確認`
 4. `人手ラベルで性能を評価`
 
-主文:
+Main statement:
 
 `自動分類の結果をそのまま解釈せず、人手ラベルとの比較を通じて利用可能な範囲を確認した。`
 
-補助文:
+Supporting statement:
 
 `コードと集計定義は別工程でも監査したが、評価の最終基準は人手ラベルとした。`
 
-### 核心数値
+### Key Values
 
-画面では手順数の`4`とカテゴリ数の`7`だけを使う。性能値や投稿件数は
-後続ページに分ける。
+Display only the four process steps and seven categories. Place performance
+values and post counts on later slides.
 
-### グラフ・レイアウト
+### Chart and Layout
 
-左から右へ進む4段階フロー。各段階は短い動詞句と簡潔なアイコンで示す。
-最終段階の「人手ラベル」を視線の終点に置く。コード監査は主フロー外の
-小さな補助注記とし、独立した検証者のように強調しない。
+Use a four-stage left-to-right flow with short verb phrases and simple icons.
+Make `人手ラベル` the visual endpoint. Show the code audit as a small supporting
+note outside the main flow, not as an independent evaluator.
 
-### 発表者説明
+### Speaker Notes
 
-分類器は全件の傾向を探る道具であり、出力自体を正解とは扱っていない。
-元投稿の確認と公式正解セットとの比較を通じて、どのカテゴリの集計を
-どこまで使えるかを判断した、と説明する。
+Explain that the classifier is a tool for exploring overall tendencies, not a
+source of ground truth. Original-post review and comparison with the official
+Gold Standard determined which category aggregates could be used and to what
+extent.
 
-### 解釈の限界
+### Interpretation Limits
 
-人手ラベルも判断基準に依存し、192件の評価結果である。コード監査は
-実装上の再現性を確認する工程であり、人手ラベルを代替しない。
+Human labels also depend on judgment criteria, and the evaluation contains 192
+records. The code audit verifies implementation reproducibility; it does not
+replace human labels.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `AI二つが相互検証したので信頼できる`
 - `AI同士の合意を正解とした`
 - `自動分類で感情を正確に把握した`
 
-## 2. ページ11 — 7カテゴリの定義
+## 2. Slide 11 — Definitions of the Seven Categories
 
-### ページ目的
+### Purpose
 
-後続の性能・構成グラフを読む前に、7カテゴリが何を表すかを定義する。
+Define the seven categories before presenting performance and composition
+charts.
 
-### タイトル
+### Title
 
 `投稿を7つの感情・行動カテゴリに分類`
 
-### 本文文案
+### Slide Copy
 
-| カテゴリ | 定義 | 匿名化した短い例 |
+| Category | Definition | Short anonymized example |
 |---|---|---|
 | 喜び・満足 | 入手、使用、見た目などへの喜び・満足 | `「買えた。これで一安心」` |
 | 欲望・執着 | 欲しい、探している、集めたいという欲求 | `「ボンドロだけはいつか欲しい」` |
@@ -113,62 +125,65 @@
 | 交換・取引 | 譲渡条件、希望品、受渡方法などの提示 | `「【譲】和柄…【求】柴犬…手渡しor郵送」` |
 | 中立 | 上記の感情・行動を明確に読み取れない記述 | `「今のボンドロも似たような感じなのかな」` |
 
-必須注記:
+Required note:
 
 `1つの投稿に複数の感情や行動が含まれる場合がある。`
 
-### 核心数値
+### Key Values
 
-カテゴリ数`7`だけを表示する。カテゴリ別件数・比率は載せない。
+Display only the category count, `7`. Do not show category counts or shares.
 
-### グラフ・レイアウト
+### Chart and Layout
 
-現在のCanvaにある7つの円形構造を維持する。中央にページタイトル、
-周囲に7カテゴリを配置し、各円の中は「カテゴリ名／1行定義／短い例」の
-順にする。例文は本文より一段小さくし、すべて同じ引用符形式に統一する。
+Retain the seven-circle structure in the current Canva deck. Place the title in
+the center and the seven categories around it. Each circle should contain the
+category name, a one-line definition, and a short example in that order. Use a
+smaller size for examples and consistent quotation marks.
 
-### 発表者説明
+### Speaker Notes
 
-カテゴリは相互排他的ではなく、同じ投稿に複数の感情や行動が共存しうる。
-画面例は公式正解セットの実文からアカウント名、メンション、URL、
-画像リンクを除き、意味を変えない範囲で短くした。
+The categories are not mutually exclusive; multiple emotions or behaviors can
+coexist in one post. The displayed examples were shortened from real text in the
+official Gold Standard by removing account names, mentions, URLs, and image
+links without changing the meaning.
 
-例示根拠（Canvaには表示しない）:
+Evidence for examples, not displayed in Canva:
 
-| カテゴリ | 根拠 |
+| Category | Evidence |
 |---|---|
-| 喜び・満足 | `gold_standard_192_normalized.csv` 38行目 |
-| 欲望・執着 | 同32行目 |
-| 不満・怒り | 同78行目 |
-| 焦り・競争 | 同124行目 |
-| 情報共有 | 同148行目 |
-| 交換・取引 | 同135行目 |
-| 中立 | 同50行目 |
+| 喜び・満足 | `gold_standard_192_normalized.csv` row 38 |
+| 欲望・執着 | Same file, row 32 |
+| 不満・怒り | Same file, row 78 |
+| 焦り・競争 | Same file, row 124 |
+| 情報共有 | Same file, row 148 |
+| 交換・取引 | Same file, row 135 |
+| 中立 | Same file, row 50 |
 
-### 解釈の限界
+### Interpretation Limits
 
-短い例はカテゴリ定義を理解するための例示であり、カテゴリ全体を代表する
-典型度や頻度を示さない。
+The examples explain category definitions. They do not indicate how typical or
+frequent the examples are within each category.
 
-### 使用禁止表現
+### Prohibited Wording
 
-- 例文からカテゴリ頻度を推定する表現
-- 7カテゴリが投稿の意味を完全に網羅するという表現
-- アカウント名、ユーザーID、メンション、URL、画像リンク
+- Language that infers category frequency from the examples
+- Claims that the seven categories completely cover the meaning of every post
+- Account names, user IDs, mentions, URLs, or image links
 
-## 3. ページ12 — 人手ラベル評価セット
+## 3. Slide 12 — Human-Labeled Evaluation Set
 
-### ページ目的
+### Purpose
 
-189件が途中段階で、公式評価入力は補充後の192件であることを明示する。
+Make clear that 189 records were an intermediate stage and that the official
+evaluation input contains 192 records after supplementation.
 
-### タイトル
+### Title
 
 `人手ラベルによる評価データの作成`
 
-### 本文文案
+### Slide Copy
 
-表示フロー:
+Display flow:
 
 1. `無作為抽出 200件`
 2. `既存の有効ラベル 189件`
@@ -176,68 +191,71 @@
 4. `最終評価データ 192件`
 5. `複数ラベルを許容`
 
-注意文:
+Caution:
 
 `広告除去の影響はカテゴリによって異なり、特に情報共有の解釈には注意が必要である。`
 
-### 核心数値
+### Key Values
 
-`200 → 189 + 3 → 192`。最終値`192`を最も大きくし、`189`には
-「途中段階」と明記する。
+Show `200 → 189 + 3 → 192`. Make `192` the largest value and explicitly label
+`189` as an intermediate stage.
 
-### グラフ・レイアウト
+### Chart and Layout
 
-横方向の評価データ作成フロー。`189`と`3`を合流させて`192`へ到達する。
-「複数ラベルを許容」は192件の下に帯として置く。広告除去の注意文は
-フローと分離した脚注領域に置く。
+Use a horizontal evaluation-data flow in which `189` and `3` merge into `192`.
+Place `複数ラベルを許容` as a band beneath 192. Put the ad-removal caution in a
+separate footnote area.
 
-### 発表者説明
+### Speaker Notes
 
-無作為200件から既存の有効ラベル189件を確定し、保留だった3件を追加
-ラベルして、192件を公式評価入力とした。原本の先頭12列と正規化本は
-全セル一致し、追加3件の交換ラベルも保存されている。
+From the random 200 records, 189 existing valid labels were confirmed and three
+pending records were additionally labeled, producing the official 192-record
+evaluation input. Every cell in the first 12 source columns matches the
+normalized file, and the three supplemental exchange labels are preserved.
 
-### 解釈の限界
+### Interpretation Limits
 
-広告除去はカテゴリ別に影響が異なる。画面では`66.9%`や`1.0%`を
-表示しない。口頭で触れる場合は、除去前に同じ分類器を適用したカテゴリ別
-件数を分母とする除去率であり、全投稿の除去率ではないことを明示する。
+Ad removal affects categories differently. Do not display `66.9%` or `1.0%` on
+the slide. If mentioned orally, clarify that these are category-specific
+removal rates using pre-removal counts classified by the same classifier as the
+denominator, not the removal rate for all posts.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `最終評価セット189件`
 - `11件を除外したので189件が最終`
-- 広告除去率を全投稿の除去率として示す表現
-- 旧値`情報共有67.7%／交換5.8%`
+- Language presenting a category-specific ad-removal rate as the overall rate
+- The old values `情報共有67.7%／交換5.8%`
 
-## 4. ページ13 — カテゴリ別分類性能
+## 4. Slide 13 — Per-Category Classification Performance
 
-### ページ目的
+### Purpose
 
-7カテゴリすべてのF1を同じ尺度で比較し、カテゴリによる性能差を示す。
+Compare F1 on a common scale for all seven categories and show performance
+differences by category.
 
-### タイトル
+### Title
 
 `カテゴリによって分類性能に差が見られた`
 
-### 本文文案
+### Slide Copy
 
-解釈:
+Interpretation:
 
 `交換・取引は比較的安定して判定できた一方、他のカテゴリには改善の余地が残った。`
 
-補助値:
+Supporting values:
 
 - `緩和基準 micro F1 0.577`
 - `多ラベル基準 micro F1 0.595`
 
-脚注:
+Footnote:
 
 `評価指標はF1。全体値は7カテゴリを合算したmicro F1。`
 
-### 核心数値
+### Key Values
 
-| カテゴリ | F1 |
+| Category | F1 |
 |---|---:|
 | 不満・怒り | 0.471 |
 | 焦り・競争 | 0.294 |
@@ -247,60 +265,64 @@
 | 情報共有 | 0.000 |
 | 中立 | 0.625 |
 
-### グラフ・レイアウト
+### Chart and Layout
 
-公式正解セット192件を使う7本の横棒グラフ。全棒を0から始め、値0も
-省略しない。交換・取引は金色＋斜線、中立は淡い青＋点パターン、
-残りは同じ中立グレーにする。全カテゴリに3桁の直接ラベルを付け、
-色だけに依存しない。micro F1二つはヘッダー右側の小さな補助値とする。
+Use seven horizontal bars based on the official 192-record Gold Standard. Start
+every bar at zero and do not omit zero values. Use gold with hatching for
+交換・取引, light blue with a dot pattern for 中立, and the same neutral gray for
+the remaining categories. Add a three-decimal direct label to every category so
+the chart does not depend on color. Put the two micro F1 values in small text at
+the right of the header.
 
-生成候補: `p13_agreement.png`、根拠: `p13_metrics.json`。
+Generated candidate: `p13_agreement.png`. Evidence: `p13_metrics.json`.
 
-### 発表者説明
+### Speaker Notes
 
-カテゴリ別値は緩和基準のF1である。交換・取引は0.869と相対的に高いが、
-それ以外にも中立0.625など差があるため、「交換だけが正しい」と二分
-しない。全体micro F1とカテゴリ別F1は集計単位が異なる。
+The per-category values are lenient-criterion F1. 交換・取引 is relatively high
+at 0.869, but values such as 0.625 for 中立 show a range of performance; do not
+reduce the finding to “only exchange was correct.” Overall micro F1 and
+per-category F1 use different aggregation units.
 
-### 解釈の限界
+### Interpretation Limits
 
-F1はprecisionとrecallの調和平均で、単純な正解率ではない。
-情報共有の0は公式標本上の結果だが、前処理の影響と標本数の少なさを
-考慮し、実態頻度や存在の有無へ拡張しない。
+F1 is the harmonic mean of precision and recall, not simple accuracy. The
+情報共有 value of zero is the result on the official sample. Given preprocessing
+effects and the small number of sample records, do not extrapolate it to actual
+frequency or existence in the population.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `交換・取引だけが正しかった`
 - `実用水準0.80`
 - `交換F1 0.872`
-- F1を`正解率`、`一致率`、`accuracy`と呼ぶ表現
+- Referring to F1 as `正解率`, `一致率`, or `accuracy`
 
-## 5. ページ14 — 人手ラベルのカテゴリ構成
+## 5. Slide 14 — Human-Labeled Category Composition
 
-### ページ目的
+### Purpose
 
-分類器の単一ラベル構成ではなく、192件の人手ラベルに基づく構成と
-不確実性を示す。
+Show the composition and uncertainty based on the 192 human-labeled records,
+not the classifier's single-label composition.
 
-### タイトル
+### Title
 
 `人手ラベルから見えたカテゴリ構成`
 
-### 本文文案
+### Slide Copy
 
-主コールアウト:
+Main callout:
 
 `焦り・競争：人手ラベル14.1%／自動分類2.9%`
 
-必須注記:
+Required notes:
 
 `1投稿に複数ラベルを付与したため、構成比の合計は113.0%。`
 
 `「情報共有」は広告除去条件の影響が大きく、低い実態比率とは断定できない。`
 
-### 核心数値
+### Key Values
 
-| カテゴリ | 分子 / 192 | 構成比 | Wald 95% CI |
+| Category | Numerator / 192 | Share | Wald 95% CI |
 |---|---:|---:|---:|
 | 交換・取引 | 54 | 28.1% | 21.8–34.5% |
 | 中立 | 48 | 25.0% | 18.9–31.1% |
@@ -310,187 +332,199 @@ F1はprecisionとrecallの調和平均で、単純な正解率ではない。
 | 不満・怒り | 14 | 7.3% | 3.6–11.0% |
 | 情報共有 | 5 | 2.6% | 0.4–4.9% |
 
-人手ラベル合計は217個。分類器の焦り・競争は
-`3,272 / 110,918 = 2.9%`。
+The human labels total 217. The classifier's 焦り・競争 count is
+`3,272 / 110,918 = 2.9%`.
 
-### グラフ・レイアウト
+### Chart and Layout
 
-カテゴリ別点推定とWald 95%信頼区間の横向きドットプロット。
-各行に件数、構成比、区間を直接表示する。焦り・競争はオレンジの点、
-情報共有はグレー、その他は青系とする。焦り・競争の自動分類2.9%は
-同じ行に×印で置く。二つの必須注記をPNG下部に組み込み、Canva上で
-別テキストを重ねない。
+Use a horizontal dot plot of point estimates and Wald 95% confidence intervals
+by category. Display count, share, and interval directly on each row. Use an
+orange point for 焦り・競争, gray for 情報共有, and blue tones for the other
+categories. Mark the classifier's 2.9% for 焦り・競争 with an × on the same row.
+Embed both required notes in the bottom of the PNG; do not overlay separate text
+in Canva.
 
-生成候補: `p14_composition.png`、根拠: `p14_metrics.json`。
+Generated candidate: `p14_composition.png`. Evidence:
+`p14_metrics.json`.
 
-### 発表者説明
+### Speaker Notes
 
-各カテゴリを独立した二値比率として扱い、`z=1.96`、
-`n=192`のWald区間を表示した。複数ラベルなので分子合計217、
-構成比合計113.0%となる。
+Treat each category as an independent binary proportion and display Wald
+intervals with `z=1.96` and `n=192`. Multi-label annotation gives 217 numerator
+labels and a combined share of 113.0%.
 
-### 解釈の限界
+### Interpretation Limits
 
-Wald近似は5/192のような希少比率で不安定になりうる。情報共有2.6%は
-広告除去条件の影響が大きいため、母集団で情報共有が少ない証拠としない。
-人手ラベルと分類器2.9%は測定方法が異なるため、差の方向を示す比較に
-限定する。
+The Wald approximation can be unstable for sparse proportions such as 5/192.
+Because 情報共有 at 2.6% is strongly affected by ad-removal conditions, do not
+treat it as evidence that information sharing is rare in the population. Human
+labels and the classifier's 2.9% use different measurement methods; compare only
+the direction of the difference.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `焦り・競争は実態として3.0%`
 - `情報共有はほとんど存在しない`
-- 構成比が相互排他的で合計100%になるという説明
-- Wald区間を母集団の真値が95%の確率で入る区間と断定する説明
+- Statements that the category shares are mutually exclusive and sum to 100%
+- Claims that a Wald interval contains the true population value with 95%
+  probability
 
-## 6. ページ15 — 交換・取引カテゴリの量的構造
+## 6. Slide 15 — Quantitative Structure of the Exchange Category
 
-### ページ目的
+### Purpose
 
-比較的安定して判定できた交換・取引カテゴリに限定し、投稿と
-アカウントの集中・裾野を示す。
+Within the relatively stable `交換・取引` category, show the concentration and
+long tail of posts and accounts.
 
-### タイトル
+### Title
 
 `「交換・取引」カテゴリの投稿構造`
 
-### 本文文案
+### Slide Copy
 
-接続文:
+Transition:
 
 `7カテゴリの中で比較的安定していた「交換・取引」を対象に、投稿とアカウントの構造を確認した。`
 
-解釈:
+Interpretation:
 
 `投稿は一部の活発なアカウントに集中しつつ、多数の単発参加アカウントにも広がっていた。`
 
-必須注記:
+Required note:
 
 `※2026年4月は収集終了月であり、その後の増減は判断できない。`
 
-### 核心数値
+### Key Values
 
 - `交換投稿 24,316件`
 - `参加アカウント 10,677`
 - `1回のみ投稿 7,198 / 67.4%`
 - `上位1% 106アカウント / 3,619件 / 投稿の14.9%`
-- 月別新規アカウント:
-  `732, 1,365, 1,759, 1,774, 1,254, 3,793`
+- New accounts by month: `732, 1,365, 1,759, 1,774, 1,254, 3,793`
 
-### グラフ・レイアウト
+### Chart and Layout
 
-上段に4つのKPI、下段に月別新規アカウントの棒グラフを置く。
-KPIは「投稿数」「アカウント数」「1回のみ67.4%」「上位1% 14.9%」
-の順。旧候補の「定型書式51.0%」カードは削除する。最終月は白抜き＋
-斜線にし、収集終了月であることを色以外でも示す。
+Place four KPI cards above a monthly new-account bar chart. Order the KPIs as
+post count, account count, one-time accounts at 67.4%, and top 1% at 14.9%.
+Remove the old `定型書式51.0%` card. Use an outline with hatching for the final
+month to show, without relying on color, that it is the collection end month.
 
-生成候補: `p15_new_accounts.png`、根拠: `p15_metrics.json`。
+Generated candidate: `p15_new_accounts.png`. Evidence:
+`p15_metrics.json`.
 
-### 発表者説明
+### Speaker Notes
 
-アカウント単位は期間中に安定している`ユーザーID`。上位1%は
-`floor(10,677×0.01)=106`アカウントで、投稿3,619件、14.9%を占める。
-同時に、7,198アカウントは1回だけ投稿している。月別新規数は各
-ユーザーIDの最初の交換投稿月で集計した。
+The account unit is `ユーザーID`, which is stable during the period. The top 1%
+is `floor(10,677×0.01)=106` accounts and represents 3,619 posts, or 14.9%.
+At the same time, 7,198 accounts posted only once. Monthly new counts use the
+month of each user ID's first exchange post.
 
-### 解釈の限界
+### Interpretation Limits
 
-10,677は一意ユーザーID数であり、実在個人の人数ではない。bot判定や
-本人確認はしていない。2026年4月は部分期間の収集終了月であり、
-その後の増減は分からない。この構造は交換カテゴリ内部に限られ、
-流行全体へ一般化しない。
+10,677 is the number of unique user IDs, not the number of real people. No bot
+detection or identity verification was performed. April 2026 is a partial
+collection endpoint, so later changes are unknown. These findings apply only
+within the exchange category and are not generalized to the whole trend.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `1万人が参加した`
 - `10,677人`
 - `上位アカウントもbotではなく実在の個人`
 - `少数のヘビーユーザーが支えた構造ではない`
-- 交換カテゴリから流行全体の構造を断定する表現
+- Statements that infer the structure of the whole trend from the exchange
+  category
 
-## 7. ページ16 — 交換投稿の定型表現
+## 7. Slide 16 — Formulaic Expressions in Exchange Posts
 
-### ページ目的
+### Purpose
 
-交換カテゴリで用いられる定型的な条件提示と、固定98件標本で確認した
-交渉表現を、母集団推定と混同せず示す。
+Show structured condition statements used in the exchange category and
+negotiation expressions observed in the fixed 98-record sample without
+confusing them with population estimates.
 
-### タイトル
+### Title
 
 `「交換・取引」投稿に見られた定型表現`
 
-### 本文文案
+### Slide Copy
 
-主結論:
+Main conclusion:
 
 `交換投稿の多くで、条件を簡潔に提示する共通の表現形式が使われていた。`
 
-表示語:
+Displayed terms:
 
 `譲／求／郵送／手渡し／交換比率／差額精算／ご検討・御検討`
 
-範囲制限:
+Scope limitation:
 
 `固定標本の分析であり、すべての交換投稿を代表するものではない。`
 
-次パートへの接続:
+Transition to the next section:
 
 `次に、これらの結果を他の分析と合わせて検討する。`
 
-### 核心数値
+### Key Values
 
-- 定型的な交換形式: `12,411件`
-- 交換投稿に占める比率: `51.0%`
-- 交渉表現を含む固定標本: `98件`
-- リプライ: `79件`
-- 定型的な挨拶: `48件`
+- Structured exchange format: `12,411件`
+- Share of exchange posts: `51.0%`
+- Fixed sample containing negotiation expressions: `98件`
+- Replies: `79件`
+- Formulaic greetings: `48件`
 - `ご検討／御検討`: `42件`
-- 交換比率: `17件`
+- Exchange ratios: `17件`
 
-### グラフ・レイアウト
+### Chart and Layout
 
-左に`12,411件／51.0%`を大きく置き、右に固定98件標本の4項目を
-大きめの表で置く。下段は原文例を置かず、主結論、条件提示の要約、
-固定標本の位置づけを大きく表示する。大きくする数値は`12,411`、
-`51.0%`、`98`の3つまでとし、79・48・42・17は補助表に留める。
-範囲制限と次パートへの接続はPNG下部に組み込む。
+Place `12,411件／51.0%` prominently on the left and a large four-row table for
+the fixed 98-record sample on the right. Do not place source-text examples in
+the lower section. Instead, prominently show the main conclusion, a summary of
+condition statements, and the role of the fixed sample. Limit oversized values
+to `12,411`, `51.0%`, and `98`; keep 79, 48, 42, and 17 in a supporting table.
+Embed the scope limitation and transition in the bottom of the PNG.
 
-生成候補: `p16_expressions.png`、根拠: `p16_metrics.json`。
+Generated candidate: `p16_expressions.png`. Evidence:
+`p16_metrics.json`.
 
-原文例は画面に表示しない。既に確認した2件の原文照合結果と匿名化根拠は、
-再現性確認のため`p16_metrics.json`にのみ保持する。
+Do not display the original examples. To support reproducibility,
+`p16_metrics.json` alone retains the already verified exact-source matches for
+two records and the rationale for anonymization.
 
-### 発表者説明
+### Speaker Notes
 
-全交換投稿24,316件の定型書式は共通正規表現で12,411件、51.0%と
-計算した。一方、98件は交渉表現で抽出した固定質的標本であり、
-79/98などを全交換投稿の比率として推定しない。そこで画面では件数だけを
-補助的に示す。
+The shared regular expression identifies 12,411 structured formats among all
+24,316 exchange posts, or 51.0%. The 98 records, however, are a fixed
+qualitative sample extracted for negotiation expressions. Do not estimate a
+population share such as 79/98 for all exchange posts; display these only as
+supporting counts.
 
-### 解釈の限界
+### Interpretation Limits
 
-定型書式12,411件は運用定義による自動判定で、全件を人手確認した値では
-ない。固定98件は無作為標本ではなく、すべての交換投稿を代表しない。
-共通表現の存在から価値創出や規範形成を断定できない。
+The 12,411 structured-format count is an automated operational definition, not
+a manually reviewed census. The fixed 98 records are not a random sample and do
+not represent every exchange post. The presence of common expressions does not
+establish value creation or norm formation.
 
-### 使用禁止表現
+### Prohibited Wording
 
 - `社会的価値が形成された`
 - `コミュニティ規範が形成された`
 - `運営も規約もないのに作法が共有された`
 - `これが流行全体の本質である`
 - `研究全体の結論である`
-- 固定98件の比率を交換投稿全体へ一般化する表現
+- Language generalizing proportions from the fixed 98 records to all exchange
+  posts
 
-## 8. 生成・検証契約
+## 8. Generation and Verification Contract
 
-`regenerate_slide_assets.py`は13〜16ページを一つの実行で生成し、
-各ページのPNGとmetrics JSON、統合manifestを出力する。出力先を
-指定しない場合は`tempfile.mkdtemp()`で新しいシステム一時ディレクトリを
-作る。`--output-dir`を指定した場合はそのパスを使う。ただし、既存最終
-PNGの誤上書きを防ぐため、リポジトリ内部への出力は拒否する。
+`regenerate_slide_assets.py` generates slides 13–16 in one run and outputs a PNG
+and metrics JSON for each slide plus a combined manifest. If no output path is
+given, `tempfile.mkdtemp()` creates a new system temporary directory. If
+`--output-dir` is provided, that path is used. Output inside the repository is
+rejected to prevent accidental overwriting of existing final PNGs.
 
-出力ファイル:
+Output files:
 
 - `p13_agreement.png` / `p13_metrics.json`
 - `p14_composition.png` / `p14_metrics.json`
@@ -498,18 +532,21 @@ PNGの誤上書きを防ぐため、リポジトリ内部への出力は拒否�
 - `p16_expressions.png` / `p16_metrics.json`
 - `slide_assets_manifest.json`
 
-PNGは1920×1080、幅1,720px以上、日本語グリフ欠落0、テキストの
-キャンバス外配置0を必須とする。異なる二つの一時ディレクトリで同じ入力を
-生成した場合、上記9ファイルのSHA-256がすべて一致しなければならない。
+Every PNG must be 1920×1080, at least 1,720 px wide in content, with 0 missing
+Japanese glyphs and 0 text elements outside the canvas. Generating from the same
+inputs in two different temporary directories must produce matching SHA-256
+values for all nine files.
 
-検証は次を含む。
+Verification includes:
 
-- 正解セット192行×12列、ID一意192件、分類結果結合192/192
-- 原本先頭12列との全セル一致、補充3件の交換ラベル保存
-- 4基準データのSHA-256一致
-- `verify_slide_numbers.py` 96/96
-- ページ15の12項目 12/12
-- ページ16の7数値と匿名化引用2件の原文照合
-- 単位・回帰テスト、Ruff、`git diff --check`
-- PNG形式・解像度・非空、metricsとmanifestのSHA照合
-- 2回生成のPNG・JSON・manifest完全一致
+- Gold Standard shape of 192 rows × 12 columns, 192 unique IDs, and a 192/192
+  join with classification results
+- Cell-for-cell equality with the first 12 source columns and preservation of
+  the three supplemental exchange labels
+- Matching SHA-256 values for the four reference datasets
+- `verify_slide_numbers.py`: 96/96
+- Slide 15: 12/12 metrics
+- Slide 16: seven metrics and source matching for two anonymized quotations
+- Unit and regression tests, Ruff, and `git diff --check`
+- PNG format, resolution, nonempty content, and metric/manifest hash checks
+- Exact match of PNG, JSON, and manifest files across two runs

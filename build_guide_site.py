@@ -467,10 +467,10 @@ def build_page(content: str, headings: list[tuple[int, str, str]]) -> str:
         <h1>{html.escape(title)}</h1>
         <p>ボンボンドロップシール関連投稿を題材に、SNS投稿を人間の判断とルールベース分類で分析するための実践ガイドです。</p>
         <div class="quick-links">
-          <a href="#2-分類カテゴリを設定する">分類カテゴリ</a>
-          <a href="#6-分類の優先順位を決める">優先順位</a>
-          <a href="#8-pythonでルールベース分類を行う">Python分類</a>
-          <a href="#10-分析結果の確認">結果確認</a>
+          <a href="#2-define-the-classification-categories">分類カテゴリ</a>
+          <a href="#6-define-category-priority">優先順位</a>
+          <a href="#8-run-rule-based-classification-in-python">Python分類</a>
+          <a href="#10-review-the-analysis-results">結果確認</a>
         </div>
       </section>
 

@@ -1,32 +1,44 @@
-# v2分類器 ベースライン精度測定
+# v2 Classifier Baseline Evaluation
 
-**測定日**: 2026-07-28
-**正解セット**: `data/output/gold_standard_labeled_189of200.csv`（手動ラベル、多重ラベル 0/1）
-**評価対象**: `data/output/sentiment_classified_2511-2604.csv`（`classify_sns_rule_based.py` v2.0.0 の出力、**未修正**）
-**評価スクリプト**: `evaluate_v2_against_gold.py`
+**Evaluation date**: 2026-07-28
+
+**Gold dataset**: `data/output/gold_standard_labeled_189of200.csv` (human labels; multi-label 0/1 columns)
+
+**Predictions**: `data/output/sentiment_classified_2511-2604.csv` (output from `classify_sns_rule_based.py` v2.0.0, **unchanged**)
+
+**Evaluation script**: `evaluate_v2_against_gold.py`
+
+> **Historical status:** this is the 189-row evaluation from 2026-07-28. The
+> current authoritative evaluation is `docs/baseline_hybrid.md`, based on Gold
+> 192. Interpretive wording such as “near operational quality” records the view
+> at this stage; the current presentation does not claim a fixed operational F1
+> threshold.
 
 ---
 
-## 0. 測定条件
+## 0. Evaluation Conditions
 
-| 項目 | 値 |
+| Item | Value |
 |---|---|
-| 抽出元 | 109,037件（`sentiment_classified_2511-2604.csv`） |
-| 抽出方法 | 単純無作為抽出、`random.Random(20260728).sample(frame, 200)` |
-| 除外 | `random_sample_100_202511_202604.csv` の全ID（83件が母集団に存在、除去済み） |
-| 抽出数 | 200 |
-| **要検討=1（判断保留）** | **11件 → 評価から除外** |
-| **評価対象** | **189件**（正解セットと予測の突合 189/189、欠損なし） |
-| 閾値 | `MIN_PRIMARY_SCORE = 1.8`（v2のまま） |
+| Sampling frame | 109,037 rows in `sentiment_classified_2511-2604.csv` |
+| Sampling method | Simple random sample: `random.Random(20260728).sample(frame, 200)` |
+| Exclusions before sampling | All IDs in `random_sample_100_202511_202604.csv`; 83 were present in the frame |
+| Sample size | 200 |
+| **Deferred: `要検討=1`** | **11 rows, excluded from evaluation** |
+| **Evaluated rows** | **189**, matched predictions 189/189, 0 missing |
+| Threshold | `MIN_PRIMARY_SCORE = 1.8` (unchanged from v2) |
 
-正解セットの整合性チェック（全て合格）:
-- ラベル値は `0`/`1` のみ、空欄は要検討=1の11件だけ
-- `中立` 列は「6カテゴリ全て0」と**全189行で一致**
-- post_id重複なし
+All Gold-data consistency checks passed:
 
-### 正解セットの分布（189件）
+- label values are `0` or `1`; only the 11 deferred rows contain empty labels
+- the `中立` column equals “all six active categories are 0” for all 189 rows
+- no duplicate `post_id`
 
-| カテゴリ | 正解件数 | 割合 |
+### Gold-label distribution (189 rows)
+
+The Japanese category names are preserved because they are dataset labels.
+
+| Category | Gold count | Share |
 |---|---:|---:|
 | 交換・取引 | 51 | 27.0% |
 | 中立 | 48 | 25.4% |
@@ -35,21 +47,21 @@
 | 焦り・競争 | 27 | 14.3% |
 | 不満・怒り | 14 | 7.4% |
 | 情報共有 | 5 | 2.6% |
-| （延べラベル数） | 214 | |
+| **Total assigned labels** | **214** | |
 
-1投稿あたりのラベル数: 0個（＝中立）48件、1個 117件、2個 23件、3個 1件。
-**多重ラベルは全体の12.7%**（24/189）。
+Labels per post: 48 rows with 0 labels (= `中立`), 117 with 1, 23 with 2, and 1 with 3. **Multi-label rows account for 12.7%** (24/189).
 
-> **注意**: `情報共有` は正解が5件しかなく、この指標の信頼区間は極めて広い（後述）。本測定から 情報共有 の性能について確定的なことは言えない。
+> **Caution:** only five Gold rows have the `情報共有` label. The confidence interval is extremely wide, so this evaluation cannot support a definitive conclusion about that category.
 
 ---
 
-## 1. 基準(1) 緩和基準 — v2の単一ラベルが正解ラベル集合に含まれるか
+## 1. Criterion 1: Lenient Primary-label Evaluation
 
-v2は1投稿に1ラベルしか付けないため、**予測が正解集合のどれか1つに当たれば正解**とみなす。
-Precision は寛容（複数正解のどれでも可）、Recall は単一ラベル出力である以上、構造的に頭打ちになる。
+v2 produces one primary label per post. Under the lenient criterion, a prediction is correct when it matches any label in the Gold set.
 
-| カテゴリ | 正解数 | 予測数 | TP | FP | FN | Precision | Recall | F1 |
+Precision is lenient because any Gold label can count as correct. Recall has a structural ceiling because the classifier returns only one primary label.
+
+| Category | Gold | Predicted | TP | FP | FN | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | 不満・怒り | 14 | 20 | 8 | 12 | 6 | 0.400 | 0.571 | **0.471** |
 | 焦り・競争 | 27 | 7 | 5 | 2 | 22 | 0.714 | 0.185 | **0.294** |
@@ -58,21 +70,20 @@ Precision は寛容（複数正解のどれでも可）、Recall は単一ラベ
 | 喜び・満足 | 33 | 29 | 16 | 13 | 17 | 0.552 | 0.485 | **0.516** |
 | 情報共有 | 5 | 4 | 0 | 4 | 5 | 0.000 | 0.000 | **0.000** |
 | 中立 | 48 | 63 | 35 | 28 | 13 | 0.556 | 0.729 | **0.631** |
-| **micro平均** | 214 | 189 | 116 | 73 | 98 | 0.614 | 0.542 | **0.576** |
-| **macro平均** | | | | | | 0.522 | 0.440 | **0.451** |
+| **Micro average** | 214 | 189 | 116 | 73 | 98 | 0.614 | 0.542 | **0.576** |
+| **Macro average** | | | | | | 0.522 | 0.440 | **0.451** |
 
-**緩和基準の的中率: 116/189 = 0.614**（95%CI [0.543, 0.680]）
+**Lenient hit rate: 116/189 = 0.614** (95% CI [0.543, 0.680])
 
-参考: 正解が1ラベルのみの165件に限った厳密一致は 103/165 = 0.624。
-正解が2ラベルの23件では 0.522 に下がる（単一ラベル出力の構造的限界）。
+For the 165 rows with exactly one Gold label, exact match is 103/165 = 0.624. Accuracy falls to 0.522 for the 23 rows with two Gold labels, reflecting the structural limitation of single-label output.
 
 ---
 
-## 2. 基準(2) 多重ラベル基準 — スコア1.8超の全カテゴリを予測集合とする
+## 2. Criterion 2: Multi-label Evaluation
 
-`category_scores` から 1.8以上のカテゴリすべてを予測集合とする。空集合は 中立 とみなす。
+The prediction set contains every category whose `category_scores` value is at least 1.8. An empty prediction set is treated as `中立`.
 
-| カテゴリ | 正解数 | 予測数 | TP | FP | FN | Precision | Recall | F1 |
+| Category | Gold | Predicted | TP | FP | FN | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | 不満・怒り | 14 | 32 | 10 | 22 | 4 | 0.312 | 0.714 | **0.435** |
 | 焦り・競争 | 27 | 7 | 5 | 2 | 22 | 0.714 | 0.185 | **0.294** |
@@ -81,58 +92,58 @@ Precision は寛容（複数正解のどれでも可）、Recall は単一ラベ
 | 喜び・満足 | 33 | 42 | 23 | 19 | 10 | 0.548 | 0.697 | **0.613** |
 | 情報共有 | 5 | 6 | 1 | 5 | 4 | 0.167 | 0.200 | **0.182** |
 | 中立 | 48 | 63 | 35 | 28 | 13 | 0.556 | 0.729 | **0.631** |
-| **micro平均** | 214 | 224 | 130 | 94 | 84 | 0.580 | 0.607 | **0.594** |
-| **macro平均** | | | | | | 0.533 | 0.535 | **0.496** |
+| **Micro average** | 214 | 224 | 130 | 94 | 84 | 0.580 | 0.607 | **0.594** |
+| **Macro average** | | | | | | 0.533 | 0.535 | **0.496** |
 
-**予測集合が正解集合と完全一致: 101/189 = 0.534**（95%CI [0.463, 0.604]）
+**Exact prediction-set match: 101/189 = 0.534** (95% CI [0.463, 0.604])
 
-### 2.1 二基準の比較
+### 2.1 Comparison of the two criteria
 
-| 指標 | (1)緩和 | (2)多重 | 差 |
+| Metric | Lenient | Multi-label | Difference |
 |---|---:|---:|---:|
-| micro F1 | 0.576 | 0.594 | +0.018 |
-| macro F1 | 0.451 | 0.496 | +0.045 |
-| micro Precision | 0.614 | 0.580 | −0.034 |
-| micro Recall | 0.542 | 0.607 | +0.065 |
+| Micro F1 | 0.576 | 0.594 | +0.018 |
+| Macro F1 | 0.451 | 0.496 | +0.045 |
+| Micro precision | 0.614 | 0.580 | −0.034 |
+| Micro recall | 0.542 | 0.607 | +0.065 |
 
-多重ラベル基準に切り替えると、**Recall が +0.065 上がり Precision が −0.034 下がる**。カテゴリ別では:
+Switching to the multi-label criterion increases recall by +0.065 and decreases precision by −0.034.
 
-- **喜び・満足**: F1 0.516 → 0.613（Recall 0.485→0.697）。単一ラベル時に他カテゴリに負けて消えていた分が回収される
-- **欲望・執着**: F1 0.373 → 0.455（Recall 0.306→0.417）。同上
-- **不満・怒り**: Recall 0.571→0.714 だが Precision 0.400→0.312 と悪化し、F1は **0.471→0.435 と下がる**。閾値1.8を超える不満スコアが付く投稿の多くは実際には不満ではない（FP 12→22）
-- **焦り・競争 / 中立**: **全く変わらない**。焦り・競争は閾値超えの予測が7件しかなく、多重にしても増えない
+- **喜び・満足**: F1 0.516 → 0.613; recall 0.485 → 0.697. Signals that lost to another primary category are recovered.
+- **欲望・執着**: F1 0.373 → 0.455; recall 0.306 → 0.417.
+- **不満・怒り**: recall 0.571 → 0.714, but precision 0.400 → 0.312 and F1 **falls from 0.471 to 0.435**. Many posts with a dissatisfaction score above 1.8 are not labeled as dissatisfaction in Gold.
+- **焦り・競争 / 中立**: no change. Only seven posts exceed the urgency threshold, so multi-label output does not recover additional cases.
 
-**結論**: 多重ラベル化はスコアの取りこぼしをある程度回収するが、根本的な取りこぼし（焦り・競争、情報共有）は閾値の問題ではなく**規則そのものが存在しない**ため、多重化しても改善しない。
+**Conclusion:** multi-label output recovers some suppressed category scores, but the missing `焦り・競争` and `情報共有` cases are caused by missing rules rather than the threshold. Multi-label output alone does not fix them.
 
 ---
 
-## 3. カテゴリ別の所見
+## 3. Category-level Findings
 
-### 3.1 交換・取引 — 唯一実用水準（F1 0.87）
+### 3.1 交換・取引: the only category near operational quality (F1 0.87)
 
-Precision 0.953（95%CI [0.845, 0.987]）。予測43件中41件が正解。`exchange_header` 重み3.0 + `structured_pair` 2.2 という他カテゴリより強い重み付けが効いている。
+Precision is 0.953 (95% CI [0.845, 0.987]); 41 of 43 predictions are correct. The relatively strong weighting of `exchange_header` at 3.0 and `structured_pair` at 2.2 contributes to this result.
 
-ただし FN 10件があり、うち監査で指摘した `\b交換\b` バグの直撃例が正解セットにも現れた:
+There are still 10 false negatives. The Gold data includes direct examples of the `\b交換\b` issue identified in the audit:
 
-```
+```text
 gold=[交換・取引]  pred=中立(score 0.00)
 「@m0jsm スタンダードとボンドロキティ交換していただくこと可能でしょうか？」
 ```
 
-「と交換して」は `\b` が成立せず、`交換して(?:ください|下さい)` にも当たらない。スコア0で中立に落ちている。
+`と交換して` does not satisfy `\b`, and it does not match `交換して(?:ください|下さい)`, so the post receives score 0 and falls into `中立`.
 
-```
+```text
 gold=[交換・取引]  pred=中立(score 0.00)
 「…定価でまとめて買い取ってくれる方いないですか」
 ```
 
-`買取|買い取り` は「買い取って」に不一致。
+`買取|買い取り` does not match `買い取って`.
 
-### 3.2 焦り・競争 — 最大の弱点（Recall 0.185）
+### 3.2 焦り・競争: the largest weakness (recall 0.185)
 
-**正解27件中5件しか拾えていない**（95%CI [0.082, 0.367]）。取りこぼし22件の行き先:
+Only **5 of 27** Gold rows are recovered (95% CI [0.082, 0.367]). The other 22 receive these primary labels:
 
-| v2が付けたラベル | 件数 |
+| v2 label | Count |
 |---|---:|
 | 不満・怒り | 9 |
 | 中立 | 5 |
@@ -140,31 +151,30 @@ gold=[交換・取引]  pred=中立(score 0.00)
 | 欲望・執着 | 2 |
 | 情報共有 | 1 |
 
-`焦り・競争` は正解セットで**3番目に多いカテゴリ（14.3%）**であるにもかかわらず、v2は全体で3.0%しか付けていない。監査レポート§2.3で「多重ラベルなら1.74倍」と推定したが、**正解セットではさらに大きい実質4.8倍の乖離**である。
+`焦り・競争` is the third-largest Gold category at 14.3%, while v2 assigns it to only 3.0% of the complete corpus. The audit estimated that multi-label counting would increase this category by 1.74×; in the Gold dataset, the effective gap is 4.8×.
 
-多重ラベル基準にしても Recall は 0.185 のまま変わらない。閾値ではなく規則の欠落が原因であることが確定した。
+Recall remains 0.185 under multi-label evaluation. This confirms that the cause is missing rules, not only the threshold.
 
-取りこぼし例:
-```
+False-negative examples:
+
+```text
 gold=[焦り・競争]  pred=中立(0.00)
 「しまむら、シール見えました！ しまむら並び始めました！！ いつメンです！ 朝早くから大変だなー。」
-   → 「並び始めました」が `並んで|並ぶ` に不一致
+   -> 「並び始めました」 does not match `並んで|並ぶ`
 
 gold=[不満・怒り, 焦り・競争]  pred=中立(0.00)
 「だめだボンボンドロップシール 全く無い。。アベイルとか行こうかな」
 
 gold=[焦り・競争]  pred=中立(0.00)
 「…出会ったらどんな絵柄でもとりあえず買う人が多くて品薄なんだと思う。落ち着くまで…」
-   → 「品薄」が辞書に存在しない
+   -> 「品薄」 is not in the dictionary
 ```
 
-### 3.3 情報共有 — 緩和基準で TP ゼロ
+### 3.3 情報共有: zero true positives under the lenient criterion
 
-**正解5件・予測4件で、重なりが1件もない**（緩和基準 P=R=F1=0.000）。多重基準でようやく1件一致。
+The five Gold rows and four predictions do not overlap under the lenient criterion: P=R=F1=0.000. The multi-label criterion recovers one row.
 
-正解5件がどう分類されたか:
-
-| 正解 | v2の予測 | 投稿（抜粋） |
+| Gold | v2 prediction | Post excerpt |
 |---|---|---|
 | 情報共有 | 中立(0.00) | ヘルムさんが…ねこきんぎょさんの店舗を借りてやってるみたいです |
 | 情報共有 | 中立(0.00) | 3️⃣新宿ドンキ ぷくぷくシール？…少しありました |
@@ -172,33 +182,34 @@ gold=[焦り・競争]  pred=中立(0.00)
 | 情報共有+喜び満足 | 喜び・満足(2.35) | …**入荷** セリア ダイソー ドンキ |
 | 情報共有 | 中立(1.50) | ボンボンドロップシール、どこにも売ってません。現場からは以上です |
 
-v2が 情報共有 と予測した4件は**全て不正解**で、いずれも実際は 喜び・満足 か 欲望・執着 だった:
+All four primary `情報共有` predictions are false positives and are labeled as `喜び・満足` or `欲望・執着` in Gold:
 
+```text
+gold=[喜び・満足]  pred=情報共有  「Amazonで…定価で再入荷して、迷わずポチっちゃった！」
+gold=[喜び・満足]  pred=情報共有  「昨日のボンドロ再入荷に出遅れたけれど今日は…出会えた嬉しい🩶」
+gold=[欲望・執着]  pred=情報共有  「釧路で…の目撃情報ないですかー？」
 ```
-gold=[喜び・満足]   pred=情報共有  「Amazonで…定価で再入荷して、迷わずポチっちゃった！」
-gold=[喜び・満足]   pred=情報共有  「昨日のボンドロ再入荷に出遅れたけれど今日は…出会えた嬉しい🩶」
-gold=[欲望・執着]   pred=情報共有  「釧路で…の目撃情報ないですかー？」
-```
 
-**`再入荷` `目撃情報` といった語が、その語を含む文の話者の感情ではなく語の存在だけで 情報共有 を発火させている。** 「再入荷して**ポチっちゃった**」は喜びの投稿であって在庫情報の共有ではない。
+Expressions such as `再入荷` and `目撃情報` trigger the category based on word presence rather than the speaker's intent. A post about successfully buying a restocked product is a joy post, not necessarily inventory information.
 
-> ただし n=5 のため、95%CI は [0.036, 0.624] と極めて広い。**情報共有の性能は本測定では判定不能**。専用に追加サンプルを取る必要がある。
+> The category has only n=5 and a 95% CI of [0.036, 0.624]. Its performance is therefore **indeterminate in this evaluation**. A dedicated additional sample is required.
 
-### 3.4 中立 — 予測63件中28件（44.4%）が誤り
+### 3.4 中立: 28 of 63 predictions are incorrect (44.4%)
 
-| 方向 | 件数 |
+| Direction | Count |
 |---|---:|
-| v2=中立、正解は非中立（**偽中立**） | **28** |
-| v2=非中立、正解は中立（偽陽性） | 13 |
+| v2=`中立`, Gold is active (**false neutral**) | **28** |
+| v2 is active, Gold=`中立` (false positive) | 13 |
 
-偽中立28件の内訳(正解ラベル、延べ): 欲望・執着 8、交換・取引 7、焦り・競争 5、情報共有 4、喜び・満足 4、不満・怒り 3。
+The 28 false-neutral rows have these Gold labels, counted with overlap: `欲望・執着` 8, `交換・取引` 7, `焦り・競争` 5, `情報共有` 4, `喜び・満足` 4, and `不満・怒り` 3.
 
-そのうち **18件はスコア0.00**、つまり**どの規則も一つも発火していない**。残り10件は 0 < score < 1.8 で閾値未達。
+Of these rows, **18 have score 0.00**, meaning that no rule fires. The remaining 10 have a score between 0 and 1.8 and do not reach the threshold.
 
-> 監査レポート§1では標本50件から「中立の64%が誤り」と推定したが、**正解セットでの実測は44.4%**。監査の推定は過大だった。ただし依然として、v2が中立とした投稿の**4割強が誤り**である。中立の実質的な割合は、41.4% × 0.556 ≈ **23%程度**と見積もられる。
+> Audit Section 1 estimated a 64% error rate from a 50-row neutral sample. The Gold data measures **44.4%**. The audit estimate was too high, although more than four in ten v2 neutral predictions are still incorrect. A rough estimate of the effective neutral share is 41.4% × 0.556 ≈ **23%**.
 
-スコア0.00の偽中立の例（規則が一つも当たらない典型）:
-```
+Examples of score-0.00 false-neutral posts:
+
+```text
 gold=[欲望・執着]  「プリティーシリーズのボンボンドロップシール出して〜〜〜〜〜〜〜」
 gold=[欲望・執着]  「嵐のツアーグッズでボンドロ出ないかな〜」
 gold=[欲望・執着]  「@seal_ya_san ボンドロ シナモロール♡ ご縁がありますように」
@@ -207,112 +218,112 @@ gold=[喜び・満足]  「…ハチワレのボンドロを貼ることに成�
 gold=[不満+焦り]   「…今の状況辛すぎる…出会えたら奇跡みたいになってる」
 ```
 
-「出して〜」「出ないかな」「ますように」といった**願望の間接表現**、「手に入れてしまった」「成功」といった**達成の言い換え**が丸ごと欠落している。
+The rules omit indirect desire expressions such as `出して〜`, `出ないかな`, and `ますように`, as well as alternative expressions of achievement such as `手に入れてしまった` and `成功`.
 
 ---
 
-## 4. 監査レポートの主張の検証 — 2点を訂正する
+## 4. Validating and Correcting Claims from the Audit
 
-### 4.1 【訂正】優先順位規則の復元は、精度を改善しない
+### 4.1 Correction: restoring the documented priority does not improve accuracy
 
-監査レポート§2で「ガイド§6の優先順位が実装されていない」ことを **P0（最優先修正）** として挙げた。正解セットで検証した結果、**この修正は精度を上げない**。
+Audit Section 2 marked the missing priority behavior from Guide Section 6 as P0. Testing the change against Gold shows that **it does not improve accuracy**.
 
-189件中、閾値超えが2つ以上ある投稿は31件、うち優先順位逆転は15件。この15件についてガイドの優先順位を適用した場合:
+Of the 189 rows, 31 exceed the threshold for at least two categories, and 15 would change under the documented priority:
 
-| 結果 | 件数 |
+| Outcome | Count |
 |---|---:|
-| 優先順位適用で**正解になる**（v2✗ → doc○） | 3 |
-| 優先順位適用で**不正解になる**（v2○ → doc✗） | 4 |
-| どちらでも正解 | 1 |
-| どちらでも不正解 | 7 |
+| Priority makes the row correct (v2 incorrect → documented priority correct) | 3 |
+| Priority makes the row incorrect (v2 correct → documented priority incorrect) | 4 |
+| Correct under both | 1 |
+| Incorrect under both | 7 |
 
-**差し引き −1件。改善ではない。** 逆転が起きるのは主に「不満・怒りが他カテゴリに負ける」パターンだが、正解セットで見ると **不満・怒りは正解が14件しかなく、むしろ過剰予測（FP 12〜22件）されている**カテゴリだった。不満・怒りを優先させる規則は、この過剰予測をさらに悪化させる。
+The net effect is −1 row. Priority reversals mainly promote `不満・怒り`, but only 14 Gold rows have that label and the category is already overpredicted, with 12–22 false positives.
 
-つまり **§6の優先順位はガイド準拠の問題であって、精度の問題ではない**。「ガイド通りに実装されていない」という指摘自体は事実として維持するが、**修正の優先度はP0からP2へ下げるべき**である。（ただし n=15 と小さく、この結論自体も確定的ではない。）
+The issue remains a mismatch between documentation and implementation, but it should be reduced from P0 to P2 as an accuracy fix. The changed subset is only n=15, so this conclusion is also uncertain.
 
-### 4.2 【訂正】信頼度ラベルは機能している
+### 4.2 Correction: the confidence label is informative
 
-監査レポート§4.3で「証拠ゼロの投稿に信頼度『中』が付くのは直感と逆」と指摘した。正解セットで見ると、**信頼度は精度の指標として単調に機能している**:
+Audit Section 4.3 questioned assigning medium confidence to neutral posts with no evidence. In the Gold data, confidence is monotonic with accuracy:
 
-| 信頼度 | 件数 | 緩和基準の正解率 |
+| Confidence | Rows | Lenient accuracy |
 |---|---:|---:|
-| 高 | 44 | **0.886** |
-| 中 | 119 | 0.597 |
-| 低 | 26 | **0.231** |
+| High | 44 | **0.886** |
+| Medium | 119 | 0.597 |
+| Low | 26 | **0.231** |
 
-「証拠ゼロの中立に中を付ける」という設計上の違和感は残るが、**結果として信頼度は使える選別指標である**。信頼度「高」に絞れば精度0.886で運用できる。監査の指摘は撤回する。
+The design remains unintuitive for score-zero neutral rows, but confidence is useful as a selection signal. Restricting use to high-confidence rows gives 0.886 accuracy. The audit claim is withdrawn.
 
-### 4.3 【確認】v2はv1より有意に良いとは言えない
+### 4.3 Confirmation: v2 is not significantly better than v1
 
-| 分類器 | 緩和基準の的中 | 95%CI |
+| Classifier | Lenient hits | 95% CI |
 |---|---:|---|
-| v2 (現行) | 116/189 = **0.614** | [0.543, 0.680] |
+| v2 (current) | 116/189 = **0.614** | [0.543, 0.680] |
 | v1 (legacy) | 111/189 = **0.587** | [0.516, 0.655] |
 
-差は +2.7ポイント。McNemar検定（v2のみ正解26件 / v1のみ正解21件、正確二項検定）で **p = 0.560**。
+The difference is +2.7 percentage points. An exact McNemar/binomial test with 26 v2-only correct rows and 21 v1-only correct rows gives **p = 0.560**.
 
-**v2の書き換えが精度を改善したという証拠はない。** 監査レポート§4.2の指摘（31.2%のラベルが未検証のまま変わった）が裏付けられた。
+There is no evidence that the v2 rewrite improved accuracy. This supports the audit finding that 31.2% of labels changed without validation.
 
-### 4.4 【確認】辞書の欠落が誤りの主因
+### 4.4 Confirmation: missing dictionary coverage is the main error source
 
-単一ラベルの誤り73件のうち、監査で列挙した欠落表現を含むもの:
+Among the 73 single-label errors:
 
-| 欠落パターン | 73件中の該当 |
+| Missing pattern | Matching errors among 73 |
 |---|---:|
-| 願望・否定形（〜たい / ますように / ないかな / ほしい） | 19 |
-| 交換（`\b` 不発） | 8 |
-| 活用形（過去 / すぎ / 語幹変化） | 6 |
-| 辞書欠落語（品薄 / 抽選 / 流通 / 目撃情報） | 5 |
+| desire and negation forms (`〜たい`, `ますように`, `ないかな`, `ほしい`) | 19 |
+| exchange (`\b` does not fire) | 8 |
+| inflection (past tense, `すぎ`, stem changes) | 6 |
+| missing terms (`品薄`, `抽選`, `流通`, `目撃情報`) | 5 |
 
-（1件が複数に該当しうるため合計は一致しない。）
+A row can match more than one pattern, so the counts do not sum to 73.
 
 ---
 
-## 5. まとめ
+## 5. Summary
 
-### 5.1 ベースライン数値
+### 5.1 Baseline metrics
 
-| 指標 | 値 |
+| Metric | Value |
 |---|---:|
-| **緩和基準 micro F1** | **0.576** |
-| **多重基準 micro F1** | **0.594** |
-| 緩和基準 macro F1 | 0.451 |
-| 多重基準 macro F1 | 0.496 |
-| 緩和基準の的中率 | 0.614 [0.543, 0.680] |
-| 予測集合の完全一致率 | 0.534 [0.463, 0.604] |
+| **Lenient micro F1** | **0.576** |
+| **Multi-label micro F1** | **0.594** |
+| Lenient macro F1 | 0.451 |
+| Multi-label macro F1 | 0.496 |
+| Lenient hit rate | 0.614 [0.543, 0.680] |
+| Exact prediction-set match | 0.534 [0.463, 0.604] |
 
-macro F1 が micro F1 を大きく下回る（0.451 vs 0.576）ことは、**性能がカテゴリ間で極端に不均一**であることを示す。実態は「交換・取引だけが動いていて、残りは動いていない」に近い。
+The large gap between macro and micro F1 (0.451 vs 0.576) indicates highly uneven performance. The classifier is close to usable only for `交換・取引`.
 
-| カテゴリ | 緩和F1 | 状態 |
+| Category | Lenient F1 | Status |
 |---|---:|---|
-| 交換・取引 | 0.872 | 実用水準 |
-| 中立 | 0.631 | 過剰予測（4割強が誤り） |
-| 喜び・満足 | 0.516 | 要改善 |
-| 不満・怒り | 0.471 | 過剰予測（Precision 0.400） |
-| 欲望・執着 | 0.373 | 要改善 |
-| 焦り・競争 | 0.294 | **ほぼ機能せず**（Recall 0.185） |
-| 情報共有 | 0.000 | **判定不能**（n=5、要追加サンプル） |
+| 交換・取引 | 0.872 | Near operational quality |
+| 中立 | 0.631 | Overpredicted; more than 40% incorrect |
+| 喜び・満足 | 0.516 | Needs improvement |
+| 不満・怒り | 0.471 | Overpredicted; precision 0.400 |
+| 欲望・執着 | 0.373 | Needs improvement |
+| 焦り・競争 | 0.294 | **Barely functional**; recall 0.185 |
+| 情報共有 | 0.000 | **Indeterminate**; n=5, requires more samples |
 
-### 5.2 修正優先度（監査レポート§5からの改訂版）
+### 5.2 Revised improvement priorities
 
-正解セットでの実測を踏まえて優先度を組み替えた。**コードは未修正。**
+The priorities below incorporate the measured Gold results. **The classifier code was not modified.**
 
-| 優先 | 対象 | 根拠 |
+| Priority | Target | Evidence |
 |---|---|---|
-| **P0** | 焦り・競争 の規則を全面的に作り直す | Recall 0.185。正解セット3位（14.3%）のカテゴリがほぼ全滅。多重化でも改善しないので閾値ではなく規則の問題 |
-| **P0** | 願望の間接表現を追加（〜出して / 出ないかな / ますように / 〜たい / ほしい） | 誤り73件中19件。偽中立の最大要因 |
-| **P0** | `\b交換\b` の修正（`classify_sns_rule_based.py:129`） | 誤り73件中8件。正解セットでもスコア0の取りこぼしを確認 |
-| **P1** | 情報共有 を「語の存在」ではなく「話者の意図」で判定する設計に変更 | 予測4件が全て不正解。`再入荷` `目撃情報` が喜び・欲望の投稿を誤って引き寄せている |
-| **P1** | 不満・怒り の過剰予測を抑える（Precision 0.400 / 多重時 0.312） | FP 12〜22件。現状は「不満語があれば不満」で拾いすぎ |
-| **P1** | 活用形の一般化（過去形・すぎ・語幹） | 誤り73件中6件 + 偽中立多数 |
-| **P1** | 辞書欠落語の追加（品薄 / 抽選 / 流通 / 買い取って / 並び始め） | 誤り73件中5件 |
-| **P2** | 多重ラベル出力への移行 | micro F1 +0.018、macro F1 +0.045。効果は限定的だが、正解の12.7%が多重ラベルである以上、単一ラベル出力では構造的に上限がある |
-| **P2** | ガイド§6の優先順位の実装 | **精度は改善しない（差し引き −1件）**。ガイド準拠のためだけの修正 |
-| **見送り** | 信頼度ラベルの再設計 | 実測では単調に機能（高0.886 / 中0.597 / 低0.231）。監査§4.3は撤回 |
+| **P0** | Redesign the `焦り・競争` rules | Recall 0.185. The third-largest Gold category (14.3%) is almost entirely missed; multi-label output does not help. |
+| **P0** | Add indirect desire forms (`〜出して`, `出ないかな`, `ますように`, `〜たい`, `ほしい`) | Present in 19 of 73 errors and the largest source of false-neutral rows. |
+| **P0** | Fix `\b交換\b` in `classify_sns_rule_based.py:129` | Present in 8 of 73 errors; score-zero misses appear in Gold. |
+| **P1** | Classify `情報共有` by speaker intent rather than word presence | All four primary predictions are wrong; `再入荷` and `目撃情報` attract joy and desire posts. |
+| **P1** | Reduce overprediction of `不満・怒り` | Precision 0.400, or 0.312 under multi-label evaluation; 12–22 false positives. |
+| **P1** | Generalize inflection handling | Six of 73 errors plus many false-neutral rows. |
+| **P1** | Add missing terms (`品薄`, `抽選`, `流通`, `買い取って`, `並び始め`) | Five of 73 errors. |
+| **P2** | Move to multi-label output | Micro F1 +0.018 and macro F1 +0.045. The benefit is limited, but 12.7% of Gold rows are multi-label. |
+| **P2** | Implement the Guide Section 6 priority | Net −1 correct row; useful only for documentation consistency. |
+| **Do not change** | Confidence labels | Measured accuracy is monotonic: high 0.886, medium 0.597, low 0.231. |
 
-### 5.3 測定上の限界
+### 5.3 Measurement limitations
 
-1. **n=189**。全体の的中率で95%CIが約±0.07ある。カテゴリ別はさらに広い。
-2. **情報共有 n=5、不満・怒り n=14** — この2カテゴリの数値はほぼ何も語らない。層化した追加サンプルが必要。
-3. **要検討11件を除外した**。うち7件は「広告」、2件は「主題が無関係」とメモされている。**広告フィルタ通過後の109,037件になお広告が残っている**ことを示唆する（200件中7件 ≈ 3.5%）。この分は本測定の分母から外れているため、実運用の精度はここで出た数値より低くなる可能性がある。
-4. 正解セットは1名の判断による。ラベラー間一致率は測定していない。
+1. **n=189.** The overall hit-rate 95% CI is approximately ±0.07; category-level intervals are wider.
+2. **`情報共有` n=5 and `不満・怒り` n=14.** These categories require stratified additional samples.
+3. **Eleven deferred rows were excluded.** Seven were noted as advertising and two as off-topic. This suggests that advertising remains in the 109,037-post corpus (7/200 ≈ 3.5%). Excluding these rows may make the measured accuracy higher than practical deployment accuracy.
+4. The Gold dataset reflects one annotator. Inter-annotator agreement was not measured.

@@ -1,80 +1,82 @@
-# SNSデータ感情分析の進め方
+# SNS Sentiment and Behavior Analysis Guide
 
-## 1. 分析目的を決める
+## 1. Define the Analysis Objective
 
-まず、感情分析で何を明らかにしたいのかを決める。
+Start by deciding what the sentiment analysis should explain.
 
-今回の研究では、ボンボンドロップシールに関するSNS投稿を対象に、単なるポジティブ・ネガティブの判定ではなく、人々の感情がどのような行動につながっているのかを分析する。
+This study examines SNS posts about Bonbon Drop Seal. Its purpose is not limited to positive and negative sentiment. It also investigates how emotions relate to behavior.
 
-### 研究目的の例
+### Example research objective
 
-ボンボンドロップシールに関するSNS投稿を分析し、「かわいい」「買えた」といった好意的感情だけでなく、「欲しい」「買えない」「転売」「交換」「探している」といった感情や行動が、流行の拡大にどのように関わっているのかを明らかにする。
+Analyze SNS posts about Bonbon Drop Seal to determine how favorable reactions such as “cute” and “I bought it,” as well as desire, inability to purchase, resale, exchange, and searching behavior, relate to the spread of the trend.
 
 ---
 
-## 2. 分類カテゴリを設定する
+## 2. Define the Classification Categories
 
-一般的な感情分析では「ポジティブ・ネガティブ・中立」に分類することが多いが、今回の研究ではそれだけでは不十分である。
+Conventional sentiment analysis often uses positive, negative, and neutral labels. Those labels alone are insufficient for this study.
 
-ボンボンドロップシールの流行を分析するためには、感情だけでなく、購入行動・競争・交換文化も含めて分類する必要がある。
+Analyzing the Bonbon Drop Seal trend requires categories for purchasing behavior, competition, and exchange culture in addition to emotion.
 
-### 分類カテゴリ
+### Classification categories
 
-| カテゴリ | 内容 | 例 |
+The Japanese category names are preserved because they are values used in the datasets and classifier outputs.
+
+| Category | Description | Examples |
 |---|---|---|
-| 喜び・満足 | 商品を手に入れた喜びや好意 | 買えた、かわいい、嬉しい、最高 |
-| 欲望・執着 | 商品を欲しがる気持ちや収集欲 | 欲しい、探してる、集めたい、沼、中毒 |
-| 不満・怒り | 入手困難や転売への不満 | 買えない、売り切れ、転売、買い占め |
-| 焦り・競争 | 購入をめぐる競争状態 | 行列、開店ダッシュ、争奪戦、即完 |
-| 情報共有 | 入荷・在庫・販売場所の共有 | 入荷、再入荷、在庫、ロフト、目撃情報 |
-| 交換・取引 | ユーザー同士の交換や取引 | 求、譲、交換、郵送、レート |
-| 中立 | 明確な感情や行動が読み取れない投稿 | 単なる商品名の言及など |
+| 喜び・満足 | Joy, satisfaction, or favorable reactions after obtaining the product | 買えた, かわいい, 嬉しい, 最高 |
+| 欲望・執着 | Desire for the product or a strong collecting impulse | 欲しい, 探してる, 集めたい, 沼, 中毒 |
+| 不満・怒り | Dissatisfaction with scarcity, resale, or purchasing conditions | 買えない, 売り切れ, 転売, 買い占め |
+| 焦り・競争 | Competition or urgency around purchasing | 行列, 開店ダッシュ, 争奪戦, 即完 |
+| 情報共有 | Sharing stock, restock, or sales-location information | 入荷, 再入荷, 在庫, ロフト, 目撃情報 |
+| 交換・取引 | Exchanges or trades between users | 求, 譲, 交換, 郵送, レート |
+| 中立 | No clear emotion or behavior can be inferred | A post that only mentions the product name |
 
 ---
 
-## 3. 元データの構造を確認する
+## 3. Inspect the Source Data
 
-CSVファイルを開き、どの列に何の情報が入っているかを確認する。
+Open the CSV files and identify what each column contains.
 
-特に確認すべき列は以下である。
+Check the following fields in particular:
 
-- 投稿本文
-- 投稿日時
-- SNSの種類
+- post text
+- posting date and time
+- SNS type
 - URL
-- ユーザー情報
-- いいね数やリポスト数があれば反応指標
+- user information
+- engagement measures such as likes and reposts, if available
 
-感情分析で最も重要なのは、投稿本文が入っている列である。
+The post-text column is the most important input for this analysis.
 
 ---
 
-## 4. まず100件をサンプリングする
+## 4. Start with a Sample of 100 Posts
 
-最初から全データを分析するのではなく、まず100件程度をランダムに抽出し、自分の目で読む。
+Do not begin by classifying the full dataset. First draw a random sample of about 100 posts and read them manually.
 
-これは、実際のSNS投稿でどのような言葉が使われているかを確認し、分類基準を作るためである。
+This step reveals the language used in actual posts and provides evidence for the category definitions.
 
-### Codexへの指示例
+### Example instruction for Codex
 
 ```text
-このプロジェクトはSNS投稿の感情分析です。
-まず、data/processed/cleaned.csvの列構造を確認してください。
-そのうえで、投稿本文にあたる列からランダムに100件を抽出し、
-投稿日があれば投稿日も含めて、
-data/output/manual_check_sample_100.csvを作成してください。
-元データは絶対に上書きしないでください。
+This project analyzes sentiment and behavior in SNS posts.
+First inspect the columns in data/processed/cleaned.csv.
+Then draw a random sample of 100 posts from the post-text column.
+Include the posting date when it is available, and save the sample as
+data/output/manual_check_sample_100.csv.
+Never overwrite the source data.
 ```
 
 ---
 
-## 5. 手動でラベルを付ける
+## 5. Apply Human Labels
 
-抽出した100件を読み、投稿ごとに分類ラベルを付ける。
+Read the sampled posts and assign a classification label to each one.
 
-### 例
+### Examples
 
-| 投稿内容 | ラベル |
+| Original post | Label |
 |---|---|
 | ボンボンドロップシール買えた！かわいい | 喜び・満足 |
 | 欲しいのにどこにも売ってない | 不満・怒り |
@@ -82,15 +84,13 @@ data/output/manual_check_sample_100.csvを作成してください。
 | ロフト再入荷してた | 情報共有 |
 | 求：いちご　譲：くま　郵送希望 | 交換・取引 |
 
-1つの投稿に複数の感情が含まれる場合もあるため、分析を単純にする場合は、1投稿につき1ラベルを付ける。
+A post may express more than one emotion. A simplified analysis can assign one primary label per post, but this choice creates a structural limitation that must be documented.
 
 ---
 
-## 6. 分類の優先順位を決める
+## 6. Define Category Priority
 
-複数のカテゴリに当てはまる投稿があるため、優先順位を決めておく。
-
-### 推奨する優先順位
+Some posts match more than one category, so the original guide proposed the following priority order:
 
 1. 不満・怒り
 2. 焦り・競争
@@ -100,63 +100,64 @@ data/output/manual_check_sample_100.csvを作成してください。
 6. 情報共有
 7. 中立
 
-例えば、「欲しいけど転売ばっかりで買えない」という投稿には、「欲しい」という欲望と、「転売」「買えない」という不満が含まれている。この場合は、より問題構造を示す「不満・怒り」として分類する。
+For example, “欲しいけど転売ばっかりで買えない” contains both desire and dissatisfaction. Under this policy, it is classified as `不満・怒り` because that label better represents the problem structure.
+
+The preserved v2.0.0 implementation uses score order first and this priority only to break ties. The difference is documented in the evaluation and audit reports.
 
 ---
 
-## 7. キーワード辞書を作成する
+## 7. Build a Keyword Dictionary
 
-100件を読んで見つけた言葉をもとに、カテゴリごとのキーワード辞書を作る。
+Use expressions found in the 100-post review to build a keyword dictionary for each category.
 
-### キーワード辞書の例
+### Example keyword dictionary
 
-| カテゴリ | キーワード例 |
+| Category | Example keywords |
 |---|---|
-| 喜び・満足 | 買えた、ゲット、嬉しい、かわいい、最高、好き |
-| 欲望・執着 | 欲しい、探してる、集めたい、コンプ、沼、中毒 |
-| 不満・怒り | 買えない、売ってない、売り切れ、転売、買い占め、最悪 |
-| 焦り・競争 | 行列、並ぶ、開店、ダッシュ、争奪戦、即完 |
-| 情報共有 | 入荷、再入荷、在庫、販売、ロフト、しまむら、目撃 |
-| 交換・取引 | 交換、求、譲、郵送、手渡し、レート、買取 |
+| 喜び・満足 | 買えた, ゲット, 嬉しい, かわいい, 最高, 好き |
+| 欲望・執着 | 欲しい, 探してる, 集めたい, コンプ, 沼, 中毒 |
+| 不満・怒り | 買えない, 売ってない, 売り切れ, 転売, 買い占め, 最悪 |
+| 焦り・競争 | 行列, 並ぶ, 開店, ダッシュ, 争奪戦, 即完 |
+| 情報共有 | 入荷, 再入荷, 在庫, 販売, ロフト, しまむら, 目撃 |
+| 交換・取引 | 交換, 求, 譲, 郵送, 手渡し, レート, 買取 |
 
-ただし、「求」「譲」のような短い単語は誤分類の原因になりやすいため、「求」と「譲」が両方含まれている場合に交換・取引とするなど、条件を工夫する。
-
----
-
-## 8. Pythonでルールベース分類を行う
-
-キーワード辞書をもとに、投稿本文に特定のキーワードが含まれているかを判定し、カテゴリを付ける。
-
-分類結果だけでなく、どのキーワードに反応したのかを記録するために、`matched_keywords`列を作る。
-
-これにより、なぜその投稿がそのカテゴリに分類されたのかを説明しやすくなる。
+Short expressions such as `求` and `譲` can cause false positives. Prefer conditional rules, such as requiring both expressions before assigning `交換・取引`.
 
 ---
 
-## 9. Codexに依頼する順番
+## 8. Run Rule-Based Classification in Python
 
-Codexには、一度にすべてを依頼するのではなく、段階的に依頼する。
+Use the keyword dictionary to identify matching expressions in each post and assign a category.
 
-### ① データ構造の確認
+Store the triggering expressions in a `matched_keywords` column rather than recording only the final category. This makes each classification easier to explain and audit.
+
+---
+
+## 9. Recommended Sequence for Codex Tasks
+
+Give Codex one bounded task at a time.
+
+### 1. Inspect the data structure
 
 ```text
-data/processed/cleaned.csvを確認して、投稿本文にあたる列名、投稿日にあたる列名、その他使えそうな列を教えてください。
-勝手にデータを書き換えず、確認結果をdocs/data_structure.mdにまとめてください。
+Inspect data/processed/cleaned.csv and identify the post-text column,
+posting-date column, and any other useful fields.
+Do not modify the data. Save the findings in docs/data_structure.md.
 ```
 
-### ② 100件サンプルの抽出
+### 2. Draw a sample of 100 posts
 
 ```text
-cleaned.csvからランダムに100件を抽出し、投稿本文、clean_text、投稿日を含むCSVを作成してください。
-出力先はdata/output/manual_check_sample_100.csvにしてください。
+Draw a random sample of 100 rows from cleaned.csv.
+Include the post text, clean_text, and posting date.
+Save the result as data/output/manual_check_sample_100.csv.
 ```
 
-### ③ 感情分類コードの作成
+### 3. Create the sentiment classifier
 
 ```text
-以下のカテゴリでSNS投稿をルールベース分類するPythonスクリプトを作ってください。
+Create a Python script that classifies SNS posts into the following categories:
 
-カテゴリ：
 - 喜び・満足
 - 欲望・執着
 - 不満・怒り
@@ -165,67 +166,69 @@ cleaned.csvからランダムに100件を抽出し、投稿本文、clean_text�
 - 交換・取引
 - 中立
 
-分類理由が分かるように、matched_keywords列も作ってください。
-複数カテゴリに該当する場合は、不満・怒り、焦り・競争、交換・取引、欲望・執着、喜び・満足、情報共有、中立の順に優先してください。
+Add a matched_keywords column so the reason for each classification is visible.
+If a post matches more than one category, use this priority:
+不満・怒り, 焦り・競争, 交換・取引, 欲望・執着, 喜び・満足,
+情報共有, 中立.
 ```
 
-### ④ 集計
+### 4. Aggregate the results
 
 ```text
-sentiment_result.csvを使って、カテゴリ別件数と割合を集計してください。
-さらに投稿日列がある場合は、月別×カテゴリ別の件数も集計してください。
-結果はdata/output/sentiment_summary.csvに保存してください。
+Use sentiment_result.csv to calculate the count and share of each category.
+If a posting-date column is available, also calculate monthly counts by category.
+Save the result as data/output/sentiment_summary.csv.
 ```
 
-### ⑤ 誤分類チェック用サンプルの作成
+### 5. Create a validation sample
 
 ```text
-各カテゴリからランダムに30件ずつ抽出し、分類結果を人間が確認できるCSVを作ってください。
-列は投稿日、clean_text、sentiment_label、matched_keywordsを含めてください。
-出力先はdata/output/sentiment_validation_sample.csvです。
+Draw a random sample of 30 posts from each category for human review.
+Include the posting date, clean_text, sentiment_label, and matched_keywords.
+Save the file as data/output/sentiment_validation_sample.csv.
 ```
 
 ---
 
-## 10. 分析結果の確認
+## 10. Review the Analysis Results
 
-分類が終わったら、以下を確認する。
+After classification, inspect:
 
-- 各カテゴリの件数
-- 各カテゴリの割合
-- 月別の感情変化
-- 転売・売り切れなどの不満投稿が増えた時期
-- 交換・取引投稿が増えた時期
-- 情報共有投稿が多い店舗名
-- 誤分類されている投稿
+- count by category
+- share by category
+- monthly changes
+- periods with more complaints about resale or sellouts
+- periods with more exchange or trade posts
+- store names that appear often in information-sharing posts
+- misclassified posts
 
-特に重要なのは、分類結果をそのまま信じるのではなく、各カテゴリから投稿を再サンプリングし、元投稿に戻って意味を確認することである。
-
----
-
-## 11. 研究としての説明
-
-発表やESでは、以下のように説明できる。
-
-> SNS投稿の感情分析では、まず全体データを機械的に分類するのではなく、ランダムに抽出した100件の投稿を目視確認し、投稿の文脈に即した分類カテゴリを設計した。そのうえで、キーワード辞書に基づくルールベース分類をPythonで実装し、分類理由となる語も記録した。さらに各カテゴリの投稿を再サンプリングして誤分類を確認し、AIやコードの結果をそのまま採用せず、元投稿に戻って意味を検証することを重視した。
+Do not accept the classifier output without review. Resample posts from every category and return to the original text to validate the intended meaning.
 
 ---
 
-## 12. まとめ
+## 11. How to Explain the Method as Research
 
-SNSデータ感情分析の第1段階は、コードを書くことではなく、投稿を実際に読み、分類基準を作ることである。
+The method can be summarized as follows:
 
-最も重要な流れは以下である。
+> Before classifying the complete SNS dataset, I manually reviewed a random sample of 100 posts and designed categories that reflected the context of the posts. I then implemented a Python rule-based classifier using a keyword dictionary and retained the matched expressions as classification evidence. Finally, I resampled posts from each category to inspect errors. The analysis therefore used AI and code as tools while retaining human review of the original text.
 
-1. 分析目的を決める
-2. 分類カテゴリを決める
-3. 元データの列構造を確認する
-4. 100件をサンプリングする
-5. 自分でラベルを付ける
-6. キーワード辞書を作る
-7. Pythonで分類する
-8. 集計する
-9. 誤分類を確認する
-10. 元投稿に戻って社会学的に解釈する
+---
 
-この流れで進めることで、AIやCodexを活用しながらも、人間の判断に基づいた説得力のある分析にできる。
+## 12. Summary
+
+The first step in SNS sentiment and behavior analysis is not writing code. It is reading posts and defining defensible categories.
+
+The core workflow is:
+
+1. define the analysis objective
+2. define the categories
+3. inspect the source columns
+4. sample 100 posts
+5. apply human labels
+6. build a keyword dictionary
+7. classify posts in Python
+8. aggregate results
+9. inspect misclassifications
+10. return to the source text for sociological interpretation
+
+This process allows AI and Codex to support the analysis without replacing human judgment.
