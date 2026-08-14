@@ -589,9 +589,9 @@ of structured exchange format, top-account scope, and Gold-file fallback.
 
 **Outputs and Verification**
 
-- `docs/slide_number_definition_audit.md`
+- `docs/slide_metric_audit.md`
 - `test_slide_number_definitions.py`
-- Updated `docs/slide_numbers_check.md`
+- Updated the metric-verification results
 
 **Reason for the Next Stage**
 
@@ -783,8 +783,8 @@ document should follow these principles:
 - `docs/baseline_evaluation.md` (merged from the former
   `baseline_v2.md` and `baseline_hybrid.md`)
 - `docs/hybrid_rebuild.md`
-- `docs/slide_number_definition_audit.md`
-- `docs/slide_numbers_check.md`
+- `docs/slide_metric_audit.md` (merged from the former
+  `slide_number_definition_audit.md` and `slide_numbers_check.md`)
 - `docs/slide_assets_regeneration.md`
 - `docs/slide_plan_10-16.md`
 - `filter_ads_202511_202604.py`

@@ -7,7 +7,7 @@ Corpus of record (task 4 instruction): only
 Anything whose source lies outside those two is labelled with its own source
 so the reader can see what was checked against what.
 
-Writes docs/slide_numbers_check.md. The spec itself is never modified.
+Writes data/output/slide_numbers_check_generated.md. The spec is never modified.
 """
 
 from __future__ import annotations
@@ -49,7 +49,9 @@ XLSX = Path("outputs/sentiment-analysis-20260716/category_random_sample_30_each.
 NEG1 = Path("outputs/negotiation-unclassified-20260728/negotiation_expressions_not_exchange_random50.csv")
 NEG2 = Path("data/output/random_sample_50_negotiation_not_exchange_202511_202604.csv")
 MONTHS = ["202511", "202512", "202601", "202602", "202603", "202604"]
-OUT = Path("docs/slide_numbers_check.md")
+# Generated report.  The curated document is docs/slide_metric_audit.md,
+# which is maintained in English by hand; writing there would overwrite it.
+OUT = Path("data/output/slide_numbers_check_generated.md")
 SPEC = Path("docs/slide_plan_10-16.md")
 
 CATEGORIES = ["不満・怒り", "焦り・競争", "交換・取引", "欲望・執着",
