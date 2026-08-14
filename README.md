@@ -21,14 +21,9 @@ This repository documents two related analysis tracks:
 
 The most reproducible path currently available is:
 
-```text
-Monthly X exports: 136,288 posts
-  -> hybrid advertising filter: 110,918 posts
-  -> v2.0.0 rule-based classification
-  -> Gold 192 evaluation
-  -> exchange analysis: 24,316 posts / 10,677 user IDs
-  -> validated slide metrics and candidate assets
-```
+![Analysis pipeline: 136,288 raw posts, 110,918 posts after advertising removal, 24,316 exchange posts from 10,677 unique user IDs, with the classifier evaluated against 192 human-labelled posts.](assets/portfolio/01_pipeline.png)
+
+The classification step also produces the validated slide metrics and candidate presentation assets.
 
 The older Word2Vec path and several legacy presentation artifacts are documented for provenance, but parts of their preprocessing history are incomplete. The two lab-provided notebooks are intentionally excluded from the public repository because their redistribution terms could not be verified. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
 
@@ -109,6 +104,8 @@ The older advertising filter retained 109,037 of 136,288 posts. An audit found t
 
 The current hybrid baseline retains 110,918 posts. It restores 2,015 posts from the old result while continuing to exclude the existing 5,874 additional-advertising IDs. Because the original source code for `2511-2604_final.csv` is missing, 391 final-filter decisions are preserved as an ID lock in `baselines/hybrid_final_exclusions.csv` rather than reconstructed from guessed rules.
 
+![Advertising filter audit: of 136,288 source posts, 19,105 are excluded by existing keyword rules, 5,874 by additional-advertising rules, and 391 by an ID lock covering decisions whose source code is missing, leaving 110,918 retained. Against the previous 109,037-post result, 2,015 over-filtered posts are restored and 134 newly excluded.](assets/portfolio/02_filter_audit.png)
+
 See [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md) for the exact inputs, hashes, and verification contract.
 
 ### Rule-based classification
@@ -139,6 +136,8 @@ This is not a simple random sample of all 110,918 hybrid posts. The three supple
 ### Exchange analysis
 
 The exchange analysis aggregates posts whose primary category is `交換・取引` by `ユーザーID`.
+
+![Exchange account concentration: 67.4% of the 10,677 user IDs posted exactly once, while the top 1% account for 14.9% of posts and the top 10% for 45.6%.](assets/portfolio/03_exchange_concentration.png)
 
 | Metric | Result |
 | --- | ---: |
@@ -205,6 +204,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 .
 ├── README.md
 ├── requirements.txt
+├── assets/portfolio/               # README figures, regenerated from data/output
 ├── baselines/
 │   └── hybrid_final_exclusions.csv
 ├── data/output/                    # local generated data; ignored by Git
@@ -217,6 +217,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 ├── build_hybrid_corpus.py
 ├── classify_sns_rule_based.py
 ├── evaluate_v2_hybrid_192.py
+├── make_portfolio_figures.py
 ├── normalize_gold_standard_192.py
 ├── regenerate_slide_assets.py
 ├── verify_hybrid_rebuild.py
@@ -281,6 +282,16 @@ python3 verify_hybrid_rebuild.py \
 ```
 
 The verification checks row counts, columns, values, ID sets, ID order, full SHA-256 hashes, Gold label preservation, and repeat-run determinism.
+
+### Regenerate the README figures
+
+```bash
+python3 make_portfolio_figures.py
+```
+
+The generator reads only existing outputs under `data/output/`. It re-derives every
+number it draws and refuses to render if any value stops matching the published
+baseline, so the figures cannot drift away from the documented results.
 
 ### Run unit tests
 

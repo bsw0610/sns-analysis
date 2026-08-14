@@ -1,0 +1,47 @@
+{
+  "font_family": "Hiragino Sans",
+  "dpi": 160,
+  "metrics": {
+    "source_rows": 136288,
+    "old_rows": 109037,
+    "final_rows": 114518,
+    "hybrid_rows": 110918,
+    "keyword_excluded": 19105,
+    "relaxation_locked": 257,
+    "additional_ad_excluded": 5874,
+    "final_only_locked": 134,
+    "restored_vs_old": 2015,
+    "dropped_vs_old": 134,
+    "gold_rows": 192,
+    "exchange_posts": 24316,
+    "exchange_accounts": 10677,
+    "single_post_accounts": 7198,
+    "top1_posts": 3619,
+    "top10_posts": 11082,
+    "template_posts": 12411
+  },
+  "post_count_buckets": {
+    "1": 7198,
+    "2": 1491,
+    "3-5": 1276,
+    "6-10": 418,
+    "11+": 294
+  },
+  "figures": [
+    {
+      "file": "01_pipeline.png",
+      "sha256": "b441998a8505f04c73c0ab181a898382aa98bd4e34637596f22c9ce6fb9d6e81",
+      "bytes": 124836
+    },
+    {
+      "file": "02_filter_audit.png",
+      "sha256": "cf57ebc2d55313ff3490c0909f6cc922c0bf6810868af071d9c59a066e18cba1",
+      "bytes": 191685
+    },
+    {
+      "file": "03_exchange_concentration.png",
+      "sha256": "effe2a795eae88edc8a1b0fdc47afc550751fa695e66a48b33fd10bc5f2d46db",
+      "bytes": 190354
+    }
+  ]
+}
