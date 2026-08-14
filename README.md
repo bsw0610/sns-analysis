@@ -209,10 +209,11 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 │   └── hybrid_final_exclusions.csv
 ├── data/output/                    # local generated data; ignored by Git
 ├── docs/
+│   ├── README.md                   # documentation index and reading order
 │   ├── 01_PROJECT_TIMELINE.md
 │   ├── hybrid_rebuild.md
 │   ├── baseline_evaluation.md
-│   └── slide_assets_regeneration.md
+│   └── slide_metric_audit.md
 ├── outputs/                        # local presentation artifacts; ignored by Git
 ├── build_hybrid_corpus.py
 ├── classify_sns_rule_based.py
@@ -225,13 +226,14 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 └── verify_slide_numbers.py
 ```
 
-Important documentation:
+Important documentation, with a full index and reading order in
+[docs/README.md](docs/README.md):
 
 - [Project Timeline](docs/01_PROJECT_TIMELINE.md)
 - [Sentiment Analysis Methodology](sns_sentiment_analysis_guide.md)
 - [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md)
 - [Classifier Baseline Evaluation](docs/baseline_evaluation.md)
-- [Slide Asset Regeneration](docs/slide_assets_regeneration.md)
+- [Presentation Metric Audit](docs/slide_metric_audit.md)
 
 ## Reproducibility and How to Run
 
