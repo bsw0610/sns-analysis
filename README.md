@@ -6,7 +6,7 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 
 本プロジェクトでは、2025年11月から2026年4月までに収集した「ボンボンドロップシール」関連のX投稿136,288件を対象に、広告除去、テキスト前処理、Word2Vec、感情・行動カテゴリ分類、交換投稿の分析を行いました。
 
-当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。その後、広告除去や集計方法によって結果が大きく変わることが分かったため、既存コードとデータの流れを再調査しました。
+当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。その後、広告除去や集計方法によって結果が大きく変わることが分かったため、既存コードとデータの流れを再調査しました。研究室提供Notebookは再配布条件を確認できないため公開せず、処理内容とデータ系譜のみを文書化しています。
 
 私が行った主な作業は、既存Notebookを利用した前処理・単語分析、ルールベース分類結果の検証、Gold label 192件による評価、交換投稿とアカウント集中度の分析、スライド指標の再確認、再現手順の整備です。既存の処理を調査し改善する際にはAIコーディングエージェントも使用し、Notebookの確認、分析パイプラインの追跡、コード修正、再現性検証を行いました。
 
@@ -14,9 +14,9 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 
 ## Overview
 
-This repository preserves two related analysis tracks:
+This repository documents two related analysis tracks:
 
-1. A word-level workflow based on cleaning notebooks, MeCab tokenization, Word2Vec, and TensorFlow Embedding Projector.
+1. A historical word-level workflow based on lab-provided cleaning and Word2Vec notebooks, MeCab tokenization, and TensorFlow Embedding Projector.
 2. A post-level workflow that removes advertising content, assigns one of seven emotion or behavior categories, evaluates the classifier against human labels, and analyzes exchange activity.
 
 The most reproducible path currently available is:
@@ -30,7 +30,7 @@ Monthly X exports: 136,288 posts
   -> validated slide metrics and candidate assets
 ```
 
-The older Word2Vec path and several legacy presentation artifacts are retained for provenance, but parts of their preprocessing history are incomplete. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
+The older Word2Vec path and several legacy presentation artifacts are documented for provenance, but parts of their preprocessing history are incomplete. The two lab-provided notebooks are intentionally excluded from the public repository because their redistribution terms could not be verified. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
 
 ## Motivation and Background
 
@@ -46,6 +46,12 @@ Later analysis focused on questions that word embeddings alone could not answer 
 - Can the reported numbers and slide assets be reproduced from preserved inputs?
 
 The repository therefore includes both exploratory research artifacts and later reproducibility work.
+
+## Source Material and Contribution Boundaries
+
+Two reference notebooks used in the original workflow were supplied through a university seminar or lab and were not authored from scratch by the repository owner. One cleaned extracted post text with regular expressions; the other trained a Gensim Word2Vec model and exported `vector.tsv` and `metadata.tsv` for TensorFlow Embedding Projector.
+
+Their redistribution terms could not be verified, so the notebook files and their full source code or cell outputs are not included in the public Git history. This repository documents only their observed role in the historical workflow. The later advertising-filter audit, hybrid-corpus reconstruction, rule-based evaluation, exchange-account analysis, slide-metric verification, and reproducibility work are represented by the scripts and documents retained here.
 
 ## Data Scope
 
@@ -83,7 +89,7 @@ UserLocal Social Insight CSV exports
   -> TensorFlow Embedding Projector
 ```
 
-The preserved Word2Vec notebook records a model trained on June 4, 2026 with the following parameters:
+During a read-only local audit, the lab-provided Word2Vec notebook recorded a model trained on June 4, 2026 with the following parameters. The notebook itself is not redistributed in this repository.
 
 | Parameter | Value |
 | --- | ---: |
@@ -173,7 +179,7 @@ The classifier is most reliable for exchange posts. It performs poorly on urgenc
 ## Tech Stack
 
 - Python 3
-- Jupyter Notebook
+- Jupyter Notebook for the historical workflow; the lab-provided source notebooks are not redistributed
 - Gensim / Word2Vec
 - MeCab with `mecab-ipadic-neologd`
 - Matplotlib
@@ -190,8 +196,6 @@ No complete dependency lockfile is currently available.
 ```text
 .
 ├── README.md
-├── 2026_Twitter用データクリーニング .ipynb
-├── Gemsim40_26_3年ゼミ【TensorFlow_Embedding Projector】Vector_meta.tsvファイル生成  (6).ipynb
 ├── baselines/
 │   └── hybrid_final_exclusions.csv
 ├── data/output/                    # local generated data; ignored by Git
@@ -224,6 +228,8 @@ Important documentation:
 ### Requirements
 
 The reproducible hybrid path requires the six monthly CSV exports and local files under `data/output/`. These files are ignored by Git and are therefore not available in a fresh clone.
+
+The historical cleaning and Word2Vec notebooks are also excluded because their redistribution terms could not be verified. The current public repository therefore documents that legacy path but does not claim that a fresh clone can rerun it end to end.
 
 The historical instructions use `/opt/anaconda3/bin/python3`. Replace it with a compatible Python interpreter if your environment differs.
 
@@ -281,6 +287,7 @@ The verification checks row counts, columns, values, ID sets, ID order, full SHA
 - Gold 192 is not a simple random sample of the hybrid corpus.
 - The rule-based classifier has known weaknesses in Japanese inflection, negation, synonym coverage, and category interactions.
 - Word2Vec training used repeated text blocks and an unlocked environment, so exact retraining equivalence is not guaranteed.
+- The lab-provided cleaning and Word2Vec notebooks are documented but not redistributed; the historical word-level workflow is therefore not independently runnable from this repository alone.
 - The repository does not contain the code that originally generated some legacy Office and Canva artifacts.
 
 ## Future Work
@@ -290,5 +297,6 @@ The verification checks row counts, columns, values, ID sets, ID order, full SHA
 - Create a representative evaluation sample directly from the hybrid corpus and document the annotation policy.
 - Improve Japanese linguistic coverage and compare the rule-based baseline with alternative classifiers.
 - Reconstruct the MeCab preprocessing environment and investigate the repeated Word2Vec corpus blocks.
+- Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
 - Add a dependency lockfile and a manifest for local, non-Git data assets.
 - Reimplement suitable extraction and aggregation steps in SQL while retaining Python for NLP and visualization.

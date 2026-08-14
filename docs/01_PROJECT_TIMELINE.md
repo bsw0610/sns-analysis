@@ -71,7 +71,8 @@ historical artifacts and must not be mixed with the current baseline.
 | 2026-07-29 | Investigation of total-count discrepancies | 136,301 and 33,988 deemed unreproducible | Confirmed by document |
 | 2026-07-30 | Hybrid baseline established | 110,918 records, Gold 192, reproduction and verification code | Confirmed by Git, documents, and data |
 | 2026-07-30 | Metric definitions and slide redesign | p13–p16 generation and verification procedure | Confirmed by Git |
-| 2026-08-14 | Preservation of latest work and creation of learning branch | `c7f3c30`, `relearn/sql-rebuild` | Confirmed by Git |
+| 2026-08-14 | Preservation of latest work and creation of learning branch | `80d47c1`, `relearn/sql-rebuild` | Confirmed by Git |
+| 2026-08-14 | Portfolio documentation and public-release hygiene | English documentation, Japanese README summary, source-notebook exclusion | Confirmed by Git and documentation |
 
 ## 5. Detailed Timeline
 
@@ -159,6 +160,13 @@ The standard sequence is confirmed by the user-provided operations guide.
 However, the exact run that produced each current file and the accuracy of some
 intermediate results cannot be fully reconstructed.
 [USER-PROVIDED][UNCERTAIN]
+
+The two notebooks used in this stage were supplied through a university seminar
+or lab. They were inspected locally without execution during the repository
+audit, but their redistribution terms could not be verified. Their files,
+source cells, and outputs are therefore excluded from the public Git history;
+this section records only the observed processing role and evidence needed to
+understand the historical data lineage. [CODE][DOC]
 
 **Purpose**
 
@@ -502,16 +510,19 @@ to be preserved through code, hashes, and repeated-run verification.
 
 ### 5.8 2026-07-30 03:07 — First Git Snapshot
 
-**Commit**: `a1f8e08 chore: preserve existing Claude Code project`
+**Commit**: `9545d4e chore: preserve existing Claude Code project`
 
 **Purpose and Decision**
 
-Preserve the existing code, notebooks, analysis documents, and generation
-procedures developed before Git so they would not be lost. [GIT]
+Preserve the existing code, analysis documents, generation procedures, and the
+then-local reference notebooks developed or used before Git so the project
+could be audited. The two lab-provided notebooks were later removed from all
+public-release history because redistribution permission was not established.
+[GIT][DOC]
 
 **Major Preserved Areas**
 
-- Word2Vec and cleaning notebooks
+- Historical Word2Vec and cleaning workflow evidence
 - Ad-removal and rule-based classification code
 - Gold generation and evaluation code
 - Sentiment-analysis guide and baseline documents
@@ -525,7 +536,7 @@ and output files are ignored by `.gitignore`. [GIT]
 
 ### 5.9 2026-07-30 03:46 — Reproducible Hybrid Baseline
 
-**Commit**: `31b5a18 feat: make hybrid analysis baseline reproducible`
+**Commit**: `f033a26 feat: make hybrid analysis baseline reproducible`
 
 **Problem Identified**
 
@@ -558,7 +569,7 @@ needed to be standardized. [GIT][DOC]
 
 ### 5.10 2026-07-30 04:38 — Standardized Slide Metrics and Gold Source
 
-**Commit**: `73f6b19 fix: standardize slide metrics and gold dataset source`
+**Commit**: `cdc6226 fix: standardize slide metrics and gold dataset source`
 
 **Problem Identified**
 
@@ -591,9 +602,9 @@ consistent dimensions and evidence files. [GIT][DOC]
 
 **Commits**
 
-- `54e7138 feat: regenerate validated slide assets`
-- `9035d99 chore: update gitignore`
-- `b164e3f feat: rework emotion analysis slides 10-16`
+- `4c1fb30 feat: regenerate validated slide assets`
+- `3fd5759 chore: update gitignore`
+- `8fbc218 feat: rework emotion analysis slides 10-16`
 
 **Purpose**
 
@@ -627,7 +638,7 @@ project. [GIT][DOC]
 
 ### 5.12 2026-08-14 — Preserved Latest Slide Work and Created SQL Relearning Branch
 
-**Commit**: `c7f3c30 wip: preserve latest slide regeneration work`
+**Commit**: `80d47c1 wip: preserve latest slide regeneration work`
 
 **Processing**
 
@@ -637,22 +648,36 @@ project. [GIT][DOC]
   generation code.
 - Preserved the then-uncommitted slide work in one WIP commit. [GIT]
 
+### 5.13 2026-08-14 — Prepared the Repository for Public Portfolio Use
+
+**Commit**: `5a518d7 docs: internationalize portfolio documentation`
+
+**Changes and Decisions**
+
+- Standardized public Markdown documentation in English and added a concise
+  Japanese overview to the root README.
+- Fast-forwarded `main` to the completed analysis and documentation history and
+  removed fully merged stale local branches.
+- Rewrote author and committer metadata to use the repository owner's GitHub
+  noreply address.
+- Removed the two lab-provided cleaning and Word2Vec notebooks from every
+  reachable local branch before the first public push because redistribution
+  permission was not established.
+- Retained a factual description of the notebooks' observed roles without
+  copying their source code or cell outputs. [GIT][DOC]
+
 **Current Branch Relationships**
 
 ```text
-main                         a1f8e08
-└─ codex-handoff             31b5a18
-   └─ fix/slide-number-definitions
-                              73f6b19
-      └─ feat/regenerate-slide-assets
-                              54e7138 → 9035d99 → b164e3f → c7f3c30
-                                                         └─ relearn/sql-rebuild
-                                                            (current HEAD)
+main
+└─ relearn/sql-rebuild
+   (aligned before the first public push)
 ```
 
-`relearn/sql-rebuild` and `feat/regenerate-slide-assets` both currently point
-to `c7f3c30`. There are no remotes or tags, and the worktree was clean before
-this timeline was drafted. [GIT]
+The public `origin` points to `git@github.com:bsw0610/sns-analysis.git`. The
+remote repository was empty when public-release preparation began. No stale
+feature branches or notebook paths remain in the reachable local history.
+[GIT]
 
 **Purpose of the Current Stage**
 
@@ -769,8 +794,9 @@ document should follow these principles:
 - `verify_hybrid_rebuild.py`
 - `regenerate_slide_assets.py`
 - `verify_slide_assets.py`
-- Two Word2Vec and cleaning notebooks
+- Two lab-provided Word2Vec and cleaning notebooks, inspected locally without
+  execution and intentionally excluded from the public Git history
 - User-provided `データ分析タイムライン` operations guide
 - Social Insight keyword configuration manual:
   <https://press-files.userlocal.jp/pdf/social_keyword_setting.pdf>
-- Git commits `a1f8e08` through `c7f3c30`
+- Git commits `9545d4e` through `5a518d7`

@@ -8,6 +8,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
+# Lab-provided reference notebooks; redistribution permission is unverified
+/2026_Twitter用データクリーニング .ipynb
+/Gemsim40_26_3年ゼミ【TensorFlow_Embedding Projector】Vector_meta.tsvファイル生成  (6).ipynb
+
 # Environments
 .venv/
 venv/
