@@ -59,3 +59,6 @@ docs/claude_presentation_chat.md
 
 # Temporary and backup Canva artifacts
 bonbon_slide_assets_run*/
+
+# Sample classifier output
+sample_output.csv

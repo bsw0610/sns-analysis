@@ -25,6 +25,34 @@ The most reproducible path currently available is:
 
 The classification step also produces the validated slide metrics and candidate presentation assets.
 
+## Try It Without the Dataset
+
+The collected posts are not in this repository, so a fresh clone cannot rerun
+the study. It can still run the classifier: `sample_data/` holds 30 synthetic
+posts written for this purpose. No dataset and no third-party packages are
+needed.
+
+```bash
+python3 classify_sns_rule_based.py \
+  --input sample_data/sample_posts.csv \
+  --output sample_output.csv
+
+python3 sample_data/check_sample_output.py sample_output.csv
+```
+
+```text
+OK: 30 rows classified, 21/30 match the intended label
+OK: 9 known disagreements reproduced exactly
+```
+
+The nine failures are deliberate. They are the weaknesses measured against the
+human-labelled evaluation set — the `\b交換\b` word-boundary defect, the
+information-sharing category scoring F1 0.000, and indirect expressions that
+match no rule — so the limitations described below can be watched happening
+rather than taken on trust. [`sample_data/README.md`](sample_data/README.md)
+maps each one to its cause, and `check_sample_output.py` pins the exact outcome
+so a behaviour change fails loudly instead of passing unnoticed.
+
 The older Word2Vec path and several legacy presentation artifacts are documented for provenance, but parts of their preprocessing history are incomplete. The two lab-provided notebooks are intentionally excluded from the public repository because their redistribution terms could not be verified. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
 
 ## Motivation and Background
@@ -208,6 +236,9 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 ├── baselines/
 │   └── hybrid_final_exclusions.csv
 ├── data/output/                    # local generated data; ignored by Git
+├── sample_data/                    # synthetic posts; runnable without the dataset
+│   ├── sample_posts.csv
+│   └── check_sample_output.py
 ├── docs/
 │   ├── README.md                   # documentation index and reading order
 │   ├── 01_PROJECT_TIMELINE.md
