@@ -674,7 +674,7 @@ main
    (aligned before the first public push)
 ```
 
-The public `origin` points to `git@github.com:bsw0610/sns-analysis.git`. The
+The public `origin` points to `https://github.com/bsw0610/sns-analysis.git`. The
 remote repository was empty when public-release preparation began. No stale
 feature branches or notebook paths remain in the reachable local history.
 [GIT]
