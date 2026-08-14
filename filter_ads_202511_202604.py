@@ -51,7 +51,7 @@ def compile_rule(code: str, reason: str, pattern: str) -> Rule:
 AD_RULES = [
     compile_rule(
         "GIVEAWAY_CAMPAIGN",
-        "경품·캠페인 응모를 유도하는 홍보 문구",
+        "promotional post soliciting giveaway or campaign entries",
         r"(?:応募方法|応募条件|応募期間|応募受付|応募は|応募はこちら|"
         r"抽選で.{0,35}(?:プレゼント|当たる|進呈)|"
         r"(?:プレゼント|キャンペーン|記念企画).{0,55}(?:応募|抽選|当選|締切|〆切|フォロー|いいね|RT|リツイート)|"
@@ -64,7 +64,7 @@ AD_RULES = [
     ),
     compile_rule(
         "DIRECT_SALES",
-        "판매·예약·주문을 직접 권유하는 상업성 문구",
+        "commercial copy directly soliciting purchases, reservations, or orders",
         r"(?:販売いたします|販売しております|好評販売中|販売中です|"
         r"発売いたします|好評発売中|発売中です|"
         r"予約受付(?:中|開始|は)|ご予約(?:受付|承り|は)|注文受付|ご注文(?:受付|は|はこちら)|"
@@ -77,7 +77,7 @@ AD_RULES = [
     ),
     compile_rule(
         "SALES_INFORMATION",
-        "판매 일정·구매 방법을 알리는 공식성 홍보 문구",
+        "official promotional notice about sales schedules or purchase methods",
         r"(?:【[^】]{0,35}販売情報[^】]{0,15}】|【[^】]{0,45}販売について】|"
         r"📢[^\n]{0,25}販売情報|販売情報[:：]|購入券.{0,25}ご案内|販売を再開いたします|"
         r"本日.{0,30}(?:発売|販売).{0,40}(?:お見逃しなく|登場|開始)|"
@@ -85,7 +85,7 @@ AD_RULES = [
     ),
     compile_rule(
         "AFFILIATE_LINK_PROMO",
-        "고정 투고·댓글 링크로 구매를 유도하는 홍보 문구",
+        "promotional copy directing purchases through pinned posts or reply links",
         r"(?:(?:販売|発売|予約|再入荷|在庫復活|再販|商品).{0,100}"
         r"(?:詳細は固定|固定ポスト|固定ツイ|固ツイ|販売リンク|購入リンク|リンクはリプ|リンクはコメント|リプ欄|リプへ|"
         r"ブックマークで保存|チェックして|お早めに|狙い目|待機がおすすめ)|"
@@ -94,7 +94,7 @@ AD_RULES = [
     ),
     compile_rule(
         "PERSONAL_SALES_SOLICITATION",
-        "개인 판매·구매대행을 공개적으로 모집하는 홍보 문구",
+        "promotional solicitation for personal sales or purchasing-agent services",
         r"(?:(?:定価で)?(?:譲れます|お譲りできます|お譲りします)|代行(?:も)?受付中|購入代行.{0,12}受付|"
         r"余って(?:いる|る).{0,18}(?:欲しい方|欲しい人))"
         r".{0,100}(?:希望者|欲しい方|欲しい人|メッセージ|DM|連絡|固定ポスト|固定ツイ|送料|手数料|代行費)|"
@@ -102,7 +102,7 @@ AD_RULES = [
     ),
     compile_rule(
         "EC_AVAILABILITY_PROMO",
-        "EC몰 재고·재판매 정보를 이용해 구매를 재촉하는 홍보 문구",
+        "promotional copy urging purchases based on e-commerce stock or restock updates",
         r"(?:Amazon|アマゾン|楽天(?:市場)?|Yahoo!?ショッピング).{0,80}"
         r"(?:在庫がある今がチャンス|今がチャンス|在庫復活中|正規在庫復活中|先着販売スタート|"
         r"販売開始|販売リンク|購入リンク|お早めに|リンクはリプ|ブックマークで保存|早い者勝ち|"
@@ -112,14 +112,14 @@ AD_RULES = [
     ),
     compile_rule(
         "MARKETPLACE_LISTING",
-        "마켓·플리마에 상품을 출품·판매하는 홍보 문구",
+        "promotional copy listing or selling items on marketplaces or flea-market apps",
         r"(?:メルカリ|ラクマ|ヤフーフリマ|Yahoo!?フリマ|PayPayフリマ|minne|BASE|BOOTH|Creema|フリマ)"
         r".{0,45}(?:出品しました|出品しています|出品中|販売しています|販売中)|"
         r"(?:出品しました|出品しています|出品中).{0,45}(?:メルカリ|ラクマ|ヤフーフリマ|Yahoo!?フリマ|PayPayフリマ|フリマ)",
     ),
     compile_rule(
         "RESTOCK_STORE_NOTICE",
-        "매장 입고·재입고·재고를 알리는 상업성 안내",
+        "commercial notice announcing store arrivals, restocks, or inventory",
         r"(?:(?:入荷しました|入荷いたしました|入荷しております|再入荷しました|再入荷いたしました)"
         r"(?=.{0,90}(?:#|販売|店頭|店舗|ショップ|商品|税込|円|ご用意|お求め|お待ち|ご容赦|少量|営業|数量|売り切れの際))|"
         r"(?:新入荷|入荷情報|入荷商品)(?=.{0,90}(?:#|販売|店頭|店舗|ショップ|商品|税込|円|ご用意|ご容赦|少量|営業|数量|売り切れの際|\d{1,2}月\d{1,2}日))|"
@@ -128,7 +128,7 @@ AD_RULES = [
     ),
     compile_rule(
         "STORE_POLICY_NOTICE",
-        "매장의 구매 제한·정리권 등 판매 운영 안내",
+        "sales operations notice covering purchase limits or numbered tickets",
         r"(?:(?:※|⚠️|🛒|購入制限[:：]?|販売制限[:：]?).{0,35}"
         r"お一人様.{0,18}(?:点|個|枚|セット|回)まで|"
         r"(?:購入制限|個数制限|販売制限)[:：]?.{0,45}(?:お一人様|各\d|最大\d|\d(?:点|個|枚|セット)まで)|"
@@ -137,7 +137,7 @@ AD_RULES = [
     ),
     compile_rule(
         "PRODUCT_EVENT_PROMO",
-        "신상품·팝업·행사·출점 홍보 문구",
+        "promotional copy for new products, pop-ups, events, or booths",
         r"(?:新商品(?:情報|NEWS|入荷|発売|のお知らせ)|"
         r"新作.{0,35}(?:発売予定|予約販売決定|販売決定|予約受付|登場)|"
         r"(?:ポップアップ|POP\s*UP|期間限定ショップ).{0,45}(?:開催決定|開催します|開催いたします|全国で開催)|"
@@ -146,25 +146,25 @@ AD_RULES = [
     ),
     compile_rule(
         "DISCOUNT_COUPON_PROMO",
-        "할인·쿠폰·특가로 구매를 유도하는 홍보 문구",
+        "promotional copy encouraging purchases through discounts, coupons, or special prices",
         r"(?:(?:セール開催|SALE開催|クーポン(?:配布|発行|コード)|\d{1,2}\s*[%％]\s*OFF|タイムセール)"
         r".{0,80}(?:販売|購入|注文|ショップ|ストア|店舗|商品|円|価格|こちら|実施|限定|詳細|固定|チェック|再入荷|リンク|紹介コード)|"
         r"(?:送料無料|特別価格|期間限定価格|お買い得).{0,60}(?:\d[\d,]*円|販売|購入|注文|こちら|詳細|固定|チェック|再入荷|ショップ|店舗|商品ページ))",
     ),
     compile_rule(
         "BUYBACK_PROMO",
-        "매입·사정 서비스를 홍보하는 문구",
+        "promotional copy advertising buyback or appraisal services",
         r"(?:高価買取|買取強化|買取募集中|買取受付|査定無料|無料査定|"
         r"(?:郵送買取|宅配買取).{0,35}(?:受付|査定|申込|申し込み|サービス|実施))",
     ),
     compile_rule(
         "OFFICIAL_PR",
-        "PR·협찬·광고임을 명시한 홍보 투고",
+        "promotional post explicitly labeled as PR, sponsored, or advertising",
         r"(?:^|[\s#【［(（])(?:PR|広告|プロモーション|タイアップ)(?:$|[\s】］)）:：])",
     ),
     compile_rule(
         "COMMERCIAL_RECRUITMENT",
-        "모니터·앰배서더 등 상업 목적 모집 홍보",
+        "commercial recruitment for monitors, ambassadors, or dealers",
         r"(?:モニター募集|アンバサダー募集|代理店募集|販売店募集|出店者募集)",
     ),
 ]

@@ -48,14 +48,14 @@ metadata.tsv
 # Generated report artifacts
 sns_sentiment_analysis_guide.html
 
-# Claude/ChatGPT 내보내기 파일
+# Claude/ChatGPT export files
 conversations.json
 memories.json
 users.json
 019f*.json
 
-# 로컬 인수인계 자료
+# Local handoff materials
 docs/claude_presentation_chat.md
 
-# Canva 임시·백업 산출물
+# Temporary and backup Canva artifacts
 bonbon_slide_assets_run*/
