@@ -13,7 +13,6 @@ import csv
 import hashlib
 import json
 import tempfile
-import textwrap
 import statistics
 import warnings
 from collections import Counter, defaultdict
@@ -772,7 +771,7 @@ def add_kpi_card(
     ax.add_patch(card)
     ax.text(
         left + 0.025,
-        0.72,
+        0.81,
         title,
         transform=ax.transAxes,
         fontsize=12,
@@ -791,7 +790,7 @@ def add_kpi_card(
     )
     ax.text(
         left + 0.025,
-        0.2,
+        0.18,
         detail,
         transform=ax.transAxes,
         fontsize=10.5,
@@ -862,7 +861,6 @@ def render_page15(
         f"{summary['accounts']:,}",
         f"{metrics['account_key']}で集計",
         accent=BLUE,
-        hatch="..",
     )
     add_kpi_card(
         cards_ax,
@@ -872,7 +870,6 @@ def render_page15(
         f"{single_share:.1f}%",
         f"{single_accounts:,} / {summary['accounts']:,}アカウント",
         accent=GOLD_ACCENT,
-        hatch="///",
     )
     add_kpi_card(
         cards_ax,
@@ -882,7 +879,6 @@ def render_page15(
         f"{top_1['share_percent']:.1f}%",
         f"{top_1['accounts']}アカウント・{top_1['posts']:,}件",
         accent=ORANGE,
-        hatch="xx",
     )
 
     bars = chart_ax.bar(
@@ -1098,45 +1094,6 @@ def page16_metrics(
     }
 
 
-def add_quote_panel(
-    ax: plt.Axes,
-    quote: dict[str, object],
-    index: int,
-) -> None:
-    """Draw one verified quote or a non-speculative placeholder."""
-    panel = FancyBboxPatch(
-        (0.03, 0.05),
-        0.94,
-        0.88,
-        boxstyle="round,pad=0.015,rounding_size=0.025",
-        linewidth=1.2,
-        edgecolor=GRID,
-        facecolor=CARD,
-        transform=ax.transAxes,
-    )
-    ax.add_patch(panel)
-    ax.text(
-        0.05,
-        0.82,
-        f"匿名化した原文例 {index}",
-        transform=ax.transAxes,
-        fontsize=11,
-        color=SUBTLE,
-        va="top",
-    )
-    wrapped = "\n".join(textwrap.wrap(str(quote["text"]), width=32))
-    ax.text(
-        0.05,
-        0.52,
-        f"「{wrapped}」",
-        transform=ax.transAxes,
-        fontsize=12.2,
-        color=INK,
-        va="center",
-        linespacing=1.35,
-    )
-
-
 def render_page16(
     metrics: dict[str, object],
     output_path: Path,
@@ -1147,21 +1104,16 @@ def render_page16(
 
     fig = plt.figure(figsize=FIGSIZE, dpi=DPI, layout="constrained")
     grid = fig.add_gridspec(
-        4,
+        3,
         1,
-        height_ratios=[0.72, 2.25, 1.75, 1.0],
+        height_ratios=[0.72, 2.6, 2.68],
     )
     header_ax = fig.add_subplot(grid[0])
-    evidence_grid = grid[1].subgridspec(1, 2, width_ratios=[0.9, 1.1])
+    evidence_grid = grid[1].subgridspec(1, 2, width_ratios=[0.88, 1.12])
     main_ax = fig.add_subplot(evidence_grid[0])
     sample_ax = fig.add_subplot(evidence_grid[1])
-    quote_grid = grid[2].subgridspec(1, 2, wspace=0.08)
-    quote_axes = [
-        fig.add_subplot(quote_grid[0]),
-        fig.add_subplot(quote_grid[1]),
-    ]
-    footer_ax = fig.add_subplot(grid[3])
-    for ax in (header_ax, main_ax, sample_ax, *quote_axes, footer_ax):
+    summary_ax = fig.add_subplot(grid[2])
+    for ax in (header_ax, main_ax, sample_ax, summary_ax):
         ax.axis("off")
 
     header_ax.text(
@@ -1170,44 +1122,46 @@ def render_page16(
         copy["title"],
         ha="left",
         va="top",
-        fontsize=24,
+        fontsize=25,
         fontweight="bold",
     )
     main_ax.text(
         0.03,
         0.95,
         "定型的な交換形式",
-        fontsize=13,
+        fontsize=15,
         color=SUBTLE,
         va="top",
     )
     main_ax.text(
         0.03,
-        0.62,
+        0.65,
         f"{template['posts']:,}件",
-        fontsize=31,
+        fontsize=39,
         fontweight="bold",
         color=BLUE,
         va="center",
     )
     main_ax.text(
         0.03,
-        0.34,
+        0.36,
         f"交換投稿の {template['share_percent']:.1f}%",
-        fontsize=18,
+        fontsize=22,
         fontweight="bold",
         color=INK,
         va="center",
     )
     main_ax.text(
         0.03,
-        0.08,
+        0.03,
         "主な表現："
-        + "／".join(metrics["displayed_expressions"]),
-        fontsize=11,
+        + "／".join(metrics["displayed_expressions"][:4])
+        + "\n"
+        + "／".join(metrics["displayed_expressions"][4:]),
+        fontsize=13.2,
         color=SUBTLE,
         va="bottom",
-        wrap=True,
+        linespacing=1.45,
     )
 
     sample_ax.text(
@@ -1215,7 +1169,7 @@ def render_page16(
         0.95,
         f"交渉表現を含む固定標本 {sample['posts']}件",
         transform=sample_ax.transAxes,
-        fontsize=14,
+        fontsize=17,
         fontweight="bold",
         color=INK,
         va="top",
@@ -1227,13 +1181,13 @@ def render_page16(
         ("交換比率", sample["exchange_ratio_posts"]),
     )
     for index, (label, value) in enumerate(sample_rows):
-        y = 0.71 - index * 0.2
+        y = 0.72 - index * 0.2
         sample_ax.text(
             0.03,
             y,
             label,
             transform=sample_ax.transAxes,
-            fontsize=12.5,
+            fontsize=14.2,
             color=SUBTLE,
             va="center",
         )
@@ -1242,7 +1196,7 @@ def render_page16(
             y,
             f"{value}件",
             transform=sample_ax.transAxes,
-            fontsize=16,
+            fontsize=20,
             fontweight="bold",
             color=INK,
             va="center",
@@ -1256,34 +1210,60 @@ def render_page16(
             transform=sample_ax.transAxes,
         )
 
-    for index, (ax, quote) in enumerate(
-        zip(quote_axes, metrics["quotes"]),
-        start=1,
-    ):
-        add_quote_panel(ax, quote, index)
-
-    footer_ax.text(
-        0.03,
-        0.86,
+    panel = FancyBboxPatch(
+        (0.03, 0.33),
+        0.94,
+        0.6,
+        boxstyle="round,pad=0.015,rounding_size=0.025",
+        linewidth=1.2,
+        edgecolor=GRID,
+        facecolor=CARD,
+        transform=summary_ax.transAxes,
+    )
+    summary_ax.add_patch(panel)
+    summary_ax.text(
+        0.055,
+        0.79,
         copy["conclusion"],
-        fontsize=12,
+        transform=summary_ax.transAxes,
+        fontsize=18,
         fontweight="bold",
         color=INK,
         va="center",
     )
-    footer_ax.text(
-        0.03,
-        0.53,
-        copy["scope_limit"] + " " + copy["anonymization"],
-        fontsize=10.4,
+    summary_ax.text(
+        0.055,
+        0.56,
+        "希望品・受け渡し方法・交換比率などを、短い語句で提示していた。",
+        transform=summary_ax.transAxes,
+        fontsize=14,
         color=SUBTLE,
         va="center",
     )
-    footer_ax.text(
+    summary_ax.text(
+        0.055,
+        0.4,
+        f"交渉表現を含む固定標本 {sample['posts']}件を補助的に確認",
+        transform=summary_ax.transAxes,
+        fontsize=12.5,
+        color=BLUE,
+        va="center",
+    )
+    summary_ax.text(
         0.03,
-        0.17,
+        0.22,
+        copy["scope_limit"],
+        transform=summary_ax.transAxes,
+        fontsize=11.5,
+        color=SUBTLE,
+        va="center",
+    )
+    summary_ax.text(
+        0.03,
+        0.07,
         copy["transition"],
-        fontsize=11,
+        transform=summary_ax.transAxes,
+        fontsize=12,
         color=BLUE,
         va="center",
     )
