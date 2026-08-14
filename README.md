@@ -4,6 +4,15 @@
 
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
+## Key Results
+
+- **136,288** Japanese X posts analyzed
+- **110,918** posts retained after advertising-filter audit
+- Classifier evaluated against **192 human-labelled posts**
+- **24,316** exchange posts across **10,677 user IDs**
+- **Micro F1: 0.595** with documented category-level failure analysis
+- Reproducibility verified with regression tests, SHA-256 checks, and CI
+
 ## 日本語概要
 
 本プロジェクトでは、2025年11月から2026年4月までに収集した「ボンボンドロップシール」関連のX投稿136,288件を対象に、広告除去、テキスト前処理、Word2Vec、感情・行動カテゴリ分類、交換投稿の分析を行いました。
