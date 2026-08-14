@@ -10,7 +10,7 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 - **110,918** posts retained after advertising-filter audit
 - Classifier evaluated against **192 human-labelled posts**
 - **24,316** exchange posts across **10,677 user IDs**
-- **Micro F1: 0.595** with documented category-level failure analysis
+- **Micro F1: 0.595** (multi-label criterion; 0.577 lenient) with documented category-level failure analysis
 - Reproducibility verified with regression tests, SHA-256 checks, and CI
 
 ## 日本語概要
