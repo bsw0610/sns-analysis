@@ -62,3 +62,6 @@ bonbon_slide_assets_run*/
 
 # Sample classifier output
 sample_output.csv
+
+# Rebuilt corpus outputs, compared against the preserved baselines
+rebuild/

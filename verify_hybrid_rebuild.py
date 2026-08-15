@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Verify every hybrid-baseline invariant.")
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument(
-        "--rebuild-dir", type=Path, default=Path("/private/tmp/bonbon_rebuild")
+        "--rebuild-dir", type=Path, default=Path("rebuild")
     )
     return parser.parse_args()
 

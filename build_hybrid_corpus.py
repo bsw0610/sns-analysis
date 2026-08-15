@@ -26,7 +26,10 @@ from filter_ads_202511_202604 import (
 
 csv.field_size_limit(10**9)
 
-DEFAULT_OUTPUT = Path("/private/tmp/bonbon_rebuild/2511-2604_hybrid.csv")
+# Rebuilt files are written outside data/output so the preserved baselines are
+# never overwritten, and the verifier compares the two directories.
+DEFAULT_REBUILD_DIR = Path("rebuild")
+DEFAULT_OUTPUT = DEFAULT_REBUILD_DIR / "2511-2604_hybrid.csv"
 DEFAULT_SELECTION_LOCK = Path(__file__).resolve().parent / "baselines/hybrid_final_exclusions.csv"
 EXPECTED_ROWS = 110_918
 EXPECTED_LOCK_COUNTS = {

@@ -425,21 +425,21 @@ The reproducible hybrid path requires the six monthly CSV exports and local file
 
 The historical cleaning and Word2Vec notebooks are also excluded because their redistribution terms could not be verified. The current public repository therefore documents that legacy path but does not claim that a fresh clone can rerun it end to end.
 
-Run the commands below from the repository root with `python3`.
+Run the commands below from the repository root with `python3`. The paths shown for `--output` and `--rebuild-dir` are the script defaults, so they can be omitted; `rebuild/` is ignored by Git and is kept separate from `data/output/` so the preserved baselines are never overwritten.
 
 ### Rebuild the hybrid corpus
 
 ```bash
 python3 build_hybrid_corpus.py \
-  --output /private/tmp/bonbon_rebuild/2511-2604_hybrid.csv
+  --output rebuild/2511-2604_hybrid.csv
 ```
 
 ### Run the classifier
 
 ```bash
 python3 classify_sns_rule_based.py \
-  --input /private/tmp/bonbon_rebuild/2511-2604_hybrid.csv \
-  --output /private/tmp/bonbon_rebuild/sentiment_classified_hybrid.csv
+  --input rebuild/2511-2604_hybrid.csv \
+  --output rebuild/sentiment_classified_hybrid.csv
 ```
 
 ### Normalize the Gold 192 dataset
@@ -447,16 +447,16 @@ python3 classify_sns_rule_based.py \
 ```bash
 python3 normalize_gold_standard_192.py \
   --input data/output/gold_standard_192.csv \
-  --output /private/tmp/bonbon_rebuild/gold_standard_192_normalized.csv \
+  --output rebuild/gold_standard_192_normalized.csv \
   --supplement data/output/gold_supplement_11.csv \
-  --hybrid /private/tmp/bonbon_rebuild/sentiment_classified_hybrid.csv
+  --hybrid rebuild/sentiment_classified_hybrid.csv
 ```
 
 ### Verify the rebuild
 
 ```bash
 python3 verify_hybrid_rebuild.py \
-  --rebuild-dir /private/tmp/bonbon_rebuild
+  --rebuild-dir rebuild
 ```
 
 The verification checks row counts, columns, values, ID sets, ID order, full SHA-256 hashes, Gold label preservation, and repeat-run determinism.
