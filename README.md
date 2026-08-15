@@ -325,6 +325,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 ```text
 .
 ├── README.md
+├── LICENSE
 ├── requirements.txt
 ├── .github/workflows/test.yml      # runs the tests and the sample on every push
 ├── assets/portfolio/               # README figures, regenerated from data/output
@@ -501,3 +502,6 @@ python3 -m unittest \
 - Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
 - Add a fully resolved lockfile for the current scripts if exact transitive dependency reproduction is required, and add a manifest for local, non-Git data assets.
 
+## License
+
+The code in this repository is released under the [MIT License](LICENSE). It does not cover the collected posts, which are not distributed here, or the lab-supplied notebooks described under Source Material and Contribution Boundaries.
