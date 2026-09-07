@@ -30,6 +30,7 @@ csv.field_size_limit(10**9)
 PROJECT_ROOT = Path(__file__).resolve().parent
 GOLD = NORMALIZED_GOLD_STANDARD
 PRED = Path("data/output/sentiment_classified_hybrid.csv")
+GOLD_189 = Path("data/output/gold_standard_labeled_189of200.csv")
 # Generated scoring report.  The curated document is docs/baseline_evaluation.md,
 # which is maintained in English by hand; writing there would overwrite it.
 OUT = Path("data/output/baseline_gold192_generated.md")
@@ -210,10 +211,59 @@ def table(counts, lines, title):
     return mf, Mf
 
 
+def supplement_note(delta: dict[str, object]) -> str:
+    """One sentence describing the measured change, with no assumption about it."""
+    extra = delta["rows"]
+    hits = [r for r in extra if r["single"] in r["gold"]]
+    misses = [r for r in extra if r["single"] not in r["gold"]]
+    parts = [
+        f"補充{len(extra)}件のうち、正解ラベルと一致した予測は{len(hits)}件、"
+        f"外れた予測は{len(misses)}件である。"
+    ]
+    changes = []
+    for kind, table in (("TP", delta["tp"]), ("FP", delta["fp"]), ("FN", delta["fn"])):
+        for category in sorted(table):
+            changes.append(f"{category}の{kind}+{table[category]}")
+    parts.append("差分は " + "、".join(changes) + " であり、それ以外のカテゴリは189件版と変わらない。")
+    if misses:
+        detail = "、".join(
+            f"正解 `{'・'.join(sorted(r['gold']))}` に対し `{r['single']}` と予測"
+            for r in misses
+        )
+        parts.append(f"外れた{len(misses)}件は{detail}。")
+    return "".join(parts)
+
+
+def supplement_delta(rows: list[dict], gold_189_path: Path) -> dict[str, object]:
+    """Per-category TP/FP/FN change contributed by the rows Gold 189 does not contain.
+
+    The earlier write-up asserted that all three supplemental rows are predicted
+    `交換・取引`, so the only change was TP +3.  That was never checked against the
+    predictions.  This derives the change instead of asserting it.
+    """
+    with gold_189_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        ids_189 = {row["post_id"] for row in csv.DictReader(handle)}
+    extra = [row for row in rows if row["post_id"] not in ids_189]
+
+    tp: dict[str, int] = {}
+    fp: dict[str, int] = {}
+    fn: dict[str, int] = {}
+    for row in extra:
+        predicted = row["single"]
+        if predicted in row["gold"]:
+            tp[predicted] = tp.get(predicted, 0) + 1
+        else:
+            fp[predicted] = fp.get(predicted, 0) + 1
+            for label in row["gold"]:
+                fn[label] = fn.get(label, 0) + 1
+    return {"rows": extra, "tp": tp, "fp": fp, "fn": fn}
+
+
 def main(
     gold_path: Path = GOLD,
     pred_path: Path = PRED,
     output: Path = OUT,
+    gold_189_path: Path = GOLD_189,
 ) -> None:
     rows, n_gold = load(gold_path, pred_path)
     n = len(rows)
@@ -284,9 +334,7 @@ def main(
           f"| 緩和 macro F1 | 0.451 | {Mf1:.3f} | {Mf1-0.451:+.3f} |",
           f"| 多重 micro F1 | 0.594 | {mf2:.3f} | {mf2-0.594:+.3f} |",
           f"| 多重 macro F1 | 0.496 | {Mf2:.3f} | {Mf2-0.496:+.3f} |", "",
-          "補充3件はいずれも正解ラベルが `交換・取引` 単独であり、v2も3件とも "
-          "`交換・取引` と予測している。したがって差分は交換・取引のTP+3のみで、"
-          "他カテゴリの数値は189件版と変わらない。", "",
+          supplement_note(supplement_delta(rows, gold_189_path)), "",
           "既存189件の予測は旧コーパスとハイブリッドで**相違0件**であることを確認済み"
           "（v2は決定的なため）。", "",
           "---", "", "## 4. 仕様書2-3節の構成比・信頼区間の検算", "",
@@ -323,6 +371,7 @@ def main(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gold", type=Path, default=GOLD)
+    parser.add_argument("--gold-189", type=Path, default=GOLD_189)
     parser.add_argument("--predictions", type=Path, default=PRED)
     parser.add_argument("--output", type=Path, default=OUT)
     return parser.parse_args()
@@ -330,4 +379,4 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.gold, args.predictions, args.output)
+    main(args.gold, args.predictions, args.output, args.gold_189)

@@ -119,7 +119,9 @@ A prediction is counted as correct when the single v2 primary label is included 
 | Multi-label micro F1 | 0.594 | 0.595 | +0.001 |
 | Multi-label macro F1 | 0.496 | 0.495 | -0.001 |
 
-Each of the three supplemental rows has only `交換・取引` as its Gold label, and v2 predicts `交換・取引` for all three. The only change is therefore TP +3 for `交換・取引`; the values for every other category remain identical to the 189-row evaluation.
+All three supplemental rows have only `交換・取引` as their Gold label. **Two of the three are predicted `交換・取引`; the third is predicted `中立`.** The change against the 189-row evaluation is therefore `交換・取引` TP +2 and FN +1, and `中立` FP +1. Every other category is unchanged.
+
+> **Correction, 2026-09-07.** This paragraph previously stated that v2 predicts `交換・取引` for all three rows and that the only change was TP +3. That was asserted rather than measured, and it is wrong. The figures above were read from the preserved Gold and prediction files; the report generator now derives them instead of asserting them, and `test_evaluation_report.py` fails if the old assumption returns.
 
 Predictions for the existing 189 rows differ by **0 rows** between the old and hybrid corpora. The v2 classifier is deterministic.
 
