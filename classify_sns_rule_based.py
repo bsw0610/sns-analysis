@@ -22,7 +22,9 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import re
+import tempfile
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
@@ -370,7 +372,26 @@ def unique_output_headers(headers: list[str]) -> list[str]:
     return [header for header in headers if header not in OUTPUT_COLUMNS] + OUTPUT_COLUMNS
 
 
+def _is_same_file(input_path: Path, output_path: Path) -> bool:
+    """True when both paths name one file, including symlink and hardlink aliases."""
+    try:
+        if output_path.exists():
+            return os.path.samefile(input_path, output_path)
+    except OSError:
+        pass
+    try:
+        return input_path.resolve() == output_path.resolve()
+    except OSError:
+        return False
+
+
 def classify_csv(input_path: Path, output_path: Path, text_column: str | None) -> int:
+    if _is_same_file(input_path, output_path):
+        raise ValueError(
+            "input and output name the same file; writing would truncate the input "
+            f"before it is read: {input_path}"
+        )
+
     with input_path.open("r", encoding="utf-8-sig", newline="") as src:
         reader = csv.reader(src)
         try:
@@ -383,35 +404,48 @@ def classify_csv(input_path: Path, output_path: Path, text_column: str | None) -
         output_headers = unique_output_headers(headers)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with output_path.open("w", encoding="utf-8-sig", newline="") as dst:
-            writer = csv.writer(dst)
-            writer.writerow(output_headers)
+        # Write to a sibling temporary file and rename it into place, so a failure
+        # part way through leaves both the input and any existing output intact.
+        handle, staged_name = tempfile.mkstemp(
+            dir=str(output_path.parent), prefix=output_path.name + ".", suffix=".part"
+        )
+        os.close(handle)
+        staged = Path(staged_name)
+        try:
+            with staged.open("w", encoding="utf-8-sig", newline="") as dst:
+                writer = csv.writer(dst)
+                writer.writerow(output_headers)
 
-            count = 0
-            for row in reader:
-                if len(row) < len(headers):
-                    row = row + [""] * (len(headers) - len(row))
-                text = row[text_index] if text_index < len(row) else ""
-                result = classify_detailed(text)
-                base = [
-                    value
-                    for index, value in enumerate(row[: len(headers)])
-                    if index not in old_indexes
-                ]
-                writer.writerow(
-                    base
-                    + [
-                        result.primary,
-                        result.secondary,
-                        result.polarity,
-                        f"{result.score:.2f}",
-                        result.confidence,
-                        result.matched_keywords,
-                        json.dumps(result.scores, ensure_ascii=False, separators=(",", ":")),
-                        VERSION,
+                count = 0
+                for row in reader:
+                    if len(row) < len(headers):
+                        row = row + [""] * (len(headers) - len(row))
+                    text = row[text_index] if text_index < len(row) else ""
+                    result = classify_detailed(text)
+                    base = [
+                        value
+                        for index, value in enumerate(row[: len(headers)])
+                        if index not in old_indexes
                     ]
-                )
-                count += 1
+                    writer.writerow(
+                        base
+                        + [
+                            result.primary,
+                            result.secondary,
+                            result.polarity,
+                            f"{result.score:.2f}",
+                            result.confidence,
+                            result.matched_keywords,
+                            json.dumps(result.scores, ensure_ascii=False, separators=(",", ":")),
+                            VERSION,
+                        ]
+                    )
+                    count += 1
+
+            os.replace(staged, output_path)
+        except BaseException:
+            staged.unlink(missing_ok=True)
+            raise
 
     return count
 

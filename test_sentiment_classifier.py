@@ -3,9 +3,15 @@
 
 from __future__ import annotations
 
+import csv
+import os
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
-from classify_sns_rule_based import classify_detailed
+import classify_sns_rule_based
+from classify_sns_rule_based import classify_csv, classify_detailed
 
 
 class SentimentClassifierRegressionTests(unittest.TestCase):
@@ -52,3 +58,58 @@ class SentimentClassifierRegressionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SameFileGuardTests(unittest.TestCase):
+    """Writing the output over the input truncated it before it was read."""
+
+    def _corpus(self, directory: Path) -> Path:
+        path = directory / "posts.csv"
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["post_id", "clean_text"])
+            for index in range(20):
+                writer.writerow([f"ID:{index}", "ボンドロ交換希望です"])
+        return path
+
+    def test_same_path_is_refused_and_the_input_survives(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            source = self._corpus(Path(name))
+            before = source.read_bytes()
+            with self.assertRaises(ValueError):
+                classify_csv(source, source, "clean_text")
+            self.assertEqual(source.read_bytes(), before)
+
+    def test_an_alias_of_the_input_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            source = self._corpus(Path(name))
+            before = source.read_bytes()
+            alias = Path(name) / "alias.csv"
+            os.symlink(source, alias)
+            with self.assertRaises(ValueError):
+                classify_csv(source, alias, "clean_text")
+            self.assertEqual(source.read_bytes(), before)
+
+    def test_a_failed_run_leaves_the_previous_output_in_place(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            directory = Path(name)
+            source = self._corpus(directory)
+            output = directory / "out.csv"
+            classify_csv(source, output, "clean_text")
+            good = output.read_bytes()
+
+            calls = {"count": 0}
+            original = classify_sns_rule_based.classify_detailed
+
+            def failing(text: str):
+                calls["count"] += 1
+                if calls["count"] == 5:
+                    raise RuntimeError("injected")
+                return original(text)
+
+            with mock.patch.object(classify_sns_rule_based, "classify_detailed", failing):
+                with self.assertRaises(RuntimeError):
+                    classify_csv(source, output, "clean_text")
+
+            self.assertEqual(output.read_bytes(), good)
+            self.assertEqual(list(directory.glob("*.part")), [])
