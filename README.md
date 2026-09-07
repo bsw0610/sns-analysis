@@ -271,10 +271,16 @@ Three different environments are involved and they are not interchangeable.
 | Research reproduction scripts | **Python 3.10 or newer** | 3.13.9 locally |
 | Historical Word2Vec workflow | not reproducible here | excluded, see above |
 
-The research scripts use `zip(..., strict=True)`, which Python 3.10 added. On 3.9 they
-now stop immediately with a message naming the requirement instead of failing part way
-through with `TypeError: zip() takes no keyword arguments`, which reads as a data
-problem rather than an environment one. **A working sample run does not mean the
+Two separate things put the research floor at Python 3.10, and neither can be worked
+around by installing something:
+
+- The scripts use `zip(..., strict=True)`, which Python 3.10 added. On 3.9 they now stop
+  immediately with a message naming the requirement instead of failing part way through
+  with `TypeError: zip() takes no keyword arguments`, which reads as a data problem
+  rather than an environment one.
+- `requirements.txt` pins `matplotlib==3.10.6`, which declares `Requires-Python >= 3.10`.
+  On 3.9 that version is not installable at all — the 3.9-compatible line stops at 3.9.4
+  — so the pinned dependency set is itself a 3.10 requirement. **A working sample run does not mean the
 research scripts will run on the same interpreter** — the sample path is the one CI
 exercises, and it is the more permissive of the two.
 

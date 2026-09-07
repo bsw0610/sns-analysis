@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """Fail fast when a research script is run on an interpreter it does not support.
 
-The research scripts use ``zip(..., strict=True)``, which needs Python 3.10.  On 3.9
-the call raises ``TypeError: zip() takes no keyword arguments`` part way through a run,
-after the script has already read its inputs, which reads as a data problem rather than
-an environment one.  Calling :func:`require_supported_interpreter` from a script's ``__main__`` block turns
-that into an immediate, named failure.  The check deliberately does **not** run at import
-time: the functions in these modules are imported by tests that run on 3.9, and importing
-them is not what breaks.
+Two independent things put the floor at Python 3.10.
+
+The research scripts use ``zip(..., strict=True)``, which 3.10 added.  On 3.9 the call
+raises ``TypeError: zip() takes no keyword arguments`` part way through a run, after the
+script has already read its inputs, which reads as a data problem rather than an
+environment one.
+
+``requirements.txt`` also pins ``matplotlib==3.10.6``, and that release declares
+``Requires-Python >= 3.10``.  It cannot be installed on 3.9 at all: the 3.9-compatible
+line stops at 3.9.4.  So the pinned dependency set is itself a 3.10 requirement, not a
+separate packaging matter that could be solved by installing something.
+
+Calling :func:`require_supported_interpreter` from a script's ``__main__`` block turns the
+first of these into an immediate, named failure.  The check deliberately does **not** run
+at import time: the functions in these modules are imported by tests that run on 3.9, and
+importing them is not what breaks.
 
 This is deliberately narrower than the public sample path.  ``classify_sns_rule_based``,
 the sample check and the unit tests run on 3.9, which is what CI exercises; the research
@@ -20,7 +29,11 @@ import sys
 
 MINIMUM = (3, 10)
 VERIFIED = ("3.13.9",)
-REASON = "zip(..., strict=True), added in Python 3.10"
+REASON = (
+    "zip(..., strict=True), added in Python 3.10; and requirements.txt pins "
+    "matplotlib==3.10.6, which declares Requires-Python >= 3.10 and has no "
+    "3.9-compatible release at that version"
+)
 
 
 def require_supported_interpreter() -> None:
