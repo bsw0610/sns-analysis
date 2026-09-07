@@ -143,7 +143,7 @@ There are still 10 false negatives. The Gold data includes direct examples of th
 
 ```text
 gold=[交換・取引]  pred=中立(score 0.00)
-「@m0jsm スタンダードとボンドロキティ交換していただくこと可能でしょうか？」
+「@<user> スタンダードとボンドロキティ交換していただくこと可能でしょうか？」
 ```
 
 `と交換して` does not satisfy `\b`, and it does not match `交換して(?:ください|下さい)`, so the post receives score 0 and falls into `中立`.
@@ -228,7 +228,7 @@ Examples of score-0.00 false-neutral posts:
 ```text
 gold=[欲望・執着]  「プリティーシリーズのボンボンドロップシール出して〜〜〜〜〜〜〜」
 gold=[欲望・執着]  「嵐のツアーグッズでボンドロ出ないかな〜」
-gold=[欲望・執着]  「@seal_ya_san ボンドロ シナモロール♡ ご縁がありますように」
+gold=[欲望・執着]  「@<user> ボンドロ シナモロール♡ ご縁がありますように」
 gold=[喜び・満足]  「ボンボンドロップシールを手に入れてしまった…🤭🤍」
 gold=[喜び・満足]  「…ハチワレのボンドロを貼ることに成功 別にいいよ〜って感じなの神」
 gold=[不満+焦り]   「…今の状況辛すぎる…出会えたら奇跡みたいになってる」
