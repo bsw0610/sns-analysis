@@ -261,6 +261,23 @@ The reproducible hybrid path requires the six monthly CSV exports and local file
 
 The historical cleaning and Word2Vec notebooks are also excluded because their redistribution terms could not be verified. The current public repository therefore documents that legacy path but does not claim that a fresh clone can rerun it end to end.
 
+#### Execution environments
+
+Three different environments are involved and they are not interchangeable.
+
+| Path | Interpreter | Verified on |
+| --- | --- | --- |
+| Public sample and unit tests | Python 3.9 or newer | 3.9.6 locally; CI runs 3.11, 3.12 and 3.13 |
+| Research reproduction scripts | **Python 3.10 or newer** | 3.13.9 locally |
+| Historical Word2Vec workflow | not reproducible here | excluded, see above |
+
+The research scripts use `zip(..., strict=True)`, which Python 3.10 added. On 3.9 they
+now stop immediately with a message naming the requirement instead of failing part way
+through with `TypeError: zip() takes no keyword arguments`, which reads as a data
+problem rather than an environment one. **A working sample run does not mean the
+research scripts will run on the same interpreter** — the sample path is the one CI
+exercises, and it is the more permissive of the two.
+
 Run the commands below from the repository root with `python3`. The paths shown for `--output` and `--rebuild-dir` are the script defaults, so they can be omitted; `rebuild/` is ignored by Git and is kept separate from `data/output/` so the preserved baselines are never overwritten.
 
 ### Rebuild the hybrid corpus

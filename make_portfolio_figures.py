@@ -12,6 +12,9 @@ never reruns the classifier.
 
 from __future__ import annotations
 
+from research_environment import require_supported_interpreter
+
+
 import argparse
 import csv
 import hashlib
@@ -653,4 +656,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    require_supported_interpreter()
     sys.exit(main())

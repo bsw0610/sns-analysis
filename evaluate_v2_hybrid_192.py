@@ -14,6 +14,9 @@ No classifier code is modified.
 
 from __future__ import annotations
 
+from research_environment import require_supported_interpreter
+
+
 import argparse
 import csv
 import json
@@ -378,5 +381,6 @@ def parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
+    require_supported_interpreter()
     args = parse_args()
     main(args.gold, args.predictions, args.output, args.gold_189)

@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+from research_environment import require_supported_interpreter
+
+
 import argparse
 import csv
 import hashlib
@@ -259,4 +262,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    require_supported_interpreter()
     main()
