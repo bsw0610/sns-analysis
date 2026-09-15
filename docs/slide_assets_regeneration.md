@@ -93,6 +93,14 @@ the basis for anonymization.
 
 ## Generation
 
+**Display-copy limitation:** `page16_metrics()` in
+[regenerate_slide_assets.py](../regenerate_slide_assets.py) still returns the
+previous conclusion in `visible_copy`. Regenerating images alone therefore
+does not apply the revised explanation documented above. To apply the
+[revised slide plan](slide_plan_10-16.md) to the actual images, the generator's
+visible text must be synchronized separately. This documentation update does
+not change the generator or regenerate any images.
+
 If `--output-dir` is omitted, `tempfile.mkdtemp()` creates a new temporary
 directory.
 
