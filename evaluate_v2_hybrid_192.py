@@ -159,6 +159,16 @@ def display_path(path: Path) -> str:
         return str(path)
 
 
+def unique_score_keys(pairs: list[tuple]) -> dict:
+    """Preserve duplicate-key errors that json.loads normally discards."""
+    scores = {}
+    for key, value in pairs:
+        if key in scores:
+            raise ValueError(f"duplicate key {key!r}")
+        scores[key] = value
+    return scores
+
+
 def load(
     gold_path: Path = GOLD,
     pred_path: Path = PRED,
@@ -194,19 +204,44 @@ def load(
 
     wanted = {g["post_id"] for g in gold}
     pred = {}
+    seen = set()
     with pred_path.open("r", encoding="utf-8-sig", newline="") as f:
-        for row in csv.DictReader(f):
-            pid = row["投稿ID_文字列"]
+        for row_number, row in enumerate(csv.DictReader(f), start=2):
+            pid = row.get("投稿ID_文字列")
+            if pid is None or not pid.strip():
+                raise ValueError(f"prediction row {row_number}: empty ID")
+            if pid in seen:
+                raise ValueError(f"prediction ID {pid!r}: duplicate ID")
+            seen.add(pid)
+            primary = row.get("sentiment_category")
+            if primary not in CATEGORIES:
+                raise ValueError(f"prediction ID {pid!r}: invalid sentiment_category")
+            try:
+                scores = json.loads(
+                    row.get("category_scores"), object_pairs_hook=unique_score_keys
+                )
+                if not isinstance(scores, dict):
+                    raise ValueError("expected a JSON object")
+                if set(scores) != set(COLMAP.values()):
+                    raise ValueError("expected exactly the six active category keys (missing or unknown key)")
+                for value in scores.values():
+                    if (isinstance(value, bool) or not isinstance(value, (int, float))
+                            or (isinstance(value, float) and not math.isfinite(value))):
+                        raise ValueError("scores must be finite numbers, excluding bool")
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"prediction ID {pid!r}: invalid category_scores: {exc}") from exc
             if pid not in wanted:
                 continue
-            scores = json.loads(row["category_scores"])
             over = {c for c, v in scores.items() if v >= MIN_PRIMARY_SCORE}
             pred[pid] = {
-                "single": row["sentiment_category"],
+                "single": primary,
                 "multi": over or {"中立"},
                 "confidence": row["sentiment_confidence"],
             }
-    return [{**g, **pred[g["post_id"]]} for g in gold if g["post_id"] in pred], len(gold)
+    missing = wanted - pred.keys()
+    if missing:
+        raise ValueError(f"missing prediction for Gold ID(s): {', '.join(sorted(missing))}")
+    return [{**g, **pred[g["post_id"]]} for g in gold], len(gold)
 
 
 def table(counts, lines, title):
