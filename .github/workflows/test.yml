@@ -31,7 +31,8 @@ jobs:
             test_sentiment_classifier.py \
             test_slide_number_definitions.py \
             test_evaluation_report.py \
-            test_evaluation_inputs.py
+            test_evaluation_inputs.py \
+            test_sample_output.py
 
       # Proves the claim the README makes: the classifier runs on a fresh clone
       # with no dataset present.

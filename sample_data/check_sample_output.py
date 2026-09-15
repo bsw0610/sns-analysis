@@ -50,6 +50,19 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def index_rows(rows: list[dict[str, str]], source: str) -> dict[str, dict[str, str]]:
+    """Validate identities before a dictionary can discard duplicate rows."""
+    indexed = {}
+    for position, row in enumerate(rows, start=2):
+        post_id = row.get("post_id")
+        if post_id is None or not post_id.strip():
+            fail(f"{source} row {position}: empty ID")
+        if post_id in indexed:
+            fail(f"{source} duplicate ID {post_id!r} at row {position}")
+        indexed[post_id] = row
+    return indexed
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         raise SystemExit("usage: check_sample_output.py <classified.csv>")
@@ -58,12 +71,24 @@ def main() -> int:
         fail(f"{path} was not produced")
 
     with path.open(encoding="utf-8-sig", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        columns = reader.fieldnames or []
+
+    with Path(__file__).with_name("sample_posts.csv").open(
+        encoding="utf-8-sig", newline=""
+    ) as handle:
+        expected = index_rows(list(csv.DictReader(handle)), "expected")
+    actual = index_rows(rows, "actual")
+    missing_ids = expected.keys() - actual.keys()
+    unknown_ids = actual.keys() - expected.keys()
+    if missing_ids or unknown_ids:
+        fail(f"missing ID(s): {sorted(missing_ids)}; unknown ID(s): {sorted(unknown_ids)}")
 
     if len(rows) != EXPECTED_ROWS:
         fail(f"expected {EXPECTED_ROWS} rows, found {len(rows)}")
 
-    missing = [column for column in OUTPUT_COLUMNS if column not in rows[0]]
+    missing = [column for column in OUTPUT_COLUMNS if column not in columns]
     if missing:
         fail(f"output is missing columns: {missing}")
 
@@ -74,6 +99,13 @@ def main() -> int:
     }
     if invalid:
         fail(f"rows predicted a category outside the seven labels: {invalid}")
+
+    for post_id, row in actual.items():
+        intended = expected[post_id]["intended_category"]
+        expected_result = EXPECTED_DISAGREEMENTS.get(post_id, (intended, intended))
+        result = (row.get("intended_category"), row["sentiment_category"])
+        if result != expected_result:
+            fail(f"unexpected result for ID {post_id!r}: expected {expected_result}, got {result}")
 
     disagreements = {
         row["post_id"]: (row["intended_category"], row["sentiment_category"])
