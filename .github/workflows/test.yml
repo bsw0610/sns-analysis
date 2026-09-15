@@ -30,7 +30,8 @@ jobs:
           python -m unittest -v \
             test_sentiment_classifier.py \
             test_slide_number_definitions.py \
-            test_evaluation_report.py
+            test_evaluation_report.py \
+            test_evaluation_inputs.py
 
       # Proves the claim the README makes: the classifier runs on a fresh clone
       # with no dataset present.

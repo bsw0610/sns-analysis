@@ -30,7 +30,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from evaluate_v2_hybrid_192 import main, supplement_delta, supplement_note
+from evaluate_v2_hybrid_192 import COLMAP, main, supplement_delta, supplement_note
 from normalize_gold_standard_192 import GOLD_COLUMNS
 from research_environment import MINIMUM, REASON
 
@@ -151,7 +151,9 @@ class GeneratedReportTests(unittest.TestCase):
         # One category over MIN_PRIMARY_SCORE, so the multi-label prediction set
         # is the single prediction.  `中立` is expressed as an empty set, which
         # the loader turns back into 中立.
-        scores = {} if category == "中立" else {category: 2.0}
+        scores = dict.fromkeys(COLMAP.values(), 0.0)
+        if category != "中立":
+            scores[category] = 2.0
         if also_over_threshold is not None:
             scores[also_over_threshold] = 2.0
         return {
