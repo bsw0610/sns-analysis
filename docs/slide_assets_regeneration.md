@@ -79,8 +79,11 @@ is moved to slide 16.
 
 ### Slide 16
 
-`slide_number_definitions.is_exchange_template()` identifies 12,411 structured
-exchange-format posts, or 51.0% of exchange posts. Shared definition functions
+`slide_number_definitions.is_exchange_template()` matches specified bracket or
+delimiter forms in 12,411 of the 24,316 primary `交換・取引` posts (51.0%).
+`郵送／手渡し` alone is insufficient. The primary classifier uses some of the
+same markers, so this is a within-category description, not an independent
+estimate of structured trading in all posts. See the [definition and limits](slide_metric_audit.md#structured-exchange-format). Shared definition functions
 calculate the following values from the fixed 98-record sample: 79 replies, 48
 formulaic greetings, 42 `ご検討／御検討` instances, and 17 exchange ratios.
 
@@ -89,6 +92,14 @@ their exact-match evidence against contiguous strings in the fixed sample and
 the basis for anonymization.
 
 ## Generation
+
+**Display-copy limitation:** `page16_metrics()` in
+[regenerate_slide_assets.py](../regenerate_slide_assets.py) still returns the
+previous conclusion in `visible_copy`. Regenerating images alone therefore
+does not apply the revised explanation documented above. To apply the
+[revised slide plan](slide_plan_10-16.md) to the actual images, the generator's
+visible text must be synchronized separately. This documentation update does
+not change the generator or regenerate any images.
 
 If `--output-dir` is omitted, `tempfile.mkdtemp()` creates a new temporary
 directory.

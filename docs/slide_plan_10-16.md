@@ -460,11 +460,16 @@ confusing them with population estimates.
 
 Main conclusion:
 
-`交換投稿の多くで、条件を簡潔に提示する共通の表現形式が使われていた。`
+`主分類が「交換・取引」の投稿では、指定した括弧・区切り記号を伴う表現が51.0%に見られた。`
 
-Displayed terms:
+Displayed terms (including the separate qualitative sample; not all are
+conditions for the 51.0% numerator):
 
 `譲／求／郵送／手渡し／交換比率／差額精算／ご検討・御検討`
+
+Place beside the percentage:
+
+`分母：主分類「交換・取引」24,316件。指定した括弧・区切り記号の一致を投稿単位で集計。分類にも一部同じ表現を使用。`
 
 Scope limitation:
 
@@ -477,7 +482,7 @@ Transition to the next section:
 ### Key Values
 
 - Structured exchange format: `12,411件`
-- Share of exchange posts: `51.0%`
+- Share of the 24,316 primary `交換・取引` posts: `51.0%`
 - Fixed sample containing negotiation expressions: `98件`
 - Replies: `79件`
 - Formulaic greetings: `48件`
@@ -502,8 +507,11 @@ two records and the rationale for anonymization.
 
 ### Speaker Notes
 
-The shared regular expression identifies 12,411 structured formats among all
-24,316 exchange posts, or 51.0%. The 98 records, however, are a fixed
+The shared regular expression matches 12,411 of the 24,316 posts assigned the
+primary `交換・取引` label, or 51.0%. It requires specified bracket/delimiter
+forms of `交換／譲／求`; `郵送／手渡し` alone does not count. The classifier
+uses some of the same markers, so the ratio is conditional on that selection,
+not independent confirmation of exchange prevalence across the corpus. The 98 records, however, are a fixed
 qualitative sample extracted for negotiation expressions. Do not estimate a
 population share such as 79/98 for all exchange posts; display these only as
 supporting counts.
@@ -511,7 +519,9 @@ supporting counts.
 ### Interpretation Limits
 
 The 12,411 structured-format count is an automated operational definition, not
-a manually reviewed census. The fixed 98 records are not a random sample and do
+a manually reviewed census. It does not establish completed trades, user
+motives or account behavior. See the [operational definition](slide_metric_audit.md#structured-exchange-format)
+for preprocessing, label selection and counting rules. The fixed 98 records are not a random sample and do
 not represent every exchange post. The presence of common expressions does not
 establish value creation or norm formation.
 

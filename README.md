@@ -153,7 +153,14 @@ The exchange analysis aggregates posts whose primary category is `交換・取�
 | User IDs with one post | 7,198 (67.4%) |
 | Top 1% of user IDs | 3,619 posts (14.9%) |
 | Top 10% of user IDs | 11,082 posts (45.6%) |
-| Template-like exchange posts | 12,411 (51.0%) |
+| Template-matching posts within the primary exchange category | 12,411 / 24,316 (51.0%) |
+
+Here, a template match means at least one bracketed `交換／譲／求` marker or
+`譲／求` followed by a specified closing delimiter or colon. `郵送` or `手渡し`
+alone is insufficient. The 51.0% describes posts selected by the current
+primary-category rules, not all discourse or completed transactions. Those
+rules use some of the same markers, so this share is not independent validation
+of the classification. See the [operational definition and limits](docs/slide_metric_audit.md#structured-exchange-format).
 
 `ユーザーID` identifies an account in the export. It does not establish a unique person or distinguish human accounts from automated accounts.
 

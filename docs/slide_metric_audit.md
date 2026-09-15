@@ -77,6 +77,13 @@ not exceed 1%. The same definition gives 1,067 accounts and
 
 ### Structured Exchange Format
 
+**Unit and denominator.** The adopted 51.0% is 12,411 matching post records
+out of the 24,316 records whose single primary `sentiment_category` is
+`交換・取引` in `data/output/sentiment_classified_hybrid.csv`. It is neither a
+share of all 110,918 retained posts nor a share of accounts or expression
+occurrences. The historical alternatives below use that same denominator.
+
+
 | Implementation | Whitespace | `〈〉/《》` | `[]/［］` | Count | Share |
 |---|---|---|---|---:|---:|
 | Literal implementation of the specification wording | Not allowed | Allowed | Excluded | 12,099 | 49.8% |
@@ -90,11 +97,72 @@ The final regular expression is defined only once, in
 【\s*(?:交換|譲|求)\s*】|[〈《\[［]\s*(?:譲|求)\s*[〉》\]］]|(?:譲|求)\s*[)）：:]
 ```
 
-The inclusion criteria are:
+#### Calculation path and interpretation
+
+- **Selection:** [build_hybrid_corpus.py](../build_hybrid_corpus.py),
+  `build_hybrid()`, selects the hybrid from the six November 2025–April 2026
+  monthly exports (136,288 records). Keyword and additional-advertising rules,
+  recovered relaxations, and the locked final exclusions yield 110,918 retained
+  records. This is a filtered collection, not a random sample of X discourse;
+  see [the preserved selection procedure](hybrid_rebuild.md).
+- **Primary classification:** [classify_sns_rule_based.py](../classify_sns_rule_based.py),
+  `normalize_text()`, `_score_rules()` and `classify_detailed()`, apply NFKC,
+  case folding, URL/mention removal and whitespace normalization, then weighted
+  category rules. The highest score must reach 1.8; ties use `PRIORITY`.
+  Secondary labels and the multi-label Gold evaluation do not determine this
+  denominator: an exchange secondary label alone is insufficient.
+- **Numerator:** [slide_number_definitions.py](../slide_number_definitions.py),
+  `is_exchange_template()`, returns a Boolean regex search on the original
+  `内容` field, without the classifier's normalization. One or more matches
+  contribute one post, even if a marker repeats or only one of `譲` and `求`
+  occurs. The exact regex above is the operational definition; its opening and
+  closing character classes do not enforce matched bracket pairs.
+- **Aggregation:** [regenerate_slide_assets.py](../regenerate_slide_assets.py),
+  `page15_metrics()`, computes the numerator and denominator; `page16_metrics()`
+  carries that result to slide 16. [make_task3_exchange_accounts.py](../make_task3_exchange_accounts.py),
+  `main()`, sums the same Boolean counts across accounts, and
+  [verify_slide_numbers.py](../verify_slide_numbers.py), `main()`, checks the
+  same ratio. Account grouping does not change the post-weighted denominator.
+  Retained replies and repost-like texts are not specially excluded, and no
+  text deduplication is applied to this ratio. The
+  hybrid builder rejects duplicate post IDs; identical text under distinct IDs
+  remains separate posts. The aggregation itself counts supplied rows without
+  a further ID check. The reply filter and ID union for the fixed 98-record
+  sample below are a separate analysis, not conditions on the 51.0%.
+
+**Shared evidence, different rules.** The classifier's `exchange_header`,
+`offer_field` and `want_field` rules reward markers also used by the template
+regex, including `【交換】`, bracketed `譲／求` and their colon forms; having
+both fields adds the `structured_pair` bonus. This overlap is confirmed in
+code. The rules are not identical: classification also uses exchange requests
+and trade terms, while template matching admits other bracket variants and
+uses unnormalized text. A template hit does not guarantee the primary category.
+
+The share describes how often these markers appear **within the set captured
+as exchange by this classifier**. Selection using related markers can favor
+such posts; the size of that effect is not estimated here. Classification and
+template prevalence therefore are not two independent pieces of evidence for
+how common structured trading is in the wider discourse. They do show the
+presence of explicit field-style expressions in this selected set. They do not
+establish completed trades, user motives, individual account behavior, or the
+prevalence of all ways to express exchange conditions.
+
+A read-only check of the preserved classification file (SHA-256 as listed in
+[hybrid_rebuild.md](hybrid_rebuild.md)) reproduced 110,918 records, 24,316 primary
+exchange records and 12,411 template hits: 51.040467…%, displayed as 51.0%.
+There were no duplicate post IDs, and all version fields were `2.0.0`; input
+hash and modification time were unchanged. This check did not rebuild the
+corpus, rerun classification, or repeat the historical manual review.
+
+#### Expression conditions
+
+The first four rows below describe template matching; the remaining rows
+refer to the separate fixed negotiation-expression sample.
+
 
 | Expression | Inclusion criterion |
 |---|---|
-| `求`, `譲` | Count as a structured format only when enclosed in an allowed bracket pair or followed by a closing bracket or colon. |
+| `求`, `譲` | Count as a structured format only when matched by the bracket character classes above or followed by a listed closing delimiter or colon. |
 | `交換` | Count as a structured format only in the `【交換】` pattern family. |
 | `郵送`, `手渡し` | Describe transaction methods and do not independently increase the structured-format or negotiation-expression counts. |
 | Separators and line breaks | Allow `【】`, `〈〉`, `《》`, `[]`, `［］`, `)`, `）`, `:`, and `：`. Allow internal spaces, full-width spaces, tabs, and line breaks through `\s*`. |
