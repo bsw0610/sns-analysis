@@ -123,6 +123,8 @@ All three supplemental rows have only `交換・取引` as their Gold label. **T
 
 > **Correction, 2026-09-07.** This paragraph previously stated that v2 predicts `交換・取引` for all three rows and that the only change was TP +3. That was asserted rather than measured, and it is wrong. The figures above were read from the preserved Gold and prediction files; the report generator now derives them instead of asserting them, and `test_evaluation_report.py` fails if the old assumption returns.
 
+> **Correction, 2026-09-16.** The commit that carried the correction above reported the singleton totals as moving 116/73/84 to 118/74/85. The true positives and false positives are right; the false negatives are not. Under the lenient criterion every Gold label the single prediction did not cover is a false negative, so the totals are **116/73/98** at 189 rows and **118/74/99** at 192 — 217 Gold label occurrences less 118 true positives is 99. The figures in the tables of this document were always computed that way and did not change. The derivation added with that commit had the same omission, counting a false negative only when the prediction missed the Gold set entirely; it now follows the same rule as the tables, and `test_evaluation_report.py` checks the generated report rather than the helper alone.
+
 Predictions for the existing 189 rows differ by **0 rows** between the old and hybrid corpora. The v2 classifier is deterministic.
 
 ---

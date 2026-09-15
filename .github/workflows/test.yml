@@ -23,11 +23,14 @@ jobs:
 
       # The classifier and its tests use only the standard library. Nothing is
       # installed here, so a failure means the code broke, not the environment.
+      # test_evaluation_report.py builds its own 192-row corpus in a temporary
+      # directory, so it runs here even though the real dataset is not published.
       - name: Run regression tests
         run: |
           python -m unittest -v \
             test_sentiment_classifier.py \
-            test_slide_number_definitions.py
+            test_slide_number_definitions.py \
+            test_evaluation_report.py
 
       # Proves the claim the README makes: the classifier runs on a fresh clone
       # with no dataset present.

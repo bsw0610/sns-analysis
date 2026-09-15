@@ -24,7 +24,10 @@ import math
 from pathlib import Path
 
 from normalize_gold_standard_192 import (
+    DEFAULT_HYBRID,
     DEFAULT_OUTPUT as NORMALIZED_GOLD_STANDARD,
+    DEFAULT_SOURCE,
+    DEFAULT_SUPPLEMENT,
     validate_normalized_gold,
 )
 
@@ -159,8 +162,25 @@ def display_path(path: Path) -> str:
 def load(
     gold_path: Path = GOLD,
     pred_path: Path = PRED,
+    *,
+    source_path: Path | None = None,
+    supplement_path: Path | None = None,
+    hybrid_path: Path | None = None,
 ) -> tuple[list[dict], int]:
-    gold_path = Path(validate_normalized_gold(gold_path)["path"])
+    # validate_normalized_gold checks the 12-column derivative against the preserved
+    # source, the supplement pool and the hybrid corpus.  Those default to fixed
+    # repository paths; accepting them as arguments makes this callable on a synthetic
+    # set, which is what lets the report be regenerated in a test without the corpus.
+    gold_path = Path(
+        validate_normalized_gold(
+            gold_path,
+            source=DEFAULT_SOURCE if source_path is None else source_path,
+            supplement=(
+                DEFAULT_SUPPLEMENT if supplement_path is None else supplement_path
+            ),
+            hybrid=DEFAULT_HYBRID if hybrid_path is None else hybrid_path,
+        )["path"]
+    )
     gold = []
     with gold_path.open("r", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
@@ -257,7 +277,16 @@ def supplement_delta(rows: list[dict], gold_189_path: Path) -> dict[str, object]
             tp[predicted] = tp.get(predicted, 0) + 1
         else:
             fp[predicted] = fp.get(predicted, 0) + 1
-            for label in row["gold"]:
+        # Every Gold label the single prediction did not cover is a false negative,
+        # including the other labels of a row whose top category was correct.  This
+        # is the rule calculate_evaluation_metrics uses for the tables above; an
+        # earlier version of this function charged a false negative only when the
+        # prediction missed the Gold set entirely, so the delta and the tables it
+        # sits beside were counting differently.  The two agree on the preserved
+        # data, where all three supplemental rows carry one Gold label, which is why
+        # the disagreement never showed up in the report.
+        for label in row["gold"]:
+            if label != predicted:
                 fn[label] = fn.get(label, 0) + 1
     return {"rows": extra, "tp": tp, "fp": fp, "fn": fn}
 
@@ -267,8 +296,17 @@ def main(
     pred_path: Path = PRED,
     output: Path = OUT,
     gold_189_path: Path = GOLD_189,
+    source_path: Path | None = None,
+    supplement_path: Path | None = None,
+    hybrid_path: Path | None = None,
 ) -> None:
-    rows, n_gold = load(gold_path, pred_path)
+    rows, n_gold = load(
+        gold_path,
+        pred_path,
+        source_path=source_path,
+        supplement_path=supplement_path,
+        hybrid_path=hybrid_path,
+    )
     n = len(rows)
 
     metrics = calculate_evaluation_metrics(rows)
