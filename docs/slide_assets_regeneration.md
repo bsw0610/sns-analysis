@@ -79,8 +79,11 @@ is moved to slide 16.
 
 ### Slide 16
 
-`slide_number_definitions.is_exchange_template()` identifies 12,411 structured
-exchange-format posts, or 51.0% of exchange posts. Shared definition functions
+`slide_number_definitions.is_exchange_template()` matches specified bracket or
+delimiter forms in 12,411 of the 24,316 primary `交換・取引` posts (51.0%).
+`郵送／手渡し` alone is insufficient. The primary classifier uses some of the
+same markers, so this is a within-category description, not an independent
+estimate of structured trading in all posts. See the [definition and limits](slide_metric_audit.md#structured-exchange-format). Shared definition functions
 calculate the following values from the fixed 98-record sample: 79 replies, 48
 formulaic greetings, 42 `ご検討／御検討` instances, and 17 exchange ratios.
 
