@@ -27,7 +27,7 @@ the metric audits and regenerated assets are individual follow-up work.
 | Document | Purpose |
 |---|---|
 | [Slide Asset Regeneration](slide_assets_regeneration.md) | Regenerating and verifying the slide 13–16 PNG assets from locked definitions. |
-| [Slide 10–16 Replacement Plan](slide_plan_10-16.md) | The presentation specification. It is also the input that `verify_slide_numbers.py` checks its measurements against. |
+| [Slide 10–16 Replacement Plan](slide_plan_10-16.md) | The presentation specification. `verify_slide_numbers.py` does not read it; the script's expected values were transcribed from its 2026-07-30 version. |
 | [Presentation Script (Japanese)](presentation_script_10-16_ja.md) | Speaker script for the Japanese presentation. Kept in Japanese by intent. |
 
 ## Historical

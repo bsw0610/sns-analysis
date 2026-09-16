@@ -419,7 +419,7 @@ left ambiguous between current and legacy code.
 | File | Role |
 | --- | --- |
 | `verify_hybrid_rebuild.py` | Row counts, ID sets and order, SHA-256 hashes, label preservation, and repeat-run determinism for the rebuild. |
-| `verify_slide_numbers.py` | Checks every metric quoted in the presentation specification against the data. |
+| `verify_slide_numbers.py` | Recomputes 96 slide figures from the data and compares them with expected values written into the script, transcribed from the 2026-07-30 specification. It does not read the specification, so later edits to it are not checked; see [the audit](docs/slide_metric_audit.md). |
 | `verify_slide_assets.py` | Checks the regenerated slide PNGs against their locked definitions. |
 | `audit_slide_number_definitions.py` | The one-off audit that produced [Presentation Metric Audit](docs/slide_metric_audit.md). |
 

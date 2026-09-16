@@ -563,7 +563,9 @@ Verification includes:
 - Cell-for-cell equality with the first 12 source columns and preservation of
   the three supplemental exchange labels
 - Matching SHA-256 values for the four reference datasets
-- `verify_slide_numbers.py`: 96/96
+- `verify_slide_numbers.py`: 96/96 against the expected values written into the
+  script, which were transcribed from the 2026-07-30 version of this document and
+  are not read from it
 - Slide 15: 12/12 metrics
 - Slide 16: seven metrics and source matching for two anonymized quotations
 - Unit and regression tests, Ruff, and `git diff --check`

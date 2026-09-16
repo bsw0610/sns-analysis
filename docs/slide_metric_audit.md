@@ -285,10 +285,23 @@ Verification results:
 
 ## Verification Results: 96 Matched / 0 Mismatched / 0 Unverifiable
 
-Produced by `verify_slide_numbers.py` against `docs/slide_plan_10-16.md`
-(SHA-256 prefix `ddc11216e18865e7`, recorded for the pre-translation file
-audited on 2026-07-30), the hybrid corpus, and
-`gold_standard_192_normalized.csv`. The script writes its raw report to
+Produced by `verify_slide_numbers.py` from the hybrid corpus and
+`gold_standard_192_normalized.csv`. The “Specification” column holds the
+expected values written into the script. They were transcribed from
+`docs/slide_plan_10-16.md` as of 2026-07-30 (commit `cdc6226`, SHA-256 prefix
+`ddc11216e18865e7`), where 95 of the 96 appear; the other is the script's own
+“no overlap” label.
+
+The script does not read the specification. Replacing it with an unrelated file
+leaves all 96 results unchanged (checked 2026-09-17). The specification was
+reworked the same day in `8fbc218` and has been revised since. Allowing for
+thousands separators and dash spacing, 55 of the 96 expected values appear in
+the current version and 41 do not: 33 of the 40 section 2-0 filter figures, 6 of
+the 16 section 2-4 account figures, and one each in sections 2-1 and 2-3. A
+match below therefore shows that the data still produce the 2026-07-30 figures.
+It does not show that the current specification agrees with the data.
+
+The script writes its raw report to
 `data/output/slide_numbers_check_generated.md`, which is a generated artifact
 excluded from Git; the table below is the same result, translated for this
 document.

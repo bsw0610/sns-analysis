@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Task 4 — verify every figure in chapter 2 of docs/slide_plan_10-16.md.
+"""Task 4 — recompute the chapter 2 figures of docs/slide_plan_10-16.md from the data.
+
+The expected values are written into this script.  They were transcribed from the
+2026-07-30 version of the specification (commit cdc6226, SHA-256 prefix
+ddc11216e18865e7).  The specification itself is never read, so edits made to it
+since then are not checked: a match means the data still produce those figures,
+not that the current specification states them.
 
 Corpus of record (task 4 instruction): only
   data/output/2511-2604_hybrid.csv
@@ -289,13 +295,15 @@ def main(
     ng = sum(1 for r in results if r[4] == "★不一致")
     na = sum(1 for r in results if r[4] == "★検証不可")
     L = ["# 仕様書 第2章 数値照合結果（タスク4）", "",
-         "**照合日**: 2026-07-30",
-         f"**照合対象仕様書**: `{SPEC}`（SHA-256 `{sha16(SPEC)}`）",
+         "**期待値の出典**: `docs/slide_plan_10-16.md` 2026-07-30版"
+         "（commit `cdc6226`、SHA-256 `ddc11216e18865e7`）。"
+         "期待値は本スクリプトに記述されており、仕様書は読まない",
+         f"**現行仕様書**: `{SPEC}`（SHA-256 `{sha16(SPEC)}`、照合には使用しない）",
          "**コーパス**: `data/output/2511-2604_hybrid.csv` / "
          "`data/output/sentiment_classified_hybrid.csv`",
          f"**正解セット**: `{gold192.name}`", "",
          f"## 集計: 一致 {ok} / 不一致 {ng} / 検証不可 {na}（全 {len(results)} 項目）", "",
-         "| 節 | 項目 | 仕様書 | 実測 | 判定 | 照合元 |",
+         "| 節 | 項目 | 期待値 | 実測 | 判定 | 照合元 |",
          "|---|---|---:|---:|---|---|"]
     for sec, item, spec, act, verdict, src in results:
         L.append(f"| {sec} | {item} | {spec} | {act} | {verdict} | {src} |")
