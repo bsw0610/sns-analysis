@@ -246,13 +246,17 @@ def negotiation_summary() -> dict[str, object]:
             has_exchange_ratio(row["内容"]) for row in occurrences
         ),
     }
-    assert result == {
+    # The duplicated post IDs stay in the result, which run() writes only to a local
+    # output directory.  They are not spelled out here because this file is public
+    # and a post ID leads to the original post and its account.  source_rows and
+    # unique_posts fix the number of extra occurrences at two; the count fixes that
+    # they are two IDs seen twice, not one ID seen three times.
+    observed = {key: value for key, value in result.items() if key != "duplicate_ids"}
+    observed["duplicate_id_count"] = len(result["duplicate_ids"])
+    assert observed == {
         "source_rows": 100,
         "unique_posts": 98,
-        "duplicate_ids": [
-            "ID:2036404178151678416",
-            "ID:2047577298866704791",
-        ],
+        "duplicate_id_count": 2,
         "reply_metadata_count": 79,
         "leading_mention_count": 75,
         "reply_union_count": 80,

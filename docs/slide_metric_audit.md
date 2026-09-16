@@ -190,14 +190,15 @@ bracket or separator rule; none was included because of a delivery-method word.
 
 Boundary cases for the qualitative metrics were also reviewed:
 
-- One post with a leading `@` but no reply metadata:
-  `ID:2010721471329706079` — excluded from replies because it recruits a partner
-  for a simple information exchange
-- One `御検討` variant:
-  `ID:2029913067061137884` — included in the “ご検討” metric
-- Duplicate IDs in the two sample files:
-  `ID:2036404178151678416` and `ID:2047577298866704791` — both contain `n:m`,
+- One post with a leading `@` but no reply metadata — excluded from replies
+  because it recruits a partner for a simple information exchange
+- One `御検討` variant — included in the “ご検討” metric
+- Two posts duplicated across the two sample files — both contain `n:m`,
   giving 19 raw occurrences and 17 unique IDs
+
+Post IDs are not listed for these cases, because a post ID leads to the original
+post and its account. `audit_slide_number_definitions.py` writes the two duplicated
+IDs to its local output directory.
 
 ## Confidence-Interval Definition
 
