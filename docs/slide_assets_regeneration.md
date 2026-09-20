@@ -93,13 +93,22 @@ the basis for anonymization.
 
 ## Generation
 
-**Display-copy limitation:** `page16_metrics()` in
-[regenerate_slide_assets.py](../regenerate_slide_assets.py) still returns the
-previous conclusion in `visible_copy`. Regenerating images alone therefore
-does not apply the revised explanation documented above. To apply the
-[revised slide plan](slide_plan_10-16.md) to the actual images, the generator's
-visible text must be synchronized separately. This documentation update does
-not change the generator or regenerate any images.
+**Stale-image limitation:** `page16_metrics()` in
+[regenerate_slide_assets.py](../regenerate_slide_assets.py) now returns the
+conclusion, denominator note and shared-marker note of the
+[revised slide plan](slide_plan_10-16.md) in `visible_copy`, and
+`render_page16()` draws them. The generator copy is therefore synchronized;
+the images are not. No PNG was regenerated when that copy changed, so any
+slide 16 image produced before it still shows the earlier conclusion and
+carries no denominator. Regenerate the assets to apply the revised wording.
+
+`verify_slide_assets.py` does not close this gap. `validate_page16()` compares
+`template`, `fixed_sample`, `displayed_expressions`, `quotes` and
+`sample_sources`; it does not compare `visible_copy`. A set of slide 16 assets
+built before this change therefore still passes verification against the
+current generator, and the PNG is checked only for format, size and
+non-blankness, never for its text. A passing run is not evidence that an image
+shows the current display copy.
 
 If `--output-dir` is omitted, `tempfile.mkdtemp()` creates a new temporary
 directory.
