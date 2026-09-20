@@ -29,7 +29,7 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 
 The project began as a four-person seminar study of Japanese social media posts about ボンボンドロップシール. That original process used UserLocal Social Insight exports and notebooks shared for text cleaning and Word2Vec analysis, and its data preparation, advertising removal, and presentation were collaborative.
 
-Later analysis focused on questions that word embeddings alone could not answer directly:
+The post-level analysis, which began in the weeks before the seminar's final presentation on 2026-07-30 and continued after it, focused on questions that word embeddings alone could not answer directly:
 
 - How much advertising content should be removed before analysis?
 - What emotions or behaviors appear in the posts?
@@ -467,8 +467,12 @@ and the seminar presentation were team work.
 
 This repository is maintained by the repository owner as a portfolio and
 reproducibility project. It documents both the original seminar workflow and
-the additional investigation, revision, validation, and reproducibility work
-carried out afterward.
+the additional investigation, revision, validation, and reproducibility work.
+That work did not start after the seminar ended. The classifier evaluation and
+the corpus rebuild were done in the last days before the final presentation on
+2026-07-30, and the repository owner's own section of that presentation used
+them. The audit, documentation, publication, and further verification followed
+afterward.
 
 It should therefore not be read as claiming sole authorship of the original
 seminar project.

@@ -7,7 +7,9 @@ presentation and is therefore preserved.
 > **Provenance.** This document is the repository owner's own draft for
 > revising slides 10–16. It was not the material delivered in the seminar
 > presentation, which was produced by the four-person team and is not included
-> here.
+> here. The owner's own section of the delivered deck showed figures from the
+> 2026-07-30 version of this plan; the wording and caveats added since then
+> were not part of what was presented.
 
 ## 0. Scope and Evidence
 
