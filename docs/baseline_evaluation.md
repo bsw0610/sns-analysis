@@ -327,10 +327,11 @@ The priorities below incorporate the measured Gold results. **The classifier cod
 1. **n=192.** The overall hit-rate 95% CI is approximately ±0.07 (118/192, 0.546–0.683); category-level intervals are wider.
 2. **`情報共有` n=5 and `不満・怒り` n=14.** These categories require stratified additional samples.
 3. **Eleven deferred rows were excluded.** Seven were noted as advertising and two as off-topic. This suggests that advertising remains in the 109,037-post corpus (7/200 ≈ 3.5%). Excluding these rows may make the measured accuracy higher than practical deployment accuracy.
-4. The Gold dataset reflects one annotator. Inter-annotator agreement was not measured.
+4. The Gold dataset reflects one annotator, the repository owner, who labelled all 192 rows by hand. Inter-annotator agreement was not measured.
 5. Gold 192 is not a simple random sample of the 110,918-post hybrid corpus. It
    is the 189-row sample drawn from the older 109,037-post corpus plus three
-   supplemental rows whose annotation provenance is not preserved.
+   supplemental rows. The same annotator labelled those three, but no record
+   remains of when or under which procedure.
 
 ---
 

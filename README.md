@@ -136,7 +136,7 @@ The current evaluation set contains 192 posts:
 - 189 labeled posts sampled from the older 109,037-post corpus
 - 3 supplemental posts retained by the hybrid corpus
 
-This is not a simple random sample of all 110,918 hybrid posts. The three supplemental labels are preserved in the baseline, but their original annotation provenance is not available.
+This is not a simple random sample of all 110,918 hybrid posts. All 192 rows were labelled by hand by one annotator, the repository owner. The three supplemental labels are preserved in the baseline, but no record remains of when or under which procedure those three were labelled.
 
 ### Exchange analysis
 
