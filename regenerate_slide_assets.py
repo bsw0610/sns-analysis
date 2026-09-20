@@ -1079,8 +1079,19 @@ def page16_metrics(
         "visible_copy": {
             "title": "「交換・取引」投稿に見られた定型表現",
             "conclusion": (
-                "交換投稿の多くで、条件を簡潔に提示する"
-                "共通の表現形式が使われていた。"
+                "主分類が「交換・取引」の投稿では、指定した括弧・"
+                "区切り記号を伴う表現が"
+                f"{template['share_percent']:.1f}%に見られた。"
+            ),
+            "denominator_note": (
+                "分母：主分類「交換・取引」"
+                f"{template['denominator_posts']:,}件。"
+                "指定した括弧・区切り記号の\n"
+                "一致を投稿単位で集計。分類にも一部同じ表現を使用。"
+            ),
+            "shared_marker_note": (
+                "分類規則にも同じ表現の一部を使うため、"
+                "分類とは独立した証拠ではない。"
             ),
             "scope_limit": (
                 "固定標本の分析であり、すべての交換投稿を"
@@ -1135,7 +1146,7 @@ def render_page16(
     )
     main_ax.text(
         0.03,
-        0.65,
+        0.70,
         f"{template['posts']:,}件",
         fontsize=39,
         fontweight="bold",
@@ -1144,8 +1155,8 @@ def render_page16(
     )
     main_ax.text(
         0.03,
-        0.36,
-        f"交換投稿の {template['share_percent']:.1f}%",
+        0.45,
+        f"主分類「交換・取引」の {template['share_percent']:.1f}%",
         fontsize=22,
         fontweight="bold",
         color=INK,
@@ -1153,12 +1164,19 @@ def render_page16(
     )
     main_ax.text(
         0.03,
+        0.32,
+        copy["denominator_note"],
+        fontsize=10,
+        color=SUBTLE,
+        va="top",
+        linespacing=1.4,
+    )
+    main_ax.text(
         0.03,
-        "主な表現："
-        + "／".join(metrics["displayed_expressions"][:4])
-        + "\n"
-        + "／".join(metrics["displayed_expressions"][4:]),
-        fontsize=13.2,
+        0.03,
+        "表示語（固定標本を含む。すべてが一致条件ではない）\n"
+        + "／".join(metrics["displayed_expressions"]),
+        fontsize=11.5,
         color=SUBTLE,
         va="bottom",
         linespacing=1.45,
@@ -1224,17 +1242,19 @@ def render_page16(
     summary_ax.text(
         0.055,
         0.79,
-        copy["conclusion"],
+        # Wrap after the first comma so the sentence stays inside the panel.
+        copy["conclusion"].replace("、", "、\n", 1),
         transform=summary_ax.transAxes,
         fontsize=18,
         fontweight="bold",
         color=INK,
         va="center",
+        linespacing=1.3,
     )
     summary_ax.text(
         0.055,
         0.56,
-        "希望品・受け渡し方法・交換比率などを、短い語句で提示していた。",
+        copy["shared_marker_note"],
         transform=summary_ax.transAxes,
         fontsize=14,
         color=SUBTLE,
