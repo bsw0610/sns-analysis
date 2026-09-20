@@ -171,7 +171,7 @@ Only **5 of 27** Gold rows are recovered (95% CI [0.082, 0.367]). The other 22 r
 | 欲望・執着 | 2 |
 | 情報共有 | 1 |
 
-`焦り・競争` is the third-largest Gold category at 14.3%, while v2 assigns it to only 3.0% of the complete corpus. The audit estimated that multi-label counting would increase this category by 1.74×; in the Gold dataset, the effective gap is 4.8×.
+`焦り・競争` is the third-largest Gold category at 14.3%, while v2 assigns it to 3,255 of the 109,037 posts (3.0%) in the corpus this section was measured on. On the current 110,918-post hybrid corpus the figure is 3,272 (2.9%). The audit estimated that multi-label counting would increase this category by 1.74×; in the Gold dataset, the effective gap is 4.8×.
 
 Recall remains 0.185 under multi-label evaluation. This confirms that the cause is missing rules, not only the threshold.
 
@@ -309,7 +309,7 @@ The priorities below incorporate the measured Gold results. **The classifier cod
 
 | Priority | Target | Evidence |
 |---|---|---|
-| **P0** | Redesign the `焦り・競争` rules | Recall 0.185. The third-largest Gold category (14.3%) is almost entirely missed; multi-label output does not help. |
+| **P0** | Redesign the `焦り・競争` rules | Recall 0.185. The third-largest Gold category (27/192 = 14.1%; 14.3% of the 189 rows) is almost entirely missed; multi-label output does not help. |
 | **P0** | Add indirect desire forms (`〜出して`, `出ないかな`, `ますように`, `〜たい`, `ほしい`) | Present in 19 of 73 errors and the largest source of false-neutral rows. |
 | **P0** | Fix `\b交換\b` in `classify_sns_rule_based.py:129` | Present in 8 of 73 errors; score-zero misses appear in Gold. |
 | **P1** | Classify `情報共有` by speaker intent rather than word presence | All four primary predictions are wrong; `再入荷` and `目撃情報` attract joy and desire posts. |
@@ -324,7 +324,7 @@ The priorities below incorporate the measured Gold results. **The classifier cod
 
 ## 9. Measurement Limitations
 
-1. **n=189.** The overall hit-rate 95% CI is approximately ±0.07; category-level intervals are wider.
+1. **n=192.** The overall hit-rate 95% CI is approximately ±0.07 (118/192, 0.546–0.683); category-level intervals are wider.
 2. **`情報共有` n=5 and `不満・怒り` n=14.** These categories require stratified additional samples.
 3. **Eleven deferred rows were excluded.** Seven were noted as advertising and two as off-topic. This suggests that advertising remains in the 109,037-post corpus (7/200 ≈ 3.5%). Excluding these rows may make the measured accuracy higher than practical deployment accuracy.
 4. The Gold dataset reflects one annotator. Inter-annotator agreement was not measured.
