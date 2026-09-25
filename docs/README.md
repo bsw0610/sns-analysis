@@ -21,6 +21,7 @@ the metric audits and regenerated assets are individual follow-up work.
 | 2 | [Hybrid Baseline Rebuild](hybrid_rebuild.md) | How the 110,918-post corpus is rebuilt from the monthly exports, with the exact inputs, hashes, and the verification contract. |
 | 3 | [Classifier Baseline Evaluation](baseline_evaluation.md) | How well the rule-based classifier performs against 192 human-labelled posts, why each category fails where it does, and what the earlier 189-row evaluation showed. |
 | 4 | [Presentation Metric Audit](slide_metric_audit.md) | Whether every number quoted in the presentation reproduces from the data, and how the page 15 definitions were fixed. |
+| 5 | [Classifier Benchmark](classifier_benchmark.md) | Whether a trained text classifier does better than the rules, and whether either does better than guessing. Aggregate results only; the benchmark code is not published. |
 
 ## Reporting and production
 
