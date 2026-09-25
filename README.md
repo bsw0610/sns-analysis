@@ -210,6 +210,13 @@ Lenient per-category F1 scores:
 
 The classifier is most reliable for exchange posts. It performs poorly on urgency and information sharing, mainly because of missing Japanese inflections and synonyms, incomplete negation handling, and rule interactions.
 
+A later benchmark compared the rules with a trained TF-IDF + logistic regression
+model and two guessing baselines, on the same labelled posts and under the same
+lenient criterion. Both the rules and the trained model beat guessing. The trained
+model did not beat the rules: its macro F1 is clearly lower (0.340 against 0.450 on
+Gold 192), mostly because it never found `不満・怒り`, and the hit-rate difference is
+inconclusive. See [Classifier Benchmark](docs/classifier_benchmark.md).
+
 ## Limitations
 
 - The original Social Insight query, keyword registration date, and export timestamps are not preserved.
@@ -390,6 +397,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 │   ├── 01_PROJECT_TIMELINE.md
 │   ├── hybrid_rebuild.md
 │   ├── baseline_evaluation.md
+│   ├── classifier_benchmark.md
 │   ├── slide_metric_audit.md
 │   ├── slide_assets_regeneration.md
 │   ├── slide_plan_10-16.md
@@ -457,6 +465,7 @@ Important documentation, with a full index and reading order in
 - [Sentiment Analysis Methodology](sns_sentiment_analysis_guide.md)
 - [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md)
 - [Classifier Baseline Evaluation](docs/baseline_evaluation.md)
+- [Classifier Benchmark](docs/classifier_benchmark.md)
 - [Presentation Metric Audit](docs/slide_metric_audit.md)
 
 ## Team Project Context
@@ -554,7 +563,7 @@ represented by the scripts and documents retained here, and are listed in
 - Rebuild the pipeline as explicit provenance-preserving tables, from raw posts through filtering, classification, evaluation, and exchange aggregation.
 - Replace shell-based CSV concatenation and field extraction with schema-aware parsing.
 - Create a representative evaluation sample directly from the hybrid corpus and document the annotation policy.
-- Improve Japanese linguistic coverage and compare the rule-based baseline with alternative classifiers.
+- Improve Japanese linguistic coverage. One trained classifier has been compared with the rules ([Classifier Benchmark](docs/classifier_benchmark.md)); models that read the text, such as a large language model, have not.
 - Reconstruct and separately pin the historical MeCab and Word2Vec environment, and investigate the repeated corpus blocks.
 - Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
 - Add a fully resolved lockfile for the current scripts if exact transitive dependency reproduction is required, and add a manifest for local, non-Git data assets.
