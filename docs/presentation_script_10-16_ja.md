@@ -4,7 +4,8 @@
 > the speaker script for a Japanese presentation. For the English technical
 > specification and verified values, see `docs/slide_plan_10-16.md`.
 
-> **担当範囲について:** 本ファイルはリポジトリ所有者が作成した原稿案であり、
+> **担当範囲について:** 本ファイルはリポジトリ所有者の個人作業として、所有者の指示のもとで
+> AIコーディングエージェントが作成した原稿案であり、
 > ゼミで実際に発表した資料ではありません。実際の発表資料は4人のチームによる
 > 共同成果物で、本リポジトリには含まれていません。
 

@@ -210,7 +210,7 @@ Do not accept the classifier output without review. Resample posts from every ca
 
 The method can be summarized as follows:
 
-> Before classifying the complete SNS dataset, I manually reviewed a random sample of 100 posts and designed categories that reflected the context of the posts. I then implemented a Python rule-based classifier using a keyword dictionary and retained the matched expressions as classification evidence. Finally, I resampled posts from each category to inspect errors. The analysis therefore used AI and code as tools while retaining human review of the original text.
+> Before the complete SNS dataset was classified, a random sample of 100 posts was reviewed by hand and categories were designed to reflect the context of the posts. A Python rule-based classifier using a keyword dictionary was then written with an AI coding agent, and it retains the matched expressions as classification evidence. Finally, posts were resampled from each category to inspect errors. The analysis therefore used AI and code as tools while retaining human review of the original text.
 
 ---
 

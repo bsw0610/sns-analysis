@@ -94,9 +94,10 @@ historical artifacts and must not be mixed with the current baseline.
 Sections 5.1 to 5.4 cover the collaborative seminar phase. Data acquisition,
 initial preprocessing, the initial advertising removal, the notebook-based
 Word2Vec exploration, and the seminar presentation were carried out by the team
-as a whole. Except where a script is identified as the repository owner's own
-code, the repository holds no record of which member performed a given task, so
-none is attributed below.
+as a whole. Except where a script is identified as part of the repository
+owner's later work (written by an AI coding agent at the owner's direction), the
+repository holds no record of which member performed a given task, so none is
+attributed below.
 
 ### 5.1 2025-11–2026-04 — Monthly Source Data from UserLocal
 
@@ -388,7 +389,10 @@ investigating the existing pipeline and data lineage, reassessing the previous
 advertising-filter decisions, reconstructing and validating the hybrid corpus,
 normalizing and evaluating Gold 192, analysing classifier errors and exchange
 activity, verifying the presentation metrics, and building the reproducibility
-scripts, regression tests, synthetic sample, CI, and public documentation.
+scripts, regression tests, synthetic sample, CI, and public documentation. The
+scripts, tests, CI, and documents from this phase were written by AI coding
+agents (Codex, later Claude Code) at the owner's direction; the owner's own part
+is the judgments listed under My Contributions in the repository README.
 
 ### 5.5 2026-07-28 — Classifier Audit and Gold 189 Evaluation
 

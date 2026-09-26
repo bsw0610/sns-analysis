@@ -17,9 +17,9 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 
 本プロジェクトでは、2025年11月から2026年4月までに収集した「ボンボンドロップシール」関連のX投稿136,288件を対象に、広告除去、テキスト前処理、Word2Vec、感情・行動カテゴリ分類、交換投稿の分析を行いました。
 
-本研究は4人構成の大学ゼミ共同プロジェクトとして始まりました。データ準備、初期の広告除去、探索的分析、発表はチーム全体の作業です。その後の確認作業で、私が無作為抽出による精度検証を行い、それに基づいてコーパスの追加作業を進めました。本リポジトリに残るキーワードフィルタとルールベース分類器のコードは私が作成したものです。当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。研究室提供Notebookは再配布条件を確認できないため公開せず、処理内容とデータ系譜のみを文書化しています。
+本研究は4人構成の大学ゼミ共同プロジェクトとして始まりました。データ準備、初期の広告除去、探索的分析、発表はチーム全体の作業です。その後の確認作業で、私が無作為抽出による精度検証を行い、それに基づいてコーパスの追加作業を進めました。本リポジトリに残るキーワードフィルタとルールベース分類器のコードは、私の指示と確認のもとでAIコーディングエージェント（Codex、のちにClaude Code）が作成したものです。当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。研究室提供Notebookは再配布条件を確認できないため公開せず、処理内容とデータ系譜のみを文書化しています。
 
-その後、広告除去や集計方法によって結果が大きく変わることが分かったため、私が個人で既存コードとデータの流れを再調査しました。私が担当した主な作業は、既存パイプラインとデータ系譜の調査、既存広告フィルタの監査と修正、hybrid corpus 110,918件の再構築と検証、Gold label 192件による評価と誤り分析、交換投稿とアカウント集中度の分析、スライド指標の監査、再現性検証と回帰テスト、CI、公開ドキュメントの整備です。この調査・改善の過程ではAIコーディングエージェントも使用しました。
+その後、広告除去や集計方法によって結果が大きく変わることが分かったため、個人の作業として既存コードとデータの流れを再調査しました。個人で進めた主な作業は、既存パイプラインとデータ系譜の調査、既存広告フィルタの監査と修正、hybrid corpus 110,918件の再構築と検証、Gold label 192件による評価と誤り分析、交換投稿とアカウント集中度の分析、スライド指標の監査、再現性検証と回帰テスト、CI、公開ドキュメントの整備です。これらのコード、テスト、文書はAIコーディングエージェントが作成しました。私自身が担ったのは、AIエージェントを使うという判断、Gold label 192件すべての手作業による判定、どの結果を信頼するかの判断、元のコードが残っていない391件を推測で再現せずIDで固定するという判断、公開範囲の決定です。
 
 本リポジトリは、当初のゼミ研究の単独著作を主張するものではありません。
 
@@ -371,7 +371,7 @@ Historical notebook workflow, documented but not redistributed or reconstructed:
 Supporting tools:
 
 - Git for provenance and reproducibility work
-- AI coding agents for repository inspection, pipeline tracing, code revision, and verification
+- AI coding agents (Codex, later Claude Code), which wrote the code, tests, and documents in this repository and were used for repository inspection, pipeline tracing, and verification
 
 A pinned `requirements.txt` is provided for the current repository scripts. It does not reconstruct the historical notebook-based Word2Vec environment.
 
@@ -493,32 +493,48 @@ marks that period accordingly rather than assigning it to an individual.
 
 ## My Contributions
 
-The work below is the individual follow-up phase represented by the scripts,
+This section covers the individual follow-up phase represented by the scripts,
 documents, and figures in this repository.
 
-- Wrote the advertising keyword filter (`filter_ads_202511_202604.py`) and the
+**Who wrote the code.** The code, tests, CI, and documents in this repository
+were written by AI coding agents (Codex, later Claude Code) at the repository
+owner's direction and with the owner's approval.
+
+**The repository owner's own part** is the judgments that shaped the work:
+
+- Deciding to try an AI coding agent on the analysis
+- Labelling all 192 Gold rows by hand, one by one
+- Deciding which results to trust: checking the accuracy of the team's
+  advertising removal against random samples reviewed by hand
+  (`sample_100_posts.py`, and the filter-check extract in
+  `make_task5_task6_files.py`), then extending the corpus work on that basis
+- Deciding not to reconstruct by guesswork the 391 filter decisions whose
+  original implementation is missing, and to lock them by post ID instead
+- Deciding what this repository publishes and how the history of the work is handled
+
+**Work carried out by the agents under that direction:**
+
+- The advertising keyword filter (`filter_ads_202511_202604.py`) and the
   rule-based classifier (`classify_sns_rule_based.py`) that the repository retains
-- Checked the accuracy of the team's advertising removal by drawing random
-  samples for manual review (`sample_100_posts.py`, and the filter-check extract
-  in `make_task5_task6_files.py`), then extended the corpus work on that basis
-- Investigated the existing notebooks, scripts, and data lineage
-- Audited the advertising-filter workflow, identified over-filtering against
-  `情報共有`, and revised and validated the filtering logic
-- Reconstructed and validated the 110,918-post hybrid corpus, locking by post ID
-  the 391 decisions whose original implementation is missing
-- Built the human-label evaluation set, from the original 200-post sample
-  (`make_gold_standard_200.py`) through to the normalized Gold 192, and scored
-  the classifier against it under both criteria
-- Analysed classifier errors by category and traced each to a specific rule defect
-- Analysed exchange activity and account concentration
+- Investigation of the existing notebooks, scripts, and data lineage
+- Audit of the advertising-filter workflow, which identified over-filtering
+  against `情報共有`, and revision and validation of the filtering logic
+- Reconstruction and validation of the 110,918-post hybrid corpus, with the 391
+  decisions above locked by post ID
+- The tooling around the human labels, from drawing the original 200-post sample
+  (`make_gold_standard_200.py`) through to normalizing Gold 192, and the scoring
+  of the classifier against those labels under both criteria
+- Classifier error analysis by category, tracing each error to a specific rule
+  defect
+- Exchange-activity and account-concentration analysis
   (`make_task3_exchange_accounts.py`)
-- Audited the presentation metrics and regenerated the analytical assets from
-  validated data
-- Built the reproducibility checks: deterministic rebuild verification, SHA-256
+- Audit of the presentation metrics, and regeneration of the analytical assets
+  from validated data
+- The reproducibility checks: deterministic rebuild verification, SHA-256
   baselines, and the 28 regression cases in `test_sentiment_classifier.py`, each
   recording a real misclassification that was found and fixed
-- Added the synthetic runnable sample and GitHub Actions CI
-- Reorganized the documentation and prepared the public repository
+- The synthetic runnable sample and GitHub Actions CI
+- The documentation and the public repository
 
 The original seminar research, the initial data preparation, the initial
 advertising removal, and the seminar presentation were team work and are not
@@ -554,9 +570,10 @@ tasks to one person.
 reconstruction, Gold 192 normalization and evaluation, classifier error
 analysis, exchange-account analysis, presentation-metric verification,
 reproducibility checks, regression tests, synthetic sample, CI, and public
-repository organization are the repository owner's later work. They are
-represented by the scripts and documents retained here, and are listed in
-[My Contributions](#my-contributions).
+repository organization are the repository owner's later individual work,
+carried out with AI coding agents that wrote the scripts and documents retained
+here. [My Contributions](#my-contributions) separates the owner's own judgments
+from the work the agents carried out.
 
 ## Future Work
 
