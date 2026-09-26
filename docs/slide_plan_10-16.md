@@ -4,8 +4,9 @@ This document is written in English for repository readers. Japanese text in
 inline code is final or candidate copy intended to appear in the Japanese
 presentation and is therefore preserved.
 
-> **Provenance.** This document is the repository owner's own draft for
-> revising slides 10–16. It was not the material delivered in the seminar
+> **Provenance.** This document is a draft for revising slides 10–16, written by
+> an AI coding agent at the repository owner's direction as part of the owner's
+> individual work. It was not the material delivered in the seminar
 > presentation, which was produced by the four-person team and is not included
 > here. The owner's own section of the delivered deck showed figures from the
 > 2026-07-30 version of this plan; the wording and caveats added since then
