@@ -4,6 +4,8 @@
 
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
+<a id="ai-workflow"></a>
+
 ## 注目していただきたい点：AIに実装を任せ、別の目で確かめた進め方
 
 このリポジトリのコード・テスト・文書は、AIコーディングエージェントが私の指示と承認のもとで書きました（[My Contributions](#my-contributions)）。ここでは、AIが作った結果をどこまで信じてよいかをどう確かめたか、確かめる仕組みが弱まったときに何をしたかを書きます。私が自分で判定したのは正解データ192件で、コードや検査の判定はAIが行いました。
@@ -11,12 +13,13 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 **1. 検査の分担と、その崩れ**
 
 - 分類器のベンチマーク（下記4）は、計画をClaude、実装をCodex、検査を会話の文脈を引き継がない別のCodexセッションが担う分担で進めました。この分担を誰が決めたかは記録にありません。
-- 最初の4回の検査は、いずれも計画側のClaudeが見落としたものを見つけました（例：何も検査していないテスト7件を、計画側は0件と報告していました）。見つけたのは検査側で、私の成果ではありません。
+- 最初の4回の検査は、いずれも計画側のClaudeが見落としたものを見つけました（例：何も検査していないテスト7件を、計画側は0件と報告していました）。見つけたのは検査側のAIです。
 - 2026-08-29に、Codexの利用量の制約から、検査をClaudeの別セッションに、実装の代行をClaudeに移す取り決めに変わりました。記録上は「改善ではなく制約による後退」です。以後、計画・実装・検査の大部分が同じ系列のモデルになり、2026-09の実装はClaudeが担いました。記録は、この後の検査結果をそれ以前と同じ信頼度では扱わないとしています。
 
 **2. 弱まった仕組みに対して私がしたこと**
 
-- 学習モデルを最初に実行する前に、別モデル（Codex）へのレビューを依頼しました。7件の指摘はすべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例は、「学習には学習用の部分だけを使った」ことを確かめる監視が文字しか見ておらず、正解ラベルなどを全データで計算する誤りがテストを通ったことです（実際の漏れは確認されていません）。
+- 私は、GitHubで公開するつもりだったので、別のモデルが入る確認が必要だと考えました。ただしCodexの利用量では元の分担を続けられなかったため、賄える形として、学習モデルの最初の実行前に一度だけ別モデルのレビューを依頼しました。
+- 依頼した別モデル（Codex）のレビューの7件の指摘は、すべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例は、「学習には学習用の部分だけを使った」ことを確かめる監視が文字しか見ておらず、正解ラベルなどを全データで計算する誤りをわざと入れたコードが、既存のテストを通ってしまったことです（実際のコードに漏れは確認されていません）。
 - 分析を始める前に、別セッションでの検査を私が開始しました。7件の指摘があり、その中に、分析の前に決めておくべき点（乱数の使い方が未定で、同じ規則でも信頼区間が変わりうる）がありました。修正後に分析を承認しました。この検査は同じ系列のモデルによるもので、モデルの多様性はありません。
 - 各段階は、実行する前に私が承認しました。学習モデルとの比較の段階で、私がベンチマークの終了を決めました。
 - 判定の規則と学習モデルの設定は、そのコードを書く前に記録されました。ただし、ブートストラップ（信頼区間の計算）の細部は、点数を見た後、そのコードを書く前に決めています。この「事前登録」は外部の登録所ではなく、リポジトリ内のコミットの順序です。
@@ -26,9 +29,9 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 - 192件はすべて私が1件ずつ手で判定しました。ただし補充の3件は、いつどの手順で判定したかの記録がなく、189件の結果も併記しています。
 - 判定者は私一人で、一致率は測っていません。また192件は現在のコーパスの無作為標本ではありません（広告除去の確認に使った無作為抽出とは別のものです）。
 - 規則ベース分類器のカテゴリ別F1は0.869〜0.000で、実用に足りるのは「交換・取引」（0.869）だけです。「情報共有」は0.000でした。
-- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分にだけ新しい資料を使いました。
+- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分では、使えると分かった「交換・取引」の範囲の結果だけを使うと決め、広告除去の見直しと正解データによる評価をやり直した資料（公開版のhybrid corpus 110,918件とGold 192の評価）を、私の担当部分にだけ使いました。
 
-**4. ベンチマーク：規則分類器の正解率は良いのか**
+**4. ベンチマーク：規則分類器の的中率は良いのか**
 
 - 規則分類器の的中率0.615（118/192）は、単独では良い値か判断できませんでした。そこで、同じ正解データで、当て推量2種と、簡単な学習モデル（文字のつながりを使うTF-IDF＋ロジスティック回帰）と比べました。
 - 規則分類器は当て推量より明確に高く、学習モデルは規則分類器を上回りませんでした。macro F1は学習モデルの方が明確に低く（0.340対0.450）、的中率の差は判断保留でした。macro F1の差の約6割は、14件しかない「不満・怒り」1カテゴリから生じています。
@@ -574,7 +577,7 @@ owner's direction and with the owner's approval.
 - The synthetic runnable sample and GitHub Actions CI
 - The documentation and the public repository
 
-**How the agents' output was checked.** The [Japanese section at the top](#注目していただきたい点aiに実装を任せ別の目で確かめた進め方)
+**How the agents' output was checked.** The [Japanese section at the top](#ai-workflow)
 gives the full account; the facts are these.
 
 - The benchmark work began with a split of roles: Claude planned, Codex implemented,
@@ -585,8 +588,10 @@ gives the full account; the facts are these.
   session and Claude could stand in as implementer. The record calls this a retreat
   forced by the limit, not an improvement. From then on most planning, implementation
   and review was done by the same model family.
-- The owner asked a different model (Codex) to review the TF-IDF stage before its first
-  run (seven findings, all fixed; the owner decided not to have the fixes re-reviewed),
+- The owner had wanted a different model in the loop because the repository was going to
+  be public. Codex usage could not sustain the original split, so as an affordable form the
+  owner asked a different model (Codex) once, before the first TF-IDF run, to review that
+  stage (seven findings, all fixed; the owner decided not to have the fixes re-reviewed),
   started a separate review session before the analysis (seven findings, one of which
   had to be settled before the analysis could proceed; that session shares the model
   family), approved each stage before it ran, and closed the benchmark at this step.
@@ -597,8 +602,9 @@ gives the full account; the facts are these.
 - All 192 Gold rows were labelled by hand by the owner, one annotator, with no
   agreement measure; for three supplemental rows no record of when or how they were
   labelled remains. Just before the final presentation, the owner found that the
-  information-sharing category scored about zero, told the team, and used the new
-  material only in the owner's own section.
+  information-sharing category scored about zero, told the team, decided to use only the usable
+  exchange/trade category's results in the owner's own section, and used the rebuilt corpus
+  (110,918 posts) and the Gold 192 evaluation only there.
 - A comparison with a large language model was planned but not run, because the local
   model it depended on was retired.
 - The account of the split and the reviews comes from working records that are not
