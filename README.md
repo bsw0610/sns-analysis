@@ -4,6 +4,44 @@
 
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
+## 注目していただきたい点：AIに実装を任せ、別の目で確かめた進め方
+
+このリポジトリのコード・テスト・文書は、AIコーディングエージェントが私の指示と承認のもとで書きました（[My Contributions](#my-contributions)）。ここでは、AIが作った結果をどこまで信じてよいかをどう確かめたか、確かめる仕組みが弱まったときに何をしたかを書きます。私が自分で判定したのは正解データ192件で、コードや検査の判定はAIが行いました。
+
+**1. 検査の分担と、その崩れ**
+
+- 分類器のベンチマーク（下記4）は、計画をClaude、実装をCodex、検査を会話の文脈を引き継がない別のCodexセッションが担う分担で進めました。この分担を誰が決めたかは記録にありません。
+- 最初の4回の検査は、いずれも計画側のClaudeが見落としたものを見つけました（例：何も検査していないテスト7件を、計画側は0件と報告していました）。見つけたのは検査側で、私の成果ではありません。
+- 2026-08-29に、Codexの利用量の制約から、検査をClaudeの別セッションに、実装の代行をClaudeに移す取り決めに変わりました。記録上は「改善ではなく制約による後退」です。以後、計画・実装・検査の大部分が同じ系列のモデルになり、2026-09の実装はClaudeが担いました。記録は、この後の検査結果をそれ以前と同じ信頼度では扱わないとしています。
+
+**2. 弱まった仕組みに対して私がしたこと**
+
+- 学習モデルを最初に実行する前に、別モデル（Codex）へのレビューを依頼しました。7件の指摘はすべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例は、「学習には学習用の部分だけを使った」ことを確かめる監視が文字しか見ておらず、正解ラベルなどを全データで計算する誤りがテストを通ったことです（実際の漏れは確認されていません）。
+- 分析を始める前に、別セッションでの検査を私が開始しました。7件の指摘があり、その中に、分析の前に決めておくべき点（乱数の使い方が未定で、同じ規則でも信頼区間が変わりうる）がありました。修正後に分析を承認しました。この検査は同じ系列のモデルによるもので、モデルの多様性はありません。
+- 各段階は、実行する前に私が承認しました。学習モデルとの比較の段階で、私がベンチマークの終了を決めました。
+- 判定の規則と学習モデルの設定は、そのコードを書く前に記録されました。ただし、ブートストラップ（信頼区間の計算）の細部は、点数を見た後、そのコードを書く前に決めています。この「事前登録」は外部の登録所ではなく、リポジトリ内のコミットの順序です。
+
+**3. 人が持つ基準：正解データ192件**
+
+- 192件はすべて私が1件ずつ手で判定しました。ただし補充の3件は、いつどの手順で判定したかの記録がなく、189件の結果も併記しています。
+- 判定者は私一人で、一致率は測っていません。また192件は現在のコーパスの無作為標本ではありません（広告除去の確認に使った無作為抽出とは別のものです）。
+- 規則ベース分類器のカテゴリ別F1は0.869〜0.000で、実用に足りるのは「交換・取引」（0.869）だけです。「情報共有」は0.000でした。
+- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分にだけ新しい資料を使いました。
+
+**4. ベンチマーク：規則分類器の正解率は良いのか**
+
+- 規則分類器の的中率0.615（118/192）は、単独では良い値か判断できませんでした。そこで、同じ正解データで、当て推量2種と、簡単な学習モデル（文字のつながりを使うTF-IDF＋ロジスティック回帰）と比べました。
+- 規則分類器は当て推量より明確に高く、学習モデルは規則分類器を上回りませんでした。macro F1は学習モデルの方が明確に低く（0.340対0.450）、的中率の差は判断保留でした。macro F1の差の約6割は、14件しかない「不満・怒り」1カテゴリから生じています。
+- 言えるのは、この小さなデータ・1つの設定・調整なしという条件で、簡単な学習モデルは規則に勝てなかったことまでです。規則が学習モデルより優れているとは言えません。
+- 文章を読むLLMが「不満・怒り」と「中立」を拾えるかを比べる計画がありましたが、依存していたローカルモデルを廃止したため実施していません。
+
+**5. 限界と公開範囲**
+
+- 判定者1人・一致率未測定・小さなデータに加え、規則分類器が正解ラベルを見た後に変更されたかどうかは記録がなく、確認できません。もし変更されていれば、規則側の点数はこのデータに合わせたものになります。
+- ベンチマークの設計・実装・検査の大部分を同じ系列のAIが行い、別モデルのレビューは学習モデルの段階で1回でした。
+- ベンチマークのコード・投稿ごとの出力・作業履歴は公開していません。公開しているのは集計結果と要約です。上の1・2の経緯は非公開の作業記録に基づき、公開リポジトリからは確認できません。その記録自体もAIが書いたものです。
+- AIが担った作業と私の判断の範囲は、[My Contributions](#my-contributions)と[docs/classifier_benchmark.md](docs/classifier_benchmark.md)に分けて示しています。
+
 ## Key Results
 
 - **136,288** Japanese X posts analyzed
@@ -535,6 +573,38 @@ owner's direction and with the owner's approval.
   recording a real misclassification that was found and fixed
 - The synthetic runnable sample and GitHub Actions CI
 - The documentation and the public repository
+
+**How the agents' output was checked.** The [Japanese section at the top](#注目していただきたい点aiに実装を任せ別の目で確かめた進め方)
+gives the full account; the facts are these.
+
+- The benchmark work began with a split of roles: Claude planned, Codex implemented,
+  and separate Codex sessions with no shared conversation context reviewed. Who set
+  up that split is not recorded. The first four reviews each found something the
+  planning model had missed; the reviewers found it, not the owner.
+- On 2026-08-29, because of Codex usage limits, the review moved to a separate Claude
+  session and Claude could stand in as implementer. The record calls this a retreat
+  forced by the limit, not an improvement. From then on most planning, implementation
+  and review was done by the same model family.
+- The owner asked a different model (Codex) to review the TF-IDF stage before its first
+  run (seven findings, all fixed; the owner decided not to have the fixes re-reviewed),
+  started a separate review session before the analysis (seven findings, one of which
+  had to be settled before the analysis could proceed; that session shares the model
+  family), approved each stage before it ran, and closed the benchmark at this step.
+- The scoring rules and TF-IDF settings were committed before the TF-IDF code was
+  written; the remaining bootstrap details were fixed after the point scores were seen.
+  "Fixed in advance" means the order of commits in this repository, not an external
+  registry.
+- All 192 Gold rows were labelled by hand by the owner, one annotator, with no
+  agreement measure; for three supplemental rows no record of when or how they were
+  labelled remains. Just before the final presentation, the owner found that the
+  information-sharing category scored about zero, told the team, and used the new
+  material only in the owner's own section.
+- A comparison with a large language model was planned but not run, because the local
+  model it depended on was retired.
+- The account of the split and the reviews comes from working records that are not
+  published, and those records were themselves written by AI, so it cannot be verified
+  from this repository. The published, checkable material is in
+  [Classifier Benchmark](docs/classifier_benchmark.md).
 
 The original seminar research, the initial data preparation, the initial
 advertising removal, and the seminar presentation were team work and are not
