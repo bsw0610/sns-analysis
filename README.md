@@ -2,6 +2,8 @@
 
 [![tests](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml)
 
+ゼミ（4人）の共同研究で、「ボンボンドロップシール」に関するX投稿136,288件を分析しました。私の担当は、投稿ごとの感情分析です。正解データ192件を自分で1件ずつ判定して確かめると、使える精度だったのは「交換・取引」だけで、「情報共有」は0.000でした。最終発表の1〜2日前には、私たちの広告除去の手順に、除いた結果を確認する工程がなく、必要な投稿まで消えていたことにも気づきました。データを作り直し、私の担当部分にだけ使いました。コードはAIコーディングエージェントが書きました。
+
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
 <a id="ai-workflow"></a>
@@ -47,12 +49,17 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 
 ## Key Results
 
-- **136,288** Japanese X posts analyzed
-- **110,918** posts retained after advertising-filter audit
-- Classifier evaluated against **192 human-labelled posts**
-- **24,316** exchange posts across **10,677 user IDs**
-- **Micro F1: 0.595** (multi-label criterion; 0.577 lenient) with documented category-level failure analysis
-- Reproducibility verified with regression tests, SHA-256 checks, and CI
+- ゼミ（4人）の共同研究で扱ったX投稿：**136,288件**
+- 広告除去を見直したデータ：**110,918件**（以前の集計109,037件に対して、2,015件が戻り、134件が新たに外れた）
+- 元のコードが残っていない除外判断**391件**は、推測で作り直さず、投稿IDで固定した
+- 正解データ**192件**を私が1件ずつ手で判定した（判定者は私1人。無作為標本ではない）
+- 分類器の的中率 **0.615**（118/192）。いちばん多いカテゴリを毎回答えるだけだと 0.281
+- カテゴリ別F1（いちばん当てはまる1カテゴリで判定）：「交換・取引」**0.869**、「情報共有」**0.000**（正解データに5件）。担当部分では「交換・取引」の結果だけを使った
+- 分類規則が「交換・取引」とした投稿は24,316件、ユーザーIDは10,677件
+- 自動チェック（CI）が確かめるのは、データなしで動く範囲（テストと合成サンプル）だけ。コード・テスト・CIはAIコーディングエージェントが書いた
+
+Other scores for the same 192 posts (micro and macro F1 under two criteria) are in
+[Results](#results).
 
 ## 日本語概要
 
@@ -146,7 +153,7 @@ The current `metadata.tsv` and `vector.tsv` contain 17,298 rows, so they do not 
 
 ### Advertising removal and hybrid corpus
 
-The initial advertising removal was team work. The keyword filter retained in this repository, `filter_ads_202511_202604.py`, produces the 109,037-post result from the 136,288 source posts. The later audit of that workflow found that broad keywords disproportionately removed posts the classifier would label as `情報共有`.
+The initial advertising removal was team work. The keyword filter retained in this repository, `filter_ads_202511_202604.py`, produces the 109,037-post result from the 136,288 source posts. The later audit of that workflow found that broad keywords disproportionately removed posts the classifier would label as `情報共有`. Our procedure had no step to check what had been removed after deleting posts by keyword.
 
 The current hybrid baseline, reconstructed from the preserved inputs and decisions, retains 110,918 posts. It restores 2,015 posts from the earlier result while continuing to exclude the existing 5,874 additional-advertising IDs. Because the original source code for `2511-2604_final.csv` is missing, 391 final-filter decisions are preserved as an ID lock in `baselines/hybrid_final_exclusions.csv` rather than reconstructed from guessed rules.
 
@@ -155,6 +162,8 @@ The current hybrid baseline, reconstructed from the preserved inputs and decisio
 See [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md) for the exact inputs, hashes, and verification contract.
 
 ### Rule-based classification
+
+The classifier is not an AI model: it applies fixed keyword patterns, which were written by an AI coding agent.
 
 `classify_sns_rule_based.py` normalizes text with NFKC and case folding, removes URLs and mentions, applies weighted regular expressions, and assigns one primary category.
 
@@ -208,6 +217,10 @@ of the classification. See the [operational definition and limits](docs/slide_me
 ## Results
 
 ### Classifier evaluation, both label sets
+
+The headline figure is the hit rate, 118/192 = 0.615: the classifier's single
+top category matched one of the human labels. The other rows below count the
+same predictions in different ways.
 
 Two label sets are reported side by side. **Gold 189** is the set actually annotated
 for the earlier evaluation; **Gold 192** adds the three supplemental rows the hybrid
@@ -322,7 +335,8 @@ Three different environments are involved and they are not interchangeable.
 
 | Path | Interpreter | Verified on |
 | --- | --- | --- |
-| Public sample and unit tests | Python 3.9 or newer | 3.9.6 locally; CI runs 3.11, 3.12 and 3.13 |
+| Public sample (classifier and sample check) | Python 3.9 or newer | 3.9.6 locally; CI runs 3.11, 3.12 and 3.13 |
+| Unit tests | **Python 3.10 or newer** | CI runs 3.11, 3.12 and 3.13. `test_evaluation_inputs.py` runs the evaluation script itself, so on 3.9.6 it fails at that script's 3.10 check |
 | Research reproduction scripts | **Python 3.10 or newer** | 3.13.9 locally |
 | Historical Word2Vec workflow | not reproducible here | excluded, see above |
 
@@ -390,8 +404,13 @@ baseline, so the figures cannot drift away from the documented results.
 ```bash
 python3 -m unittest \
   test_sentiment_classifier.py \
-  test_slide_number_definitions.py
+  test_slide_number_definitions.py \
+  test_evaluation_report.py \
+  test_evaluation_inputs.py \
+  test_sample_output.py
 ```
+
+These are the same five files CI runs.
 
 ## Tech Stack
 
@@ -444,7 +463,7 @@ A pinned `requirements.txt` is provided for the current repository scripts. It d
 │   ├── slide_plan_10-16.md
 │   ├── presentation_script_10-16_ja.md
 │   └── task0_total_count.md
-└── *.py                            # 19 scripts, listed by role below
+└── *.py                            # 23 scripts, listed by role below
 ```
 
 ### Scripts
@@ -478,6 +497,15 @@ left ambiguous between current and legacy code.
 | --- | --- |
 | `test_sentiment_classifier.py` | 28 regression cases recording real misclassifications that were found and fixed. |
 | `test_slide_number_definitions.py` | Unit tests for the shared metric definitions. |
+| `test_evaluation_report.py` | Regression tests for the Gold 192 evaluation report, on a 192-row corpus it builds itself. |
+| `test_evaluation_inputs.py` | Runs the evaluation script on missing, duplicated, empty or invalid predictions and checks that it refuses them, while valid extra rows leave the report unchanged. |
+| `test_sample_output.py` | Checks the sample checker in `sample_data/` against altered copies of the sample output. |
+
+**Environment.**
+
+| File | Role |
+| --- | --- |
+| `research_environment.py` | Stops a research script at once, with a message, when it is run on Python older than 3.10. |
 
 **Figures and slides.**
 
