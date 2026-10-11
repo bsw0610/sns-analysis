@@ -22,7 +22,7 @@ Other scores for the same 192 posts (micro and macro F1 under two criteria) are 
 
 <a id="ai-workflow"></a>
 
-## 注目していただきたい点：AIに実装を任せ、別の目で確かめた進め方
+## AIに実装を任せ、別の目で確かめた進め方
 
 このリポジトリのコード・テスト・文書は、AIコーディングエージェントが私の指示と承認のもとで書きました（[My Contributions](#my-contributions)）。ここでは、AIが作った結果をどこまで信じてよいかをどう確かめたか、確かめる仕組みが弱まったときに何をしたかを書きます。私が自分で判定したのは正解データ192件で、コードや検査の判定はAIが行いました。
 
