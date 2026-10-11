@@ -6,6 +6,20 @@
 
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
+## Key Results
+
+- ゼミ（4人）の共同研究で扱ったX投稿：**136,288件**
+- 広告除去を見直したデータ：**110,918件**（以前の集計109,037件に対して、2,015件が戻り、134件が新たに外れた）
+- 元のコードが残っていない除外判断**391件**は、推測で作り直さず、投稿IDで固定した
+- 正解データ**192件**を私が1件ずつ手で判定した（判定者は私1人。無作為標本ではない）
+- 分類器の的中率 **0.615**（118/192）。いちばん多いカテゴリを毎回答えるだけだと 0.281
+- カテゴリ別F1（いちばん当てはまる1カテゴリで判定）：「交換・取引」**0.869**、「情報共有」**0.000**（正解データに5件）。担当部分では「交換・取引」の結果だけを使った
+- 分類規則が「交換・取引」とした投稿は24,316件、ユーザーIDは10,677件
+- 自動チェック（CI）が確かめるのは、データなしで動く範囲（テストと合成サンプル）だけ。コード・テスト・CIはAIコーディングエージェントが書いた
+
+Other scores for the same 192 posts (micro and macro F1 under two criteria) are in
+[Results](#results).
+
 <a id="ai-workflow"></a>
 
 ## 注目していただきたい点：AIに実装を任せ、別の目で確かめた進め方
@@ -46,20 +60,6 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 - ベンチマークの設計・実装・検査の大部分を同じ系列のAIが行い、別モデルのレビューは学習モデルの段階で1回でした。
 - ベンチマークのコード・投稿ごとの出力・作業履歴は公開していません。公開しているのは集計結果と要約です。上の1・2の経緯は非公開の作業記録に基づき、公開リポジトリからは確認できません。その記録自体もAIが書いたものです。
 - AIが担った作業と私の判断の範囲は、[My Contributions](#my-contributions)と[docs/classifier_benchmark.md](docs/classifier_benchmark.md)に分けて示しています。
-
-## Key Results
-
-- ゼミ（4人）の共同研究で扱ったX投稿：**136,288件**
-- 広告除去を見直したデータ：**110,918件**（以前の集計109,037件に対して、2,015件が戻り、134件が新たに外れた）
-- 元のコードが残っていない除外判断**391件**は、推測で作り直さず、投稿IDで固定した
-- 正解データ**192件**を私が1件ずつ手で判定した（判定者は私1人。無作為標本ではない）
-- 分類器の的中率 **0.615**（118/192）。いちばん多いカテゴリを毎回答えるだけだと 0.281
-- カテゴリ別F1（いちばん当てはまる1カテゴリで判定）：「交換・取引」**0.869**、「情報共有」**0.000**（正解データに5件）。担当部分では「交換・取引」の結果だけを使った
-- 分類規則が「交換・取引」とした投稿は24,316件、ユーザーIDは10,677件
-- 自動チェック（CI）が確かめるのは、データなしで動く範囲（テストと合成サンプル）だけ。コード・テスト・CIはAIコーディングエージェントが書いた
-
-Other scores for the same 192 posts (micro and macro F1 under two criteria) are in
-[Results](#results).
 
 ## 日本語概要
 
@@ -605,7 +605,7 @@ owner's direction and with the owner's approval.
 - The synthetic runnable sample and GitHub Actions CI
 - The documentation and the public repository
 
-**How the agents' output was checked.** The [Japanese section at the top](#ai-workflow)
+**How the agents' output was checked.** The [Japanese section after Key Results](#ai-workflow)
 gives the full account; the facts are these.
 
 - The benchmark work began with a split of roles: Claude planned, Codex implemented,
