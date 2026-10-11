@@ -18,9 +18,10 @@ first of these into an immediate, named failure.  The check deliberately does **
 at import time: the functions in these modules are imported by tests that run on 3.9, and
 importing them is not what breaks.
 
-This is deliberately narrower than the public sample path.  ``classify_sns_rule_based``,
-the sample check and the unit tests run on 3.9, which is what CI exercises; the research
-reproduction scripts do not.  See "Execution environments" in the README.
+This is deliberately narrower than the public sample path.  ``classify_sns_rule_based``
+and the sample check run on 3.9; the research reproduction scripts, and the unit tests that
+run them, do not.  CI runs everything on 3.11, 3.12 and 3.13.  See "Execution
+environments" in the README.
 """
 
 from __future__ import annotations
@@ -46,7 +47,7 @@ def require_supported_interpreter() -> None:
         f"{running} ({sys.executable}).\n"
         f"Reason: {REASON}.\n"
         f"Verified on: {', '.join(VERIFIED)}.\n"
-        "The public sample path -- classify_sns_rule_based.py, "
-        "sample_data/check_sample_output.py and the unit tests -- does run on 3.9, so a "
+        "The public sample path -- classify_sns_rule_based.py and "
+        "sample_data/check_sample_output.py -- does run on 3.9, so a "
         "working sample run does not mean this script will work on the same interpreter."
     )

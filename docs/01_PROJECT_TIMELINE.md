@@ -531,7 +531,9 @@ commit added a reproduction procedure based on the actual ID differences.
 **Issues Identified**
 
 - `gold_supplement_11.csv` has empty labels, while all three supplements in
-  Gold 192 have `交換取引=1`. The annotator, time, and rationale are unknown.
+  Gold 192 have `交換取引=1`. All three were labelled by the repository owner,
+  who labelled all 192 rows; when, under which procedure, and on what rationale
+  is not recorded.
 - Gold 192 is not a direct simple random sample of the full hybrid corpus.
   [CODE][DOC][UNCERTAIN]
 
@@ -776,7 +778,7 @@ Do not overwrite historical decisions with a guessed implementation.
 ### Ad Removal and Classification
 
 - Original ad-filter rules that created `2511-2604_final.csv`
-- Annotator and rationale for the three Gold supplement decisions
+- Timing, procedure, and rationale for the three Gold supplement decisions (the annotator is the repository owner)
 - Multi-label policy, neutral definition, and annotator-disagreement resolution
 - Whether a new sample representative of the full hybrid corpus is needed
 

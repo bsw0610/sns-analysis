@@ -73,7 +73,7 @@ The baseline `gold_standard_192.csv` has 20 CSV columns. The first 12 are meanin
 
 The three supplemental rows are the rows of `gold_standard_192.csv` whose `post_id` also appears in `gold_supplement_11.csv`; `validate_normalized_gold()` reports them as `supplement_ids`. Their IDs are not listed here, because a post ID leads to the original post and its account.
 
-The human labels for these rows are empty in `gold_supplement_11.csv`, but all three rows have `交換取引=1` in the current `gold_standard_192.csv` baseline. No separate evidence identifying when or by whom these labels were assigned was found in the repository.
+The human labels for these rows are empty in `gold_supplement_11.csv`, but all three rows have `交換取引=1` in the current `gold_standard_192.csv` baseline. The repository owner labelled them, as with the other 189 rows; no record of when or under which procedure remains in the repository.
 
 The normalization script does not recreate labels from the supplemental file. It preserves the 12 values already present in the baseline Gold dataset. The older `make_task5_task6_files.py` writes the three supplemental rows with empty labels and is therefore not used in this normalization procedure.
 
