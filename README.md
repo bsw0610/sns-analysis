@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml)
 
-ゼミ（4人）の共同研究で、「ボンボンドロップシール」に関するX投稿136,288件を分析しました。私の担当は、投稿ごとの感情分析です。正解データ192件を自分で1件ずつ判定して確かめると、使える精度だったのは「交換・取引」だけで、「情報共有」は0.000でした。最終発表の1〜2日前には、私たちの広告除去の手順に、除いた結果を確認する工程がなく、必要な投稿まで消えていたことにも気づきました。データを作り直し、私の担当部分にだけ使いました。コードはAIコーディングエージェントが書きました。
+ゼミ（4人）の共同研究で、「ボンボンドロップシール」に関するX投稿136,288件を分析しました。私の担当は、投稿ごとの感情分析です。正解データ192件を自分で1件ずつ判定して比べると、いちばん当てはまる1カテゴリで見たF1（見落としと誤りの両方を見る0〜1の点数）は、「交換・取引」が0.869、「情報共有」は0.000でした。担当部分では「交換・取引」の結果だけを使うと決めました。最終発表の1〜2日前には、私たちの広告除去の手順に、除いた結果を確認する工程がなく、必要な投稿まで消えていたことにも気づきました。データを作り直し、私の担当部分にだけ使いました。コードはAIコーディングエージェントが書きました。
 
 An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
 
@@ -21,22 +21,22 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 **2. 弱まった仕組みに対して私がしたこと**
 
 - 私は、GitHubで公開するつもりだったので、別のモデルが入る確認が必要だと考えました。ただしCodexの利用量では元の分担を続けられなかったため、賄える形として、学習モデルの最初の実行前に一度だけ別モデルのレビューを依頼しました。
-- 依頼した別モデル（Codex）のレビューの7件の指摘は、すべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例は、「学習には学習用の部分だけを使った」ことを確かめる監視が文字しか見ておらず、正解ラベルなどを全データで計算する誤りをわざと入れたコードが、既存のテストを通ってしまったことです（実際のコードに漏れは確認されていません）。
-- 分析を始める前に、別セッションでの検査を私が開始しました。7件の指摘があり、その中に、分析の前に決めておくべき点（乱数の使い方が未定で、同じ規則でも信頼区間が変わりうる）がありました。修正後に分析を承認しました。この検査は同じ系列のモデルによるもので、モデルの多様性はありません。
+- 依頼した別モデル（Codex）のレビューの7件の指摘は、すべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例：学習モデルは、採点に使う投稿の情報を学習のときに使ってはいけません。それを見張る仕組みが投稿の文章しか見ておらず、正解ラベルなどを全データから計算してしまう誤りをわざと入れたコードでも、既存のテストを通ってしまいました（実際のコードにそうした漏れは確認されていません）。
+- 分析を始める前に、別セッションでの検査を私が開始しました。7件の指摘があり、その中に、分析の前に決めておくべき点（結果のぶれ幅を計算する手順の細部が決まっておらず、同じ規則に従っても違う幅が出うる）がありました。修正後に分析を承認しました。この検査は同じ系列のモデルによるもので、モデルの多様性はありません。
 - 各段階は、実行する前に私が承認しました。学習モデルとの比較の段階で、私がベンチマークの終了を決めました。
-- 判定の規則と学習モデルの設定は、そのコードを書く前に記録されました。ただし、ブートストラップ（信頼区間の計算）の細部は、点数を見た後、そのコードを書く前に決めています。この「事前登録」は外部の登録所ではなく、リポジトリ内のコミットの順序です。
+- どの点数で比べ、どうなったら「差がある」と言うかの規則と、学習モデルの設定は、そのコードを書く前に記録されました。ただし、結果のぶれ幅を計算する手順の細部は、点数を見た後、その計算のコードを書く前に決めています。「先に決めた」ことの根拠は、外部の登録所ではなく、このリポジトリの記録の順序です。
 
 **3. 人が持つ基準：正解データ192件**
 
 - 192件はすべて私が1件ずつ手で判定しました。ただし補充の3件は、いつどの手順で判定したかの記録がなく、189件の結果も併記しています。
 - 判定者は私一人で、一致率は測っていません。また192件は現在のコーパスの無作為標本ではありません（広告除去の確認に使った無作為抽出とは別のものです）。
-- 規則ベース分類器のカテゴリ別F1は0.869〜0.000で、実用に足りるのは「交換・取引」（0.869）だけです。「情報共有」は0.000でした。
-- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分では、使えると分かった「交換・取引」の範囲の結果だけを使うと決め、広告除去の見直しと正解データによる評価をやり直した資料（公開版のhybrid corpus 110,918件とGold 192の評価）を、私の担当部分にだけ使いました。
+- 規則ベース分類器のカテゴリ別F1（見落としと誤りの両方を見る0〜1の点数。いちばん当てはまる1カテゴリで判定）は0.869〜0.000でした。「交換・取引」が0.869、次に高い「中立」が0.625、「情報共有」は0.000（正解データに5件）です。使える・使えないを分ける基準値を事前に決めてはいませんでした。
+- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分では、いちばん点数の高かった「交換・取引」の範囲の結果だけを使うと決め、広告除去の見直しと正解データによる評価をやり直した資料（公開版の、広告除去をやり直したデータ110,918件と、正解データ192件による評価）を、私の担当部分にだけ使いました。
 
 **4. ベンチマーク：規則分類器の的中率は良いのか**
 
-- 規則分類器の的中率0.615（118/192）は、単独では良い値か判断できませんでした。そこで、同じ正解データで、当て推量2種と、簡単な学習モデル（文字のつながりを使うTF-IDF＋ロジスティック回帰）と比べました。
-- 規則分類器は当て推量より明確に高く、学習モデルは規則分類器を上回りませんでした。macro F1は学習モデルの方が明確に低く（0.340対0.450）、的中率の差は判断保留でした。macro F1の差の約6割は、14件しかない「不満・怒り」1カテゴリから生じています。
+- 規則分類器の的中率0.615（118/192）は、単独では良い値か判断できませんでした。そこで、同じ正解データで、当て推量2種（いちばん多いカテゴリを毎回答える：0.281、カテゴリの割合どおりに無作為に答える：平均0.206）と、簡単な学習モデル（文字の並びの特徴からカテゴリを当てる基本的な手法。名称はTF-IDF＋ロジスティック回帰）と比べました。
+- 規則分類器は当て推量より明確に高く、学習モデルは規則分類器を上回りませんでした。的中率は規則0.615に対して学習モデル0.542でしたが、偶然でも起こりうる範囲の差だったため、判断保留としました。カテゴリごとのF1を平均した点数（macro F1）では、学習モデルの方が明確に低く（0.340対0.450）、その差の約6割は、14件しかない「不満・怒り」1カテゴリから生じています。
 - 言えるのは、この小さなデータ・1つの設定・調整なしという条件で、簡単な学習モデルは規則に勝てなかったことまでです。規則が学習モデルより優れているとは言えません。
 - 文章を読むLLMが「不満・怒り」と「中立」を拾えるかを比べる計画がありましたが、依存していたローカルモデルを廃止したため実施していません。
 
@@ -67,11 +67,11 @@ Other scores for the same 192 posts (micro and macro F1 under two criteria) are 
 
 本研究は4人構成の大学ゼミ共同プロジェクトとして始まりました。データ準備、初期の広告除去、探索的分析、発表はチーム全体の作業です。その後の確認作業で、私が無作為抽出による精度検証を行い、それに基づいてコーパスの追加作業を進めました。本リポジトリに残るキーワードフィルタとルールベース分類器のコードは、私の指示と確認のもとでAIコーディングエージェント（Codex、のちにClaude Code）が作成したものです。当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。研究室提供Notebookは再配布条件を確認できないため公開せず、処理内容とデータ系譜のみを文書化しています。
 
-その後、広告除去や集計方法によって結果が大きく変わることが分かったため、個人の作業として既存コードとデータの流れを再調査しました。個人で進めた主な作業は、既存パイプラインとデータ系譜の調査、既存広告フィルタの監査と修正、hybrid corpus 110,918件の再構築と検証、Gold label 192件による評価と誤り分析、交換投稿とアカウント集中度の分析、スライド指標の監査、再現性検証と回帰テスト、CI、公開ドキュメントの整備です。これらのコード、テスト、文書はAIコーディングエージェントが作成しました。私自身が担ったのは、AIエージェントを使うという判断、Gold label 192件すべての手作業による判定、どの結果を信頼するかの判断、元のコードが残っていない391件を推測で再現せずIDで固定するという判断、公開範囲の決定です。
+その後、広告除去や集計方法によって結果が大きく変わることが分かったため、チームの作業とは別に、個人の作業として、AIコーディングエージェントを使って調べ直しました。私自身が担ったのは、たまたま使える環境にあったAIエージェントを試してみたこと、Gold label（正解データ）192件すべての手作業による判定、どの結果を信頼するかの判断、元のコードが残っていない391件を推測で再現せず投稿IDで固定するという判断、公開範囲の決定です。その判断のもとで、AIコーディングエージェントが、既存のコードとデータの流れの調査、広告フィルタの監査と修正、広告除去をやり直したデータ（hybrid corpus）110,918件の再構築と検証、Gold label 192件による評価と誤り分析、交換投稿とアカウント集中度の分析、スライド指標の監査、自動チェック（回帰テスト・CI）、公開ドキュメントを作成しました。
 
 本リポジトリは、当初のゼミ研究の単独著作を主張するものではありません。
 
-現在の基準データは、月別原票136,288件から広告を除去したhybrid corpus 110,918件です。ルールベース分類では「交換・取引」が24,316件、関連するユニークユーザーIDが10,677件でした。分類器はGold label 192件に対して、多重ラベル基準のmicro F1が0.595、macro F1が0.495でした。特に「焦り・競争」と「情報共有」の性能が低く、広告除去の偏りや日本語表現の取りこぼしが課題として残っています。
+現在の基準データは、月別原票136,288件から広告を除去したhybrid corpus 110,918件です。ルールベース分類では「交換・取引」が24,316件、関連するユニークユーザーIDが10,677件でした。分類器の的中率は、Gold label 192件に対して0.615（118/192）で、いちばん多いカテゴリを毎回答えるだけの場合は0.281です。別の採点方法による数値（micro F1、macro F1）は[Results](#results)にあります。特に「焦り・競争」と「情報共有」の性能が低く、広告除去の偏りや日本語表現の取りこぼしが課題として残っています。
 
 ## Motivation and Background
 
@@ -630,7 +630,7 @@ gives the full account; the facts are these.
 - All 192 Gold rows were labelled by hand by the owner, one annotator, with no
   agreement measure; for three supplemental rows no record of when or how they were
   labelled remains. Just before the final presentation, the owner found that the
-  information-sharing category scored about zero, told the team, decided to use only the usable
+  information-sharing category scored about zero, told the team, decided to use only the highest-scoring
   exchange/trade category's results in the owner's own section, and used the rebuilt corpus
   (110,918 posts) and the Gold 192 evaluation only there.
 - A comparison with a large language model was planned but not run, because the local
@@ -642,9 +642,10 @@ gives the full account; the facts are these.
 
 The original seminar research, the initial data preparation, the initial
 advertising removal, and the seminar presentation were team work and are not
-claimed here. The individual contribution to the filtering is the later
-accuracy check and the corpus work that followed it, not the original removal
-decision.
+claimed here. The owner's individual contribution to the filtering is the later
+accuracy check and the decision to redo the corpus on that basis, not the
+original removal decision; the rebuild itself was carried out by the AI coding
+agents.
 
 ## Source Material and Contribution Boundaries
 
@@ -670,14 +671,14 @@ Version control begins after that phase, so this repository holds no evidence of
 who performed any individual task within it, and it does not attribute those
 tasks to one person.
 
-**3. Subsequent individual work.** The advertising-filter audit, hybrid-corpus
+**3. The later individual phase.** The advertising-filter audit, hybrid-corpus
 reconstruction, Gold 192 normalization and evaluation, classifier error
 analysis, exchange-account analysis, presentation-metric verification,
 reproducibility checks, regression tests, synthetic sample, CI, and public
-repository organization are the repository owner's later individual work,
-carried out with AI coding agents that wrote the scripts and documents retained
-here. [My Contributions](#my-contributions) separates the owner's own judgments
-from the work the agents carried out.
+repository organization were not team work: they belong to the repository
+owner's later individual phase. In that phase AI coding agents wrote the
+scripts, tests, and documents retained here, and the owner's own part was the
+judgments listed under [My Contributions](#my-contributions).
 
 ## Future Work
 
