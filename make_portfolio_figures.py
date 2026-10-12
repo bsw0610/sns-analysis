@@ -4,7 +4,9 @@
 The figures are derived from ``data/output`` rather than from hard-coded
 report values.  Every derived quantity is checked against the published
 baseline before anything is drawn, so a silent drift between the documents
-and the figures fails loudly instead of shipping a wrong picture.
+and the figures fails loudly instead of shipping a wrong picture.  The two
+guessing baselines in the evaluation figure are the exception: they are copied
+from docs/classifier_benchmark.md (see PUBLISHED_GUESS_HIT_RATES).
 
 This module only reads existing outputs.  It never rebuilds the corpus and
 never reruns the classifier.
@@ -45,11 +47,8 @@ ACCENT_SOFT = "#A8CCC1"
 LOCK = "#B4532A"
 GREYS = ("#C6C6C0", "#B0B0A9", "#9B9B94")
 
-# Dataset label value, kept in Japanese because that is what the corpus and the
-# classifier output contain.  Figures may be viewed outside the README, so they
-# carry the English gloss used in the README category table.
+# Dataset label value, as it appears in the corpus and the classifier output.
 EXCHANGE_CATEGORY = "交換・取引"
-EXCHANGE_CATEGORY_GLOSS = "exchange or trade"
 
 # Published baseline.  Sources: docs/hybrid_rebuild.md, docs/baseline_evaluation.md
 # and the repository README.  The renderer refuses to draw if the data no
@@ -75,11 +74,35 @@ EXPECTED = {
 }
 
 
+# Published lenient evaluation on Gold 192 as (tp, fp, fn) per category.
+# Source: docs/baseline_evaluation.md section 3.
+EXPECTED_EVALUATION = {
+    "不満・怒り": (8, 12, 6),
+    "焦り・競争": (5, 2, 22),
+    "交換・取引": (43, 2, 11),
+    "欲望・執着": (11, 12, 25),
+    "喜び・満足": (16, 13, 17),
+    "情報共有": (0, 4, 5),
+    "中立": (35, 29, 13),
+}
+EXPECTED_HITS = 118
+
+# Hit rates of the two guessing baselines on Gold 192.  These are NOT re-derived
+# here: they come from the classifier benchmark, whose code is not published, and
+# are copied from the table in docs/classifier_benchmark.md.
+PUBLISHED_GUESS_HIT_RATES = {
+    "dummy_majority": 0.281,
+    "dummy_prior_mean": 0.206,
+}
+
+
 @dataclass(frozen=True)
 class Metrics:
     values: dict[str, int]
     buckets: list[tuple[str, int]]
     lorenz: list[tuple[float, float]]
+    evaluation: dict[str, tuple[int, int, int]]
+    hits: int
 
     def __getitem__(self, key: str) -> int:
         return self.values[key]
@@ -114,6 +137,30 @@ def count_rows(path: Path) -> int:
 def top_fraction_count(account_count: int, fraction: float) -> int:
     """Whole accounts not exceeding the requested population share."""
     return max(1, math.floor(account_count * fraction))
+
+
+def collect_evaluation(output: Path) -> tuple[dict[str, tuple[int, int, int]], int]:
+    """Lenient per-category counts and hits, from the same code the report uses."""
+    from evaluate_v2_hybrid_192 import calculate_evaluation_metrics, load
+
+    rows, _ = load(
+        output / "gold_standard_192_normalized.csv",
+        output / "sentiment_classified_hybrid.csv",
+        source_path=output / "gold_standard_192.csv",
+        supplement_path=output / "gold_supplement_11.csv",
+        hybrid_path=output / "sentiment_classified_hybrid.csv",
+    )
+    result = calculate_evaluation_metrics(rows)
+    per_category = result["lenient"]["per_category"]
+    evaluation = {
+        category: (counts["tp"], counts["fp"], counts["fn"])
+        for category, counts in per_category.items()
+    }
+    return evaluation, result["lenient_hits"]
+
+
+def f1(tp: int, fp: int, fn: int) -> float:
+    return 2 * tp / (2 * tp + fp + fn) if tp else 0.0
 
 
 def collect_metrics(root: Path) -> Metrics:
@@ -197,6 +244,16 @@ def collect_metrics(root: Path) -> Metrics:
         for key, expected in EXPECTED.items()
         if values[key] != expected
     ]
+    evaluation, hits = collect_evaluation(output)
+    mismatches += [
+        f"  {category}: data={evaluation.get(category)} baseline={expected}"
+        for category, expected in EXPECTED_EVALUATION.items()
+        if evaluation.get(category) != expected
+    ]
+    if set(evaluation) != set(EXPECTED_EVALUATION):
+        mismatches.append(f"  categories: data={sorted(evaluation)}")
+    if hits != EXPECTED_HITS:
+        mismatches.append(f"  lenient_hits: data={hits} baseline={EXPECTED_HITS}")
     if mismatches:
         raise SystemExit(
             "Derived metrics no longer match the published baseline:\n"
@@ -225,7 +282,9 @@ def collect_metrics(root: Path) -> Metrics:
         if index % step == 0 or index == account_count:
             lorenz.append((index / account_count, running / exchange_posts))
 
-    return Metrics(values=values, buckets=buckets, lorenz=lorenz)
+    return Metrics(
+        values=values, buckets=buckets, lorenz=lorenz, evaluation=evaluation, hits=hits
+    )
 
 
 def new_figure(width: float, height: float) -> tuple[plt.Figure, plt.Axes]:
@@ -316,51 +375,60 @@ def arrow(ax: plt.Axes, x1: float, x2: float, y: float, label: str = "") -> None
 
 
 def render_pipeline(metrics: Metrics, path: Path) -> None:
-    fig, ax = new_figure(13.5, 3.7)
+    fig, ax = new_figure(13.5, 4.5)
     title_block(
         ax,
-        "Analysis pipeline",
-        "Monthly X exports through advertising removal, rule-based classification, "
-        "and exchange-account aggregation.",
+        "分析の流れ",
+        "月別のX投稿 → 広告除去 → ルールによる分類 → ユーザーIDごとの集計",
     )
 
     stages = [
-        (f"{metrics['source_rows']:,}", "raw posts", False),
-        (f"{metrics['hybrid_rows']:,}", "hybrid corpus", True),
+        (f"{metrics['source_rows']:,}", "元の投稿", False),
+        (f"{metrics['hybrid_rows']:,}", "広告除去をやり直したデータ", True),
         (
             f"{metrics['exchange_posts']:,}",
-            f"{EXCHANGE_CATEGORY} posts\n({EXCHANGE_CATEGORY_GLOSS})",
+            f"規則が「{EXCHANGE_CATEGORY}」\nとした投稿",
             False,
         ),
-        (f"{metrics['exchange_accounts']:,}", "unique user IDs", False),
+        (f"{metrics['exchange_accounts']:,}", "ユーザーID", False),
     ]
-    width, height, gap = 18.0, 24.0, 7.0
-    y = 42.0
+    width, height, gap = 18.0, 21.0, 7.0
+    y = 50.0
     x = 4.0
-    labels = ["advertising\nremoval", "rule-based\nclassification", "aggregate by\nuser ID"]
+    labels = ["広告除去", "ルールによる\n分類", "ユーザーID\nごとに集計"]
     for index, (value, label, emphasis) in enumerate(stages):
         node(ax, x, y, width, height, value, label, emphasis=emphasis)
         if index < len(stages) - 1:
             arrow(ax, x + width + 1.2, x + width + gap - 1.2, y + height / 2, labels[index])
         x += width + gap
 
+    # The human-labelled set checks the classification step, so it hangs off
+    # that arrow as its own box rather than a caption.
     branch_x = 50.5
-    ax.plot([branch_x, branch_x], [54.0, 26.0], color=RULE, lw=1.1)
-    ax.plot([branch_x, branch_x + 4.0], [26.0, 26.0], color=RULE, lw=1.1)
+    box_x, box_y, box_w, box_h = 33.0, 15.0, 35.0, 19.0
+    ax.plot([branch_x, branch_x], [y + height / 2, box_y + box_h], color=MUTED, lw=1.1)
     ax.text(
-        branch_x + 5.5,
-        26.0,
-        f"classifier evaluated against {metrics['gold_rows']} human-labelled posts "
-        f"(Gold {metrics['gold_rows']})",
-        fontsize=10.5,
+        branch_x + 1.2,
+        (y + box_y + box_h) / 2,
+        "分類結果と照合",
+        fontsize=9,
         color=MUTED,
         va="center",
+    )
+    node(
+        ax,
+        box_x,
+        box_y,
+        box_w,
+        box_h,
+        f"{metrics['gold_rows']}件",
+        "私が1件ずつ手で判定した正解データ\n（判定者1人・無作為標本ではない）",
     )
 
     footnote(
         ax,
-        "User IDs are export account identifiers. They do not establish unique people "
-        "and do not separate automated accounts.",
+        "ユーザーIDはエクスポート上のアカウント識別子です。人数を表すものではなく、"
+        "自動投稿のアカウントも区別していません。",
     )
     fig.savefig(path, dpi=DPI, facecolor=CANVAS)
     plt.close(fig)
@@ -368,19 +436,20 @@ def render_pipeline(metrics: Metrics, path: Path) -> None:
 
 def render_filter_audit(metrics: Metrics, path: Path) -> None:
     fig, ax = new_figure(13.5, 5.6)
+    locked = metrics["relaxation_locked"] + metrics["final_only_locked"]
     title_block(
         ax,
-        "Advertising filter audit and hybrid rebuild",
-        "The original filter was not reproducible. Its decisions were re-derived, "
-        "and the 391 whose source code is missing were locked by post ID.",
+        "広告除去の見直し：除きすぎていた投稿を戻した",
+        "キーワードで除いた後に結果を確認する工程が、私たちの手順にありませんでした。"
+        f"元のコードがない{locked}件は、推測せず投稿IDで固定しました。",
     )
 
     segments = [
-        ("keyword_excluded", "existing keyword rules", GREYS[0], False),
-        ("relaxation_locked", "relaxation candidates (ID lock)", LOCK, True),
-        ("additional_ad_excluded", "additional-advertising rules", GREYS[2], False),
-        ("final_only_locked", "final-only decisions (ID lock)", LOCK, True),
-        ("hybrid_rows", "retained hybrid corpus", ACCENT, False),
+        ("keyword_excluded", "これまでのキーワード規則で除外", GREYS[0], False),
+        ("relaxation_locked", "規則をゆるめる候補だったが除外のまま（IDで固定）", LOCK, True),
+        ("additional_ad_excluded", "追加の広告規則で除外", GREYS[2], False),
+        ("final_only_locked", "最終判断でのみ除外（IDで固定）", LOCK, True),
+        ("hybrid_rows", "残した投稿（広告除去をやり直したデータ）", ACCENT, False),
     ]
     total = metrics["source_rows"]
     bar_x, bar_w, bar_y, bar_h = 4.0, 92.0, 55.0, 9.0
@@ -403,7 +472,7 @@ def render_filter_audit(metrics: Metrics, path: Path) -> None:
     ax.text(
         bar_x,
         bar_y + bar_h + 3.0,
-        f"{total:,} source posts",
+        f"元の投稿 {total:,}件",
         fontsize=11,
         color=INK,
         fontweight="bold",
@@ -412,7 +481,7 @@ def render_filter_audit(metrics: Metrics, path: Path) -> None:
     ax.text(
         bar_x + bar_w,
         bar_y + bar_h + 3.0,
-        f"{metrics['hybrid_rows']:,} retained ({metrics['hybrid_rows'] / total * 100:.1f}%)",
+        f"残した投稿 {metrics['hybrid_rows']:,}件（{metrics['hybrid_rows'] / total * 100:.1f}%）",
         fontsize=11,
         color=ACCENT,
         fontweight="bold",
@@ -443,6 +512,15 @@ def render_filter_audit(metrics: Metrics, path: Path) -> None:
         )
         ax.text(bar_x + 13.0, legend_y + 0.2, label, fontsize=10.5, color=MUTED, va="center")
         legend_y -= 6.2
+    ax.text(
+        bar_x + 3.0,
+        legend_y + 0.6,
+        f"{metrics['relaxation_locked']:,} + {metrics['final_only_locked']:,} = {locked:,}件："
+        "元のコードがなく、投稿IDで固定",
+        fontsize=10,
+        color=LOCK,
+        va="center",
+    )
 
     panel_x = 52.0
     ax.add_patch(
@@ -459,17 +537,17 @@ def render_filter_audit(metrics: Metrics, path: Path) -> None:
     ax.text(
         panel_x + 3.0,
         40.0,
-        "Correction against the previous result",
+        "以前の集計との差",
         fontsize=11,
         fontweight="bold",
         color=INK,
         va="center",
     )
     steps = [
-        (f"{metrics['old_rows']:,}", "previous filter result", MUTED),
-        (f"+{metrics['restored_vs_old']:,}", "over-filtered posts restored", ACCENT),
-        (f"-{metrics['dropped_vs_old']:,}", "newly excluded by the ID lock", LOCK),
-        (f"{metrics['hybrid_rows']:,}", "hybrid corpus", INK),
+        (f"{metrics['old_rows']:,}", "以前の集計", MUTED),
+        (f"+{metrics['restored_vs_old']:,}", "除きすぎていた投稿を戻した", ACCENT),
+        (f"-{metrics['dropped_vs_old']:,}", "IDの固定で新たに除外", LOCK),
+        (f"{metrics['hybrid_rows']:,}", "やり直したデータ", INK),
     ]
     step_y = 33.0
     for index, (value, label, color) in enumerate(steps):
@@ -495,8 +573,7 @@ def render_filter_audit(metrics: Metrics, path: Path) -> None:
 
     footnote(
         ax,
-        "The restored posts were disproportionately ones the classifier labels "
-        "情報共有 (information sharing), which the over-broad keywords had removed.",
+        "戻した投稿は、分類器が「情報共有」とする投稿に偏っていました。",
     )
     fig.savefig(path, dpi=DPI, facecolor=CANVAS)
     plt.close(fig)
@@ -511,15 +588,14 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
     head.axis("off")
     title_block(
         head,
-        "Exchange activity is spread across many one-off accounts",
-        f"{metrics['exchange_posts']:,} {EXCHANGE_CATEGORY} "
-        f"({EXCHANGE_CATEGORY_GLOSS}) posts from "
-        f"{metrics['exchange_accounts']:,} unique user IDs.",
+        f"「{EXCHANGE_CATEGORY}」の投稿：1回だけ投稿したユーザーIDが多い",
+        f"規則が「{EXCHANGE_CATEGORY}」とした投稿 {metrics['exchange_posts']:,}件、"
+        f"ユーザーID {metrics['exchange_accounts']:,}件。",
     )
     footnote(
         head,
-        "User IDs are ranked by post count; ties are ordered arbitrarily, which does "
-        "not change the cumulative shares.",
+        "ユーザーIDは投稿数の多い順に並べています。同数の並び順は任意ですが、"
+        "累積の割合は変わりません。ユーザーIDは人数を表すものではありません。",
     )
 
     left = fig.add_axes((0.055, 0.20, 0.36, 0.50))
@@ -539,8 +615,8 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
             fontweight="bold",
         )
     left.set_ylim(0, total_accounts * 0.82)
-    left.set_xlabel("posts per user ID", fontsize=10.5, color=MUTED, labelpad=7)
-    left.set_ylabel("user IDs", fontsize=10.5, color=MUTED, labelpad=7)
+    left.set_xlabel("ユーザーIDあたりの投稿数", fontsize=10.5, color=MUTED, labelpad=7)
+    left.set_ylabel("ユーザーID数", fontsize=10.5, color=MUTED, labelpad=7)
     left.tick_params(labelsize=10, colors=MUTED, length=0)
     left.grid(axis="y", color=RULE, lw=0.8, zorder=0)
     left.set_axisbelow(True)
@@ -548,7 +624,7 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
         left.spines[side].set_visible(False)
     left.spines["bottom"].set_color(RULE)
     left.set_title(
-        f"{metrics['single_post_accounts'] / total_accounts * 100:.1f}% posted exactly once",
+        f"ユーザーIDの{metrics['single_post_accounts'] / total_accounts * 100:.1f}%は1回だけ投稿",
         fontsize=11,
         color=INK,
         fontweight="bold",
@@ -569,7 +645,7 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
         right.plot([fraction, fraction], [0, share], color=MUTED, lw=1, ls=":", zorder=3)
         right.plot([fraction], [share], "o", color=ACCENT, markersize=6, zorder=5)
         right.annotate(
-            f"top {fraction}% of user IDs\n{metrics[key]:,} posts ({share:.1f}%)",
+            f"上位{fraction}%のユーザーID\n{metrics[key]:,}件（{share:.1f}%）",
             xy=(fraction, share),
             xytext=text_xy,
             fontsize=9.5,
@@ -580,8 +656,8 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
 
     right.set_xlim(0, 100)
     right.set_ylim(0, 100)
-    right.set_xlabel("user IDs, ranked by post count (%)", fontsize=10.5, color=MUTED, labelpad=7)
-    right.set_ylabel("cumulative share of posts (%)", fontsize=10.5, color=MUTED, labelpad=7)
+    right.set_xlabel("ユーザーID（投稿数の多い順、%）", fontsize=10.5, color=MUTED, labelpad=7)
+    right.set_ylabel("投稿の累積割合（%）", fontsize=10.5, color=MUTED, labelpad=7)
     right.tick_params(labelsize=10, colors=MUTED, length=0)
     right.grid(color=RULE, lw=0.8, zorder=0)
     right.set_axisbelow(True)
@@ -590,11 +666,124 @@ def render_exchange_concentration(metrics: Metrics, path: Path) -> None:
     for side in ("left", "bottom"):
         right.spines[side].set_color(RULE)
     right.set_title(
-        "Concentration is real but moderate",
+        f"上位10%のユーザーIDが投稿の"
+        f"{metrics['top10_posts'] / metrics['exchange_posts'] * 100:.1f}%",
         fontsize=11,
         color=INK,
         fontweight="bold",
         loc="left",
+        pad=12,
+    )
+
+    fig.savefig(path, dpi=DPI, facecolor=CANVAS)
+    plt.close(fig)
+
+
+def render_classifier_evaluation(metrics: Metrics, path: Path) -> None:
+    fig = plt.figure(figsize=(13.5, 5.6), dpi=DPI)
+    fig.patch.set_facecolor(CANVAS)
+    head = fig.add_axes((0, 0, 1, 1))
+    head.set_xlim(0, 100)
+    head.set_ylim(0, 100)
+    head.axis("off")
+    gold_rows = metrics["gold_rows"]
+    title_block(
+        head,
+        f"分類器の評価：私が手で判定した正解データ{gold_rows}件との比較",
+        "分類器がいちばんに選んだカテゴリを、正解と比べた結果です"
+        "（判定者1人・無作為標本ではない）。",
+    )
+    footnote(
+        head,
+        "1つの投稿に複数のカテゴリが付くことがあるため、カテゴリの件数の合計は"
+        f"{gold_rows}を超えます。当て推量の値は docs/classifier_benchmark.md の集計値です。",
+    )
+
+    ranked = sorted(
+        metrics.evaluation.items(), key=lambda item: f1(*item[1]), reverse=True
+    )
+    names = [f"{category}（正解{tp + fn}件）" for category, (tp, _, fn) in ranked]
+    scores = [f1(*counts) for _, counts in ranked]
+    left = fig.add_axes((0.20, 0.20, 0.30, 0.50))
+    colors = [ACCENT if index == 0 else ACCENT_SOFT for index in range(len(scores))]
+    left.barh(names, scores, color=colors, height=0.66, zorder=3)
+    for index, score in enumerate(scores):
+        left.text(
+            score + 0.02,
+            index,
+            f"{score:.3f}",
+            va="center",
+            fontsize=10,
+            color=INK,
+            fontweight="bold",
+        )
+    left.invert_yaxis()
+    left.set_xlim(0, 1.0)
+    left.tick_params(labelsize=10, colors=MUTED, length=0)
+    left.tick_params(axis="y", labelcolor=INK)
+    left.grid(axis="x", color=RULE, lw=0.8, zorder=0)
+    left.set_axisbelow(True)
+    for side in ("top", "right", "bottom"):
+        left.spines[side].set_visible(False)
+    left.spines["left"].set_color(RULE)
+    left.set_title(
+        "カテゴリ別F1（見落としと誤りの両方を見る0〜1の点数）",
+        fontsize=11,
+        color=INK,
+        fontweight="bold",
+        loc="left",
+        x=-0.52,
+        pad=12,
+    )
+
+    hit_rate = metrics.hits / gold_rows
+    compare = [
+        (f"規則分類器（{metrics.hits}/{gold_rows}）", hit_rate, ACCENT),
+        (
+            "いちばん多いカテゴリを\n毎回答える",
+            PUBLISHED_GUESS_HIT_RATES["dummy_majority"],
+            GREYS[1],
+        ),
+        (
+            "カテゴリの割合どおりに\n無作為に答える（平均）",
+            PUBLISHED_GUESS_HIT_RATES["dummy_prior_mean"],
+            GREYS[1],
+        ),
+    ]
+    right = fig.add_axes((0.72, 0.30, 0.23, 0.40))
+    right.barh(
+        [label for label, _, _ in compare],
+        [value for _, value, _ in compare],
+        color=[color for _, _, color in compare],
+        height=0.6,
+        zorder=3,
+    )
+    for index, (_, value, _) in enumerate(compare):
+        right.text(
+            value + 0.02,
+            index,
+            f"{value:.3f}",
+            va="center",
+            fontsize=10,
+            color=INK,
+            fontweight="bold",
+        )
+    right.invert_yaxis()
+    right.set_xlim(0, 1.0)
+    right.tick_params(labelsize=10, colors=MUTED, length=0)
+    right.tick_params(axis="y", labelcolor=INK)
+    right.grid(axis="x", color=RULE, lw=0.8, zorder=0)
+    right.set_axisbelow(True)
+    for side in ("top", "right", "bottom"):
+        right.spines[side].set_visible(False)
+    right.spines["left"].set_color(RULE)
+    right.set_title(
+        "的中率：当て推量との比較",
+        fontsize=11,
+        color=INK,
+        fontweight="bold",
+        loc="left",
+        x=-0.72,
         pad=12,
     )
 
@@ -609,10 +798,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def display(path: Path, root: Path) -> Path:
+    return path.relative_to(root) if path.is_relative_to(root) else path
+
+
 def main() -> int:
     args = parse_args()
     root = args.root.resolve()
-    output_dir = args.output_dir or root / "assets" / "portfolio"
+    output_dir = (args.output_dir or root / "assets" / "portfolio").resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     font_family = select_japanese_font()
@@ -622,6 +815,7 @@ def main() -> int:
         ("01_pipeline.png", render_pipeline),
         ("02_filter_audit.png", render_filter_audit),
         ("03_exchange_concentration.png", render_exchange_concentration),
+        ("04_classifier_evaluation.png", render_classifier_evaluation),
     )
     manifest: list[dict[str, object]] = []
     for name, renderer in renderers:
@@ -634,7 +828,7 @@ def main() -> int:
                 "bytes": target.stat().st_size,
             }
         )
-        print(f"wrote {target.relative_to(root)}")
+        print(f"wrote {display(target, root)}")
 
     (output_dir / "figure_metrics.json").write_text(
         json.dumps(
@@ -643,6 +837,14 @@ def main() -> int:
                 "dpi": DPI,
                 "metrics": metrics.values,
                 "post_count_buckets": dict(metrics.buckets),
+                "evaluation": {
+                    "lenient_hits": metrics.hits,
+                    "per_category_tp_fp_fn": {
+                        category: list(counts)
+                        for category, counts in metrics.evaluation.items()
+                    },
+                    "published_guess_hit_rates": PUBLISHED_GUESS_HIT_RATES,
+                },
                 "figures": manifest,
             },
             ensure_ascii=False,
@@ -651,7 +853,7 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
-    print(f"wrote {(output_dir / 'figure_metrics.json').relative_to(root)}")
+    print(f"wrote {display(output_dir / 'figure_metrics.json', root)}")
     return 0
 
 
