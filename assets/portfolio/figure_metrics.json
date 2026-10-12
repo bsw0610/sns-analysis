@@ -27,21 +27,70 @@
     "6-10": 418,
     "11+": 294
   },
+  "evaluation": {
+    "lenient_hits": 118,
+    "per_category_tp_fp_fn": {
+      "不満・怒り": [
+        8,
+        12,
+        6
+      ],
+      "焦り・競争": [
+        5,
+        2,
+        22
+      ],
+      "交換・取引": [
+        43,
+        2,
+        11
+      ],
+      "欲望・執着": [
+        11,
+        12,
+        25
+      ],
+      "喜び・満足": [
+        16,
+        13,
+        17
+      ],
+      "情報共有": [
+        0,
+        4,
+        5
+      ],
+      "中立": [
+        35,
+        29,
+        13
+      ]
+    },
+    "published_guess_hit_rates": {
+      "dummy_majority": 0.281,
+      "dummy_prior_mean": 0.206
+    }
+  },
   "figures": [
     {
       "file": "01_pipeline.png",
-      "sha256": "f86c245db40b3f81c380f45c5b61400675bffdaeecdc961436e16a7da4eea9f0",
-      "bytes": 128886
+      "sha256": "e7c53a070e3cb8476f647160f27cb5d7a4443018ae5ecb2ca5545b4523b88344",
+      "bytes": 139855
     },
     {
       "file": "02_filter_audit.png",
-      "sha256": "cf57ebc2d55313ff3490c0909f6cc922c0bf6810868af071d9c59a066e18cba1",
-      "bytes": 191685
+      "sha256": "96603fc65fee86789b1fc2c3cf838b28e95edb285efdabebc2cd993cc1e70354",
+      "bytes": 227022
     },
     {
       "file": "03_exchange_concentration.png",
-      "sha256": "7e0fa335458f48ef73480b8741358b130f0bcbadabb5fa1697dc81c6870477f6",
-      "bytes": 195416
+      "sha256": "9ba48e7ad0a2b53e15f02c34c3c10984d08ac2bd155543a25c0a66e4a8b02c76",
+      "bytes": 208654
+    },
+    {
+      "file": "04_classifier_evaluation.png",
+      "sha256": "557f0fab4326909651285ec7aca7ead132762a9690076d9af18f4886d39ee005",
+      "bytes": 231462
     }
   ]
 }

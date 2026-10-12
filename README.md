@@ -20,6 +20,10 @@ An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocess
 Other scores for the same 192 posts (micro and macro F1 under two criteria) are in
 [Results](#results).
 
+![分析の流れ：元の投稿136,288件、広告除去をやり直したデータ110,918件、規則が「交換・取引」とした投稿24,316件、ユーザーID 10,677件。分類の結果は、私が1件ずつ手で判定した正解データ192件（判定者1人・無作為標本ではない）と照合した。](assets/portfolio/01_pipeline.png)
+
+![分類器の評価：正解データ192件との比較。カテゴリ別F1は「交換・取引」0.869、「中立」0.625、「喜び・満足」0.516、「不満・怒り」0.471、「欲望・執着」0.373、「焦り・競争」0.294、「情報共有」0.000。的中率は規則分類器0.615（118/192）、いちばん多いカテゴリを毎回答える場合0.281、カテゴリの割合どおりに無作為に答える場合の平均0.206。](assets/portfolio/04_classifier_evaluation.png)
+
 <a id="ai-workflow"></a>
 
 ## AIに実装を任せ、別の目で確かめた進め方
@@ -95,9 +99,10 @@ This repository documents two related analysis tracks:
 1. A historical word-level workflow based on lab-provided cleaning and Word2Vec notebooks, MeCab tokenization, and TensorFlow Embedding Projector.
 2. A post-level workflow that removes advertising content, assigns one of seven emotion or behavior categories, evaluates the classifier against human labels, and analyzes exchange activity.
 
-The most reproducible path currently available is:
-
-![Analysis pipeline: 136,288 raw posts, 110,918 posts after advertising removal, 24,316 exchange posts from 10,677 unique user IDs, with the classifier evaluated against 192 human-labelled posts.](assets/portfolio/01_pipeline.png)
+The most reproducible path currently available is the post-level one shown in the
+pipeline figure under [Key Results](#key-results): 136,288 raw posts, 110,918 after
+the advertising removal was redone, 24,316 posts the rules classify as `交換・取引`,
+from 10,677 user IDs, with the classifier checked against 192 human-labelled posts.
 
 The classification step also produces the validated slide metrics and candidate presentation assets.
 
@@ -157,7 +162,7 @@ The initial advertising removal was team work. The keyword filter retained in th
 
 The current hybrid baseline, reconstructed from the preserved inputs and decisions, retains 110,918 posts. It restores 2,015 posts from the earlier result while continuing to exclude the existing 5,874 additional-advertising IDs. Because the original source code for `2511-2604_final.csv` is missing, 391 final-filter decisions are preserved as an ID lock in `baselines/hybrid_final_exclusions.csv` rather than reconstructed from guessed rules.
 
-![Advertising filter audit: of 136,288 source posts, 19,105 are excluded by existing keyword rules, 5,874 by additional-advertising rules, and 391 by an ID lock covering decisions whose source code is missing, leaving 110,918 retained. Against the previous 109,037-post result, 2,015 over-filtered posts are restored and 134 newly excluded.](assets/portfolio/02_filter_audit.png)
+![Advertising-removal review (figure text in Japanese): of 136,288 source posts, 19,105 are excluded by the existing keyword rules, 5,874 by additional-advertising rules, and 257 + 134 = 391 by an ID lock covering decisions whose source code is missing, leaving 110,918 retained (81.4%). Against the previous 109,037-post result, 2,015 over-removed posts are restored and 134 newly excluded. The restored posts skew toward ones the classifier labels 情報共有.](assets/portfolio/02_filter_audit.png)
 
 See [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md) for the exact inputs, hashes, and verification contract.
 
@@ -192,7 +197,7 @@ This is not a simple random sample of all 110,918 hybrid posts. All 192 rows wer
 
 The exchange analysis aggregates posts whose primary category is `交換・取引` by `ユーザーID`.
 
-![Exchange account concentration: 67.4% of the 10,677 user IDs posted exactly once, while the top 1% account for 14.9% of posts and the top 10% for 45.6%.](assets/portfolio/03_exchange_concentration.png)
+![Posts the rules classify as 交換・取引 (figure text in Japanese): 24,316 posts from 10,677 user IDs. 67.4% of the user IDs posted exactly once; the top 1% of user IDs account for 14.9% of the posts and the top 10% for 45.6%.](assets/portfolio/03_exchange_concentration.png)
 
 | Metric | Result |
 | --- | ---: |
@@ -395,9 +400,12 @@ The verification checks row counts, columns, values, ID sets, ID order, full SHA
 python3 make_portfolio_figures.py
 ```
 
-The generator reads only existing outputs under `data/output/`. It re-derives every
-number it draws and refuses to render if any value stops matching the published
-baseline, so the figures cannot drift away from the documented results.
+The generator reads only existing outputs under `data/output/`. It re-derives the
+numbers it draws and refuses to render if any value stops matching the published
+baseline, so the figures cannot drift away from the documented results. The one
+exception is the two guessing baselines in the evaluation figure (0.281 and 0.206):
+the benchmark code is not published, so they are copied from
+[Classifier Benchmark](docs/classifier_benchmark.md).
 
 ### Run unit tests
 
@@ -511,7 +519,7 @@ left ambiguous between current and legacy code.
 
 | File | Role |
 | --- | --- |
-| `make_portfolio_figures.py` | The three README figures, re-derived from `data/output` with a drift guard. |
+| `make_portfolio_figures.py` | The four README figures, re-derived from `data/output` with a drift guard. The two guessing baselines in the evaluation figure are copied from [Classifier Benchmark](docs/classifier_benchmark.md), not re-derived. |
 | `regenerate_slide_assets.py` | Slide 13–16 PNG candidates from the locked definitions. |
 | `make_task3_exchange_accounts.py` | Produces `exchange_accounts.csv`, the per-account aggregation the exchange figure reads. |
 
