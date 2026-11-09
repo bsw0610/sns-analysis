@@ -1,49 +1,45 @@
 # Documentation Index
 
-The documents below record how the analysis was rebuilt, verified, and
-reported. They are written in English; Japanese appears only where it is a
-dataset label, a metric definition, or presentation copy.
+Start with the [repository README](../README.md) for the research, results,
+synthetic sample, contributions, and limitations. The original seminar work was
+collaborative; the later audit and reproducibility work was the owner's
+individual phase, carried out with AI coding agents.
 
-Start with the [repository README](../README.md) for the results and figures.
+## Understand the results
 
-The project ran in two phases: a four-person university seminar project, and the
-repository owner's later individual audit, reconstruction, and reproducibility
-work. [Project Timeline](01_PROJECT_TIMELINE.md) marks where each section falls,
-and the README's Team Project Context and My Contributions sections state the
-boundary. Documents about the presentation record collaborative seminar output;
-the metric audits and regenerated assets are individual follow-up work.
+| Document | What it covers |
+| --- | --- |
+| [Classifier Baseline Evaluation](baseline_evaluation.md) | Gold 192 and the earlier Gold 189, evaluation criteria and category errors. |
+| [Classifier Benchmark](classifier_benchmark.md) | Comparison with guessing and a trained model; aggregate results only, with code unpublished. |
+| [Hybrid Baseline Rebuild](hybrid_rebuild.md) | The 110,918-post corpus, inputs, hashes and verification contract. |
+| [Presentation Metric Audit](slide_metric_audit.md) | Definitions and verification of presentation numbers. |
+| [Sentiment Analysis Methodology](../sns_sentiment_analysis_guide.md) | Classifier methodology and labels. |
 
-## Read in this order
+## Run and inspect
 
-| # | Document | What it answers |
-|---|---|---|
-| 1 | [Project Timeline](01_PROJECT_TIMELINE.md) | What happened in this project, reconstructed from preserved files rather than memory, including which parts could not be recovered. |
-| 2 | [Hybrid Baseline Rebuild](hybrid_rebuild.md) | How the 110,918-post corpus is rebuilt from the monthly exports, with the exact inputs, hashes, and the verification contract. |
-| 3 | [Classifier Baseline Evaluation](baseline_evaluation.md) | How well the rule-based classifier performs against 192 human-labelled posts, why each category fails where it does, and what the earlier 189-row evaluation showed. |
-| 4 | [Presentation Metric Audit](slide_metric_audit.md) | Whether every number quoted in the presentation reproduces from the data, and how the page 15 definitions were fixed. |
-| 5 | [Classifier Benchmark](classifier_benchmark.md) | Whether a trained text classifier does better than the rules, and whether either does better than guessing. Aggregate results only; the benchmark code is not published. |
+| Document | What it covers |
+| --- | --- |
+| [Reproducibility and execution](reproducibility.md) | Environments, required private inputs, commands and historical methods. |
+| [Script reference](scripts.md) | Roles of the Python files in the repository root. |
+| [Synthetic sample](../sample_data/README.md) | Running 30 synthetic posts and understanding the nine known disagreements. |
+| [R3 Input Validation](r3_input_validation.md) | Evaluation input validation and its verification. |
+| [R5 Sample Validation](r5_sample_validation.md) | The synthetic sample checker and its validation. |
+| [Slide Asset Regeneration](slide_assets_regeneration.md) | Regenerating and verifying slide 13–16 PNG assets. |
 
-## Reporting and production
+The generated reports from `evaluate_v2_hybrid_192.py` and
+`verify_slide_numbers.py` go to the Git-ignored `data/output/`, not this directory.
+A fresh clone lacks the research data; the synthetic sample and CI do not
+reproduce the full study.
 
-| Document | Purpose |
-|---|---|
-| [Slide Asset Regeneration](slide_assets_regeneration.md) | Regenerating and verifying the slide 13–16 PNG assets from locked definitions. |
-| [Slide 10–16 Replacement Plan](slide_plan_10-16.md) | The presentation specification. `verify_slide_numbers.py` does not read it; the script's expected values were transcribed from its 2026-07-30 version. |
-| [Presentation Script (Japanese)](presentation_script_10-16_ja.md) | Speaker script for the Japanese presentation. Kept in Japanese by intent. |
+## Research history and attribution
 
-## Historical
+| Document | What it covers |
+| --- | --- |
+| [Contributions, source material, and AI workflow](contributions.md) | Team, owner and AI roles, source boundaries, and review limitations. |
+| [Project Timeline](01_PROJECT_TIMELINE.md) | Evidence-backed reconstruction and gaps in the project history. |
+| [Task 0: Total-count Discrepancy](task0_total_count.md) | Historical investigation of the 136,288 total; its 109,037-post corpus was superseded. |
+| [Slide 10–16 Replacement Plan](slide_plan_10-16.md) | Presentation specification; the verification script uses transcribed expected values, not the document itself. |
+| [Presentation Script (Japanese)](presentation_script_10-16_ja.md) | Japanese speaker script. |
 
-| Document | Status |
-|---|---|
-| [Task 0: Total-count Discrepancy](task0_total_count.md) | Records the 2026-07-29 investigation that settled the source total at 136,288. Its working corpus of 109,037 posts has since been superseded by the 110,918-post hybrid corpus. |
-
-Section 10 of the [Classifier Baseline Evaluation](baseline_evaluation.md) is
-likewise historical: it preserves the 189-row baseline that the Gold 192
-evaluation replaced.
-
-## A note on generated reports
-
-`evaluate_v2_hybrid_192.py` and `verify_slide_numbers.py` write their raw
-reports to `data/output/`, which is excluded from Git. The curated documents
-here carry the same figures in English. Regenerating a report therefore never
-overwrites a document in this directory.
+Section 10 of the [Classifier Baseline Evaluation](baseline_evaluation.md)
+preserves the historical Gold 189 baseline alongside the later Gold 192 results.

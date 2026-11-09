@@ -2,238 +2,63 @@
 
 [![tests](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml/badge.svg)](https://github.com/bsw0610/sns-analysis/actions/workflows/test.yml)
 
-ゼミ（4人）の共同研究で、「ボンボンドロップシール」に関するX投稿136,288件を分析しました。私の担当は、投稿ごとの感情分析です。正解データ192件を自分で1件ずつ判定して比べると、いちばん当てはまる1カテゴリで見たF1（見落としと誤りの両方を見る0〜1の点数）は、「交換・取引」が0.869、「情報共有」は0.000でした。担当部分では「交換・取引」の結果だけを使うと決めました。最終発表の1〜2日前には、私たちの広告除去の手順に、除いた結果を確認する工程がなく、必要な投稿まで消えていたことにも気づきました。データを作り直し、私の担当部分にだけ使いました。コードはAIコーディングエージェントが書きました。
+4人の大学ゼミで、「ボンボンドロップシール」に関するX投稿を分析しました。2025年11月〜2026年4月に収集された**136,288件**を対象に、広告除去、テキスト処理、Word2Vec、投稿の感情・行動分類、交換投稿の分析を行いました。私の担当は投稿ごとの感情分析です。
 
-An analysis of Japanese X posts about Bonbon Drop Seal, covering text preprocessing, Word2Vec, rule-based behavior classification, evaluation, and reproducible presentation metrics.
+発表直前の確認で、広告除去後に除外結果を確認する工程がなく、必要な投稿も消えていたことが分かりました。私の担当部分に使うデータを作り直し、自分で判定した正解データと分類結果を照合しました。コード、テスト、CI、文書は、私の指示と承認のもとでAIコーディングエージェントが書きました。
+
+This repository documents a four-person seminar study and the repository owner's
+individual follow-up: a rule-based post classifier, its evaluation, and the
+reconstruction and verification of the analysis. The collected posts are not
+published; a synthetic example is runnable below.
+
+<a id="日本語概要"></a>
+<a id="motivation-and-background"></a>
+<a id="overview"></a>
+<a id="data-scope"></a>
+<a id="original-word-level-workflow"></a>
+<a id="methodology"></a>
 
 ## Key Results
 
-- ゼミ（4人）の共同研究で扱ったX投稿：**136,288件**
-- 広告除去を見直したデータ：**110,918件**（以前の集計109,037件に対して、2,015件が戻り、134件が新たに外れた）
-- 元のコードが残っていない除外判断**391件**は、推測で作り直さず、投稿IDで固定した
-- 正解データ**192件**を私が1件ずつ手で判定した（判定者は私1人。無作為標本ではない）
-- 分類器の的中率 **0.615**（118/192）。いちばん多いカテゴリを毎回答えるだけだと 0.281
-- カテゴリ別F1（いちばん当てはまる1カテゴリで判定）：「交換・取引」**0.869**、「情報共有」**0.000**（正解データに5件）。担当部分では「交換・取引」の結果だけを使った
-- 分類規則が「交換・取引」とした投稿は24,316件、ユーザーIDは10,677件
-- 自動チェック（CI）が確かめるのは、データなしで動く範囲（テストと合成サンプル）だけ。コード・テスト・CIはAIコーディングエージェントが書いた
-
-Other scores for the same 192 posts (micro and macro F1 under two criteria) are in
-[Results](#results).
+- 元の投稿は**136,288件**。広告除去を見直した結果は**110,918件**で、以前の
+  109,037件に対し2,015件が戻り、134件が新たに外れました。
+- 元のコードが残っていない除外判断**391件**は、推測で再実装せず投稿IDで固定しました。
+- 正解データ**192件**を私が1件ずつ手で判定しました。判定者は1人で、現在の
+  コーパスの無作為標本ではありません。
+- 分類器の的中率は**0.615（118/192）**。最多カテゴリを毎回答える場合は0.281です。
+  最も当てはまる1カテゴリで見たF1は「交換・取引」**0.869**、
+  「情報共有」**0.000**（正解データ中5件）でした。
+- 規則が「交換・取引」とした投稿は**24,316件**、そのユーザーIDは**10,677件**です。
+  これは分類結果であり、実際に成立した取引の数ではありません。
 
 ![分析の流れ：元の投稿136,288件、広告除去をやり直したデータ110,918件、規則が「交換・取引」とした投稿24,316件、ユーザーID 10,677件。分類の結果は、私が1件ずつ手で判定した正解データ192件（判定者1人・無作為標本ではない）と照合した。](assets/portfolio/01_pipeline.png)
 
+[分析の流れを拡大](assets/portfolio/01_pipeline.png)
+
 ![分類器の評価：正解データ192件との比較。カテゴリ別F1は「交換・取引」0.869、「中立」0.625、「喜び・満足」0.516、「不満・怒り」0.471、「欲望・執着」0.373、「焦り・競争」0.294、「情報共有」0.000。的中率は規則分類器0.615（118/192）、いちばん多いカテゴリを毎回答える場合0.281、カテゴリの割合どおりに無作為に答える場合の平均0.206。](assets/portfolio/04_classifier_evaluation.png)
 
-<a id="ai-workflow"></a>
+[分類器の評価を拡大](assets/portfolio/04_classifier_evaluation.png)
 
-## AIに実装を任せ、別の目で確かめた進め方
+<a id="advertising-removal-and-hybrid-corpus"></a>
 
-このリポジトリのコード・テスト・文書は、AIコーディングエージェントが私の指示と承認のもとで書きました（[My Contributions](#my-contributions)）。ここでは、AIが作った結果をどこまで信じてよいかをどう確かめたか、確かめる仕組みが弱まったときに何をしたかを書きます。私が自分で判定したのは正解データ192件で、コードや検査の判定はAIが行いました。
+### Advertising removal and exchange activity
 
-**1. 検査の分担と、その崩れ**
+元の広告除去では、分類器が「情報共有」とする投稿が広いキーワードにより偏って除かれていました。これは分類器の出力に基づく観察です。[フィルタ監査の図](assets/portfolio/02_filter_audit.png)と[再構築の詳細](docs/hybrid_rebuild.md)に内訳を示します。
 
-- 分類器のベンチマーク（下記4）は、計画をClaude、実装をCodex、検査を会話の文脈を引き継がない別のCodexセッションが担う分担で進めました。この分担を誰が決めたかは記録にありません。
-- 最初の4回の検査は、いずれも計画側のClaudeが見落としたものを見つけました（例：何も検査していないテスト7件を、計画側は0件と報告していました）。見つけたのは検査側のAIです。
-- 2026-08-29に、Codexの利用量の制約から、検査をClaudeの別セッションに、実装の代行をClaudeに移す取り決めに変わりました。記録上は「改善ではなく制約による後退」です。以後、計画・実装・検査の大部分が同じ系列のモデルになり、2026-09の実装はClaudeが担いました。記録は、この後の検査結果をそれ以前と同じ信頼度では扱わないとしています。
+<a id="exchange-analysis"></a>
 
-**2. 弱まった仕組みに対して私がしたこと**
+「交換・取引」と分類された24,316件について、10,677ユーザーIDのうち7,198 ID（**67.4%**）は1件だけ投稿しました。投稿数上位1%のIDが3,619件（**14.9%**）、上位10%が11,082件（45.6%）を占めます。指定した交換形式に一致する投稿は12,411/24,316件（**51.0%**）でした。分類規則と形式判定は一部の記号を共有するため、この割合は分類の独立した検証ではありません。IDはアカウントであり、人数を表しません。[集中度の図](assets/portfolio/03_exchange_concentration.png) ·[形式の定義と限界](docs/slide_metric_audit.md#structured-exchange-format)
 
-- 私は、GitHubで公開するつもりだったので、別のモデルが入る確認が必要だと考えました。ただしCodexの利用量では元の分担を続けられなかったため、賄える形として、学習モデルの最初の実行前に一度だけ別モデルのレビューを依頼しました。
-- 依頼した別モデル（Codex）のレビューの7件の指摘は、すべて修正されました。修正後の再レビューはしないと私が決めました。7件の一例：学習モデルは、採点に使う投稿の情報を学習のときに使ってはいけません。それを見張る仕組みが投稿の文章しか見ておらず、正解ラベルなどを全データから計算してしまう誤りをわざと入れたコードでも、既存のテストを通ってしまいました（実際のコードにそうした漏れは確認されていません）。
-- 分析を始める前に、別セッションでの検査を私が開始しました。7件の指摘があり、その中に、分析の前に決めておくべき点（結果のぶれ幅を計算する手順の細部が決まっておらず、同じ規則に従っても違う幅が出うる）がありました。修正後に分析を承認しました。この検査は同じ系列のモデルによるもので、モデルの多様性はありません。
-- 各段階は、実行する前に私が承認しました。学習モデルとの比較の段階で、私がベンチマークの終了を決めました。
-- どの点数で比べ、どうなったら「差がある」と言うかの規則と、学習モデルの設定は、そのコードを書く前に記録されました。ただし、結果のぶれ幅を計算する手順の細部は、点数を見た後、その計算のコードを書く前に決めています。「先に決めた」ことの根拠は、外部の登録所ではなく、このリポジトリの記録の順序です。
+<a id="rule-based-classification"></a>
+<a id="human-label-evaluation"></a>
+<a id="results"></a>
+<a id="classifier-evaluation-both-label-sets"></a>
 
-**3. 人が持つ基準：正解データ192件**
+### Classifier evaluation
 
-- 192件はすべて私が1件ずつ手で判定しました。ただし補充の3件は、いつどの手順で判定したかの記録がなく、189件の結果も併記しています。
-- 判定者は私一人で、一致率は測っていません。また192件は現在のコーパスの無作為標本ではありません（広告除去の確認に使った無作為抽出とは別のものです）。
-- 規則ベース分類器のカテゴリ別F1（見落としと誤りの両方を見る0〜1の点数。いちばん当てはまる1カテゴリで判定）は0.869〜0.000でした。「交換・取引」が0.869、次に高い「中立」が0.625、「情報共有」は0.000（正解データに5件）です。使える・使えないを分ける基準値を事前に決めてはいませんでした。
-- 最終発表（2026-07-30）の直前に、「情報共有」の分類精度がほぼ0だと分かりました。チームに伝えたうえで、担当部分では、いちばん点数の高かった「交換・取引」の範囲の結果だけを使うと決め、広告除去の見直しと正解データによる評価をやり直した資料（公開版の、広告除去をやり直したデータ110,918件と、正解データ192件による評価）を、私の担当部分にだけ使いました。
+分類器は固定キーワード規則を使い、AIモデル自体ではありません。正解データは旧コーパスからの189件と追加3件で構成されます。追加3件の判定時期・手順は記録に残っていません。判定者間の一致率は測っていません。
 
-**4. ベンチマーク：規則分類器の的中率は良いのか**
-
-- 規則分類器の的中率0.615（118/192）は、単独では良い値か判断できませんでした。そこで、同じ正解データで、当て推量2種（いちばん多いカテゴリを毎回答える：0.281、カテゴリの割合どおりに無作為に答える：平均0.206）と、簡単な学習モデル（文字の並びの特徴からカテゴリを当てる基本的な手法。名称はTF-IDF＋ロジスティック回帰）と比べました。
-- 規則分類器は当て推量より明確に高く、学習モデルは規則分類器を上回りませんでした。的中率は規則0.615に対して学習モデル0.542でしたが、偶然でも起こりうる範囲の差だったため、判断保留としました。カテゴリごとのF1を平均した点数（macro F1）では、学習モデルの方が明確に低く（0.340対0.450）、その差の約6割は、14件しかない「不満・怒り」1カテゴリから生じています。
-- 言えるのは、この小さなデータ・1つの設定・調整なしという条件で、簡単な学習モデルは規則に勝てなかったことまでです。規則が学習モデルより優れているとは言えません。
-- 文章を読むLLMが「不満・怒り」と「中立」を拾えるかを比べる計画がありましたが、依存していたローカルモデルを廃止したため実施していません。
-
-**5. 限界と公開範囲**
-
-- 判定者1人・一致率未測定・小さなデータに加え、規則分類器が正解ラベルを見た後に変更されたかどうかは記録がなく、確認できません。もし変更されていれば、規則側の点数はこのデータに合わせたものになります。
-- ベンチマークの設計・実装・検査の大部分を同じ系列のAIが行い、別モデルのレビューは学習モデルの段階で1回でした。
-- ベンチマークのコード・投稿ごとの出力・作業履歴は公開していません。公開しているのは集計結果と要約です。上の1・2の経緯は非公開の作業記録に基づき、公開リポジトリからは確認できません。その記録自体もAIが書いたものです。
-- AIが担った作業と私の判断の範囲は、[My Contributions](#my-contributions)と[docs/classifier_benchmark.md](docs/classifier_benchmark.md)に分けて示しています。
-
-## 日本語概要
-
-本プロジェクトでは、2025年11月から2026年4月までに収集した「ボンボンドロップシール」関連のX投稿136,288件を対象に、広告除去、テキスト前処理、Word2Vec、感情・行動カテゴリ分類、交換投稿の分析を行いました。
-
-本研究は4人構成の大学ゼミ共同プロジェクトとして始まりました。データ準備、初期の広告除去、探索的分析、発表はチーム全体の作業です。その後の確認作業で、私が無作為抽出による精度検証を行い、それに基づいてコーパスの追加作業を進めました。本リポジトリに残るキーワードフィルタとルールベース分類器のコードは、私の指示と確認のもとでAIコーディングエージェント（Codex、のちにClaude Code）が作成したものです。当初の分析では、研究室で共有されていたNotebookとUserLocal Social Insightのデータを利用し、MeCabによる分かち書き、Word2Vec学習、TensorFlow Embedding Projectorでの探索を実施しました。研究室提供Notebookは再配布条件を確認できないため公開せず、処理内容とデータ系譜のみを文書化しています。
-
-その後、広告除去や集計方法によって結果が大きく変わることが分かったため、チームの作業とは別に、個人の作業として、AIコーディングエージェントを使って調べ直しました。私自身が担ったのは、たまたま使える環境にあったAIエージェントを試してみたこと、Gold label（正解データ）192件すべての手作業による判定、どの結果を信頼するかの判断、元のコードが残っていない391件を推測で再現せず投稿IDで固定するという判断、公開範囲の決定です。その判断のもとで、AIコーディングエージェントが、既存のコードとデータの流れの調査、広告フィルタの監査と修正、広告除去をやり直したデータ（hybrid corpus）110,918件の再構築と検証、Gold label 192件による評価と誤り分析、交換投稿とアカウント集中度の分析、スライド指標の監査、自動チェック（回帰テスト・CI）、公開ドキュメントを作成しました。
-
-本リポジトリは、当初のゼミ研究の単独著作を主張するものではありません。
-
-現在の基準データは、月別原票136,288件から広告を除去したhybrid corpus 110,918件です。ルールベース分類では「交換・取引」が24,316件、関連するユニークユーザーIDが10,677件でした。分類器の的中率は、Gold label 192件に対して0.615（118/192）で、いちばん多いカテゴリを毎回答えるだけの場合は0.281です。別の採点方法による数値（micro F1、macro F1）は[Results](#results)にあります。特に「焦り・競争」と「情報共有」の性能が低く、広告除去の偏りや日本語表現の取りこぼしが課題として残っています。
-
-## Motivation and Background
-
-The project began as a four-person seminar study of Japanese social media posts about ボンボンドロップシール. That original process used UserLocal Social Insight exports and notebooks shared for text cleaning and Word2Vec analysis, and its data preparation, advertising removal, and presentation were collaborative.
-
-The post-level analysis, which began in the weeks before the seminar's final presentation on 2026-07-30 and continued after it, focused on questions that word embeddings alone could not answer directly:
-
-- How much advertising content should be removed before analysis?
-- What emotions or behaviors appear in the posts?
-- How accurately can a rule-based classifier identify those categories?
-- How large is the exchange and trade segment?
-- Is exchange activity concentrated among a small number of user IDs?
-- Can the reported numbers and slide assets be reproduced from preserved inputs?
-
-The repository therefore includes both exploratory research artifacts and later reproducibility work.
-
-## Overview
-
-This repository documents two related analysis tracks:
-
-1. A historical word-level workflow based on lab-provided cleaning and Word2Vec notebooks, MeCab tokenization, and TensorFlow Embedding Projector.
-2. A post-level workflow that removes advertising content, assigns one of seven emotion or behavior categories, evaluates the classifier against human labels, and analyzes exchange activity.
-
-The most reproducible path currently available is the post-level one shown in the
-pipeline figure under [Key Results](#key-results): 136,288 raw posts, 110,918 after
-the advertising removal was redone, 24,316 posts the rules classify as `交換・取引`,
-from 10,677 user IDs, with the classifier checked against 192 human-labelled posts.
-
-The classification step also produces the validated slide metrics and candidate presentation assets.
-
-## Data Scope
-
-The monthly X exports cover November 2025 through April 2026.
-
-| File | Logical records |
-| --- | ---: |
-| `202511.csv` | 12,907 |
-| `202512.csv` | 17,037 |
-| `202601.csv` | 24,721 |
-| `202602.csv` | 31,597 |
-| `202603.csv` | 20,260 |
-| `202604.csv` | 29,766 |
-| **Total** | **136,288** |
-
-The raw datasets are not tracked by Git. They may also contain line breaks inside fields, so physical line counts such as `wc -l` must not be treated as post counts.
-
-## Methodology
-
-### Original word-level workflow
-
-The original workflow used the following sequence:
-
-```text
-UserLocal Social Insight CSV exports
-  -> INPUT.csv
-  -> INPUT_new.csv
-  -> cleaning notebook
-  -> clean.csv
-  -> MeCab / mecab-ipadic-neologd
-  -> clean.wakati
-  -> Word2Vec
-  -> clean.model
-  -> vector.tsv / metadata.tsv
-  -> TensorFlow Embedding Projector
-```
-
-During a read-only local audit, the lab-provided Word2Vec notebook recorded a model trained on June 4, 2026 with the following parameters. The notebook itself is not redistributed in this repository.
-
-| Parameter | Value |
-| --- | ---: |
-| Architecture | skip-gram (`sg=1`) |
-| Vector size | 350 |
-| Window | 15 |
-| Minimum count | 5 |
-| Negative samples | 10 |
-| Epochs | 10 |
-| Vocabulary | 71,408 |
-
-The current `metadata.tsv` and `vector.tsv` contain 17,298 rows, so they do not represent the full 71,408-word vocabulary. The export rule for this subset is unknown.
-
-### Advertising removal and hybrid corpus
-
-The initial advertising removal was team work. The keyword filter retained in this repository, `filter_ads_202511_202604.py`, produces the 109,037-post result from the 136,288 source posts. The later audit of that workflow found that broad keywords disproportionately removed posts the classifier would label as `情報共有`. Our procedure had no step to check what had been removed after deleting posts by keyword.
-
-The current hybrid baseline, reconstructed from the preserved inputs and decisions, retains 110,918 posts. It restores 2,015 posts from the earlier result while continuing to exclude the existing 5,874 additional-advertising IDs. Because the original source code for `2511-2604_final.csv` is missing, 391 final-filter decisions are preserved as an ID lock in `baselines/hybrid_final_exclusions.csv` rather than reconstructed from guessed rules.
-
-![Advertising-removal review (figure text in Japanese): of 136,288 source posts, 19,105 are excluded by the existing keyword rules, 5,874 by additional-advertising rules, and 257 + 134 = 391 by an ID lock covering decisions whose source code is missing, leaving 110,918 retained (81.4%). Against the previous 109,037-post result, 2,015 over-removed posts are restored and 134 newly excluded. The restored posts skew toward ones the classifier labels 情報共有.](assets/portfolio/02_filter_audit.png)
-
-See [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md) for the exact inputs, hashes, and verification contract.
-
-### Rule-based classification
-
-The classifier is not an AI model: it applies fixed keyword patterns, which were written by an AI coding agent.
-
-`classify_sns_rule_based.py` normalizes text with NFKC and case folding, removes URLs and mentions, applies weighted regular expressions, and assigns one primary category.
-
-The seven labels are preserved in Japanese because they are dataset and output column values:
-
-| Label | English description |
-| --- | --- |
-| `不満・怒り` | dissatisfaction or anger |
-| `焦り・競争` | urgency or competition |
-| `交換・取引` | exchange or trade |
-| `欲望・執着` | desire or fixation |
-| `喜び・満足` | joy or satisfaction |
-| `情報共有` | information sharing |
-| `中立` | neutral / no active rule |
-
-### Human-label evaluation
-
-The current evaluation set contains 192 posts:
-
-- 189 labeled posts sampled from the older 109,037-post corpus
-- 3 supplemental posts retained by the hybrid corpus
-
-This is not a simple random sample of all 110,918 hybrid posts. All 192 rows were labelled by hand by one annotator, the repository owner. The three supplemental labels are preserved in the baseline, but no record remains of when or under which procedure those three were labelled.
-
-### Exchange analysis
-
-The exchange analysis aggregates posts whose primary category is `交換・取引` by `ユーザーID`.
-
-![Posts the rules classify as 交換・取引 (figure text in Japanese): 24,316 posts from 10,677 user IDs. 67.4% of the user IDs posted exactly once; the top 1% of user IDs account for 14.9% of the posts and the top 10% for 45.6%.](assets/portfolio/03_exchange_concentration.png)
-
-| Metric | Result |
-| --- | ---: |
-| Exchange posts | 24,316 |
-| Unique user IDs | 10,677 |
-| Mean posts per user ID | 2.28 |
-| Median posts per user ID | 1 |
-| User IDs with one post | 7,198 (67.4%) |
-| Top 1% of user IDs | 3,619 posts (14.9%) |
-| Top 10% of user IDs | 11,082 posts (45.6%) |
-| Template-matching posts within the primary exchange category | 12,411 / 24,316 (51.0%) |
-
-Here, a template match means at least one bracketed `交換／譲／求` marker or
-`譲／求` followed by a specified closing delimiter or colon. `郵送` or `手渡し`
-alone is insufficient. The 51.0% describes posts selected by the current
-primary-category rules, not all discourse or completed transactions. Those
-rules use some of the same markers, so this share is not independent validation
-of the classification. See the [operational definition and limits](docs/slide_metric_audit.md#structured-exchange-format).
-
-`ユーザーID` identifies an account in the export. It does not establish a unique person or distinguish human accounts from automated accounts.
-
-## Results
-
-### Classifier evaluation, both label sets
-
-The headline figure is the hit rate, 118/192 = 0.615: the classifier's single
-top category matched one of the human labels. The other rows below count the
-same predictions in different ways.
-
-Two label sets are reported side by side. **Gold 189** is the set actually annotated
-for the earlier evaluation; **Gold 192** adds the three supplemental rows the hybrid
-corpus retained. The classifier is deterministic and its predictions for the 189
-shared rows are identical under both corpora, so the difference between the columns
-comes only from the three added rows.
-
-| Criterion | Metric | Gold 189 | Gold 192 |
+| Evaluation criterion | Metric | Gold 189 | Gold 192 |
 | --- | --- | ---: | ---: |
 | Multi-label threshold | Micro F1 | 0.594 | 0.595 |
 | Multi-label threshold | Macro F1 | 0.496 | 0.495 |
@@ -242,59 +67,13 @@ comes only from the three added rows.
 | Lenient primary-label match | Hit rate | 116/189 = 0.614 | 118/192 = 0.615 |
 | Multi-label threshold | Exact match | — | 103/192 = 0.536 |
 
-**Multi-label threshold** counts every category whose rule score reaches the
-threshold. **Lenient primary-label match** counts only the single highest-scoring
-category and treats a row as correct when that one category is among the Gold labels.
-The two criteria answer different questions, so the numbers are not interchangeable.
+前者は閾値以上の全カテゴリを採点し、後者は最高得点の1カテゴリが正解ラベルのいずれかに含まれれば正解とします。分母は各正解データ集合であり、110,918件全体ではありません。両集合に共通する189件の予測は同じです。[評価方法とカテゴリ別の誤り](docs/baseline_evaluation.md)を参照してください。
 
-Denominators are the label sets themselves, not the 110,918-post corpus. A 95%
-confidence interval computed on these rows describes this set of labelled posts; it
-does not establish how the classifier behaves on the full corpus, because the label
-set is not a random sample of it.
-
-Source: [`docs/baseline_evaluation.md`](docs/baseline_evaluation.md) §5 for the paired
-figures and §3 for the hit rates. Exact-match is recorded for Gold 192 only.
-
-Lenient per-category F1 scores:
-
-| Category | F1 |
-| --- | ---: |
-| `交換・取引` | 0.869 |
-| `中立` | 0.625 |
-| `喜び・満足` | 0.516 |
-| `不満・怒り` | 0.471 |
-| `欲望・執着` | 0.373 |
-| `焦り・競争` | 0.294 |
-| `情報共有` | 0.000 |
-
-The classifier is most reliable for exchange posts. It performs poorly on urgency and information sharing, mainly because of missing Japanese inflections and synonyms, incomplete negation handling, and rule interactions.
-
-A later benchmark compared the rules with a trained TF-IDF + logistic regression
-model and two guessing baselines, on the same labelled posts and under the same
-lenient criterion. Both the rules and the trained model beat guessing. The trained
-model did not beat the rules: its macro F1 is clearly lower (0.340 against 0.450 on
-Gold 192), mostly because it never found `不満・怒り`, and the hit-rate difference is
-inconclusive. See [Classifier Benchmark](docs/classifier_benchmark.md).
-
-## Limitations
-
-- The original Social Insight query, keyword registration date, and export timestamps are not preserved.
-- The raw and generated datasets are excluded from Git, so a fresh clone cannot reproduce the analysis by itself.
-- `INPUT.csv`, `INPUT_new.csv`, `clean.csv`, and `clean.wakati` contain unresolved lineage or duplication issues.
-- The exact MeCab and `mecab-ipadic-neologd` versions used for the historical run are unknown.
-- The original source code for the final advertising filter is missing; 391 decisions are preserved as an ID lock.
-- Gold 192 is not a simple random sample of the hybrid corpus.
-- The rule-based classifier has known weaknesses in Japanese inflection, negation, synonym coverage, and category interactions.
-- Word2Vec training used repeated text blocks and an unlocked environment, so exact retraining equivalence is not guaranteed.
-- The lab-provided cleaning and Word2Vec notebooks are documented but not redistributed; the historical word-level workflow is therefore not independently runnable from this repository alone.
-- The repository does not contain the code that originally generated some legacy Office and Canva artifacts.
+同じ正解データでの比較では、規則とTF-IDF＋ロジスティック回帰の双方が当て推量を上回りました。学習モデルの的中率0.542と規則0.615の差は判断保留、macro F1は0.340対0.450で学習モデルが低い結果でした。小標本・1設定・調整なしの比較であり、規則が学習モデル一般より優れるとは言えません。[ベンチマーク集計と条件](docs/classifier_benchmark.md)
 
 ## Try It Without the Dataset
 
-The collected posts are not in this repository, so a fresh clone cannot rerun
-the study. It can still run the classifier: `sample_data/` holds 30 synthetic
-posts written for this purpose. No dataset and no third-party packages are
-needed.
+Python 3.9以上と標準ライブラリで、公開された合成投稿30件を分類できます。研究データや追加パッケージは不要です。リポジトリのルートで実行してください。
 
 ```bash
 python3 classify_sns_rule_based.py \
@@ -309,395 +88,77 @@ OK: 30 rows classified, 21/30 match the intended label
 OK: 9 known disagreements reproduced exactly
 ```
 
-The nine failures are deliberate. They are the weaknesses measured against the
-human-labelled evaluation set — the `\b交換\b` word-boundary defect, the
-information-sharing category scoring F1 0.000, and indirect expressions that
-match no rule — so the limitations described below can be watched happening
-rather than taken on trust. [`sample_data/README.md`](sample_data/README.md)
-maps each one to its cause, and `check_sample_output.py` pins the exact outcome
-so a behaviour change fails loudly instead of passing unnoticed. CI runs this
-same sequence on every push.
+意図ラベルとの不一致9件は既知の弱点を示すためのものです。[サンプルの説明](sample_data/README.md)に各原因があります。これは合成例の動作確認であり、Gold 192による評価や研究全体の再現ではありません。CIは5つのテストモジュールとこのサンプルを実行します。
 
-The older Word2Vec path and several legacy presentation artifacts are documented for provenance, but parts of their preprocessing history are incomplete. The two lab-provided notebooks are intentionally excluded from the public repository because their redistribution terms could not be verified. See [Project Timeline](docs/01_PROJECT_TIMELINE.md) for the evidence-backed reconstruction.
+<a id="ai-workflow"></a>
+<a id="aiに実装を任せ別の目で確かめた進め方"></a>
+<a id="team-project-context"></a>
+<a id="my-contributions"></a>
+<a id="source-material-and-contribution-boundaries"></a>
 
-## Reproducibility and How to Run
+## Team, individual, and AI contributions
 
-### Requirements
+データ準備、初期の広告除去、探索、ゼミ発表は4人のチーム作業です。このリポジトリは元の共同研究の単独著作を主張しません。初期段階の個別担当を示す記録は残っていません。
 
-Install the dependencies used by the current repository scripts:
+私自身は正解データ192件の手作業判定、抽出標本による広告除去の確認、391件のID固定、利用する結果と公開範囲の決定、各段階の承認を担いました。発表前に「情報共有」の精度がほぼゼロだとチームに伝え、私の発表担当部分に限り、最もF1の高かった「交換・取引」の結果と再構築データ・評価を使いました。
 
-```bash
-python3 -m pip install -r requirements.txt
-```
+AIエージェントは私の指示と承認のもとで、フィルタ監査と再構築、分類・評価、交換分析、検証、コード、テスト、CI、文書を書きました。コードと検査の判定もAIが行いました。ベンチマークには別セッションや別モデルによるレビューを使い、利用制約による分担変更もありました。その経緯はAIが書いた非公開作業記録に基づき、公開リポジトリからは検証できません。[役割・資料出典・AI作業の詳細](docs/contributions.md)
 
-The reproducible hybrid path requires the six monthly CSV exports and local files under `data/output/`. These files are ignored by Git and are therefore not available in a fresh clone.
+<a id="limitations"></a>
 
-The historical cleaning and Word2Vec notebooks are also excluded because their redistribution terms could not be verified. The current public repository therefore documents that legacy path but does not claim that a fresh clone can rerun it end to end.
+## Limitations and public scope
 
-#### Execution environments
+- Gold 192は小さな非無作為標本で判定者は私1人です。補充3件の判定経緯と、
+  規則が正解ラベルを見た後に変更されたかは不明です。全コーパスへの性能の
+  一般化はできず、カテゴリの採用基準値も事前には決めていませんでした。
+- 日本語の活用・否定・類義語・規則の相互作用に弱点があり、特に「焦り・競争」
+  と「情報共有」の性能が低い結果でした。
+- 収集投稿、生成データ、Goldラベルは公開していません。研究の完全な再実行には
+  Gitに含まれない入力が必要です。ベンチマークは集計要約のみ公開し、コード・
+  投稿ごとの出力・作業履歴は公開していません。
+- 研究室提供Notebookは再配布条件を確認できず公開していません。元の検索条件や
+  一部のデータ系譜、MeCab環境、旧Word2Vecの再学習条件にも未解決点があります。
+  [実行環境と過去の方法](docs/reproducibility.md#historical-data-and-methods)
 
-Three different environments are involved and they are not interchangeable.
+<a id="reproducibility-and-how-to-run"></a>
+<a id="requirements"></a>
+<a id="execution-environments"></a>
+<a id="rebuild-the-hybrid-corpus"></a>
+<a id="run-the-classifier"></a>
+<a id="normalize-the-gold-192-dataset"></a>
+<a id="verify-the-rebuild"></a>
+<a id="regenerate-the-readme-figures"></a>
+<a id="run-unit-tests"></a>
+<a id="tech-stack"></a>
+<a id="repository-structure"></a>
+<a id="scripts"></a>
 
-| Path | Interpreter | Verified on |
-| --- | --- | --- |
-| Public sample (classifier and sample check) | Python 3.9 or newer | 3.9.6 locally; CI runs 3.11, 3.12 and 3.13 |
-| Unit tests | **Python 3.10 or newer** | CI runs 3.11, 3.12 and 3.13. `test_evaluation_inputs.py` runs the evaluation script itself, so on 3.9.6 it fails at that script's 3.10 check |
-| Research reproduction scripts | **Python 3.10 or newer** | 3.13.9 locally |
-| Historical Word2Vec workflow | not reproducible here | excluded, see above |
+## Documentation and repository
 
-Two separate things put the research floor at Python 3.10, and neither can be worked
-around by installing something:
-
-- The scripts use `zip(..., strict=True)`, which Python 3.10 added. On 3.9 they now stop
-  immediately with a message naming the requirement instead of failing part way through
-  with `TypeError: zip() takes no keyword arguments`, which reads as a data problem
-  rather than an environment one.
-- `requirements.txt` pins `matplotlib==3.10.6`, which declares `Requires-Python >= 3.10`.
-  On 3.9 that version is not installable at all — the 3.9-compatible line stops at 3.9.4
-  — so the pinned dependency set is itself a 3.10 requirement. **A working sample run does not mean the
-research scripts will run on the same interpreter** — the sample path is the one CI
-exercises, and it is the more permissive of the two.
-
-Run the commands below from the repository root with `python3`. The paths shown for `--output` and `--rebuild-dir` are the script defaults, so they can be omitted; `rebuild/` is ignored by Git and is kept separate from `data/output/` so the preserved baselines are never overwritten.
-
-### Rebuild the hybrid corpus
-
-```bash
-python3 build_hybrid_corpus.py \
-  --output rebuild/2511-2604_hybrid.csv
-```
-
-### Run the classifier
-
-```bash
-python3 classify_sns_rule_based.py \
-  --input rebuild/2511-2604_hybrid.csv \
-  --output rebuild/sentiment_classified_hybrid.csv
-```
-
-### Normalize the Gold 192 dataset
-
-```bash
-python3 normalize_gold_standard_192.py \
-  --input data/output/gold_standard_192.csv \
-  --output rebuild/gold_standard_192_normalized.csv \
-  --supplement data/output/gold_supplement_11.csv \
-  --hybrid rebuild/sentiment_classified_hybrid.csv
-```
-
-### Verify the rebuild
-
-```bash
-python3 verify_hybrid_rebuild.py \
-  --rebuild-dir rebuild
-```
-
-The verification checks row counts, columns, values, ID sets, ID order, full SHA-256 hashes, Gold label preservation, and repeat-run determinism.
-
-### Regenerate the README figures
-
-```bash
-python3 make_portfolio_figures.py
-```
-
-The generator reads only existing outputs under `data/output/`. It re-derives the
-numbers it draws and refuses to render if any value stops matching the published
-baseline, so the figures cannot drift away from the documented results. The one
-exception is the two guessing baselines in the evaluation figure (0.281 and 0.206):
-the benchmark code is not published, so they are copied from
-[Classifier Benchmark](docs/classifier_benchmark.md).
-
-### Run unit tests
-
-```bash
-python3 -m unittest \
-  test_sentiment_classifier.py \
-  test_slide_number_definitions.py \
-  test_evaluation_report.py \
-  test_evaluation_inputs.py \
-  test_sample_output.py
-```
-
-These are the same five files CI runs.
-
-## Tech Stack
-
-Current repository scripts:
-
-- Python 3
-- Matplotlib 3.10.6
-- Pillow 12.0.0
-- CSV and JSON processing with the Python standard library
-
-Historical notebook workflow, documented but not redistributed or reconstructed:
-
-- Jupyter Notebook
-- Gensim / Word2Vec
-- MeCab with `mecab-ipadic-neologd`
-- TensorFlow Embedding Projector
-
-Supporting tools:
-
-- Git for provenance and reproducibility work
-- AI coding agents (Codex, later Claude Code), which wrote the code, tests, and documents in this repository and were used for repository inspection, pipeline tracing, and verification
-
-A pinned `requirements.txt` is provided for the current repository scripts. It does not reconstruct the historical notebook-based Word2Vec environment.
-
-## Repository Structure
+- [Documentation index](docs/README.md): 結果、実行、研究経緯の読み順。
+- [Reproducibility and execution](docs/reproducibility.md): 環境、非公開入力、
+  再構築・検証コマンド、過去の分析手順。
+- [Script reference](docs/scripts.md): ルートの各Pythonファイルの役割。
+- [Contributions and sources](docs/contributions.md): チーム・本人・AIの役割と資料出典。
+- [Project timeline](docs/01_PROJECT_TIMELINE.md) ·
+  [Classifier evaluation](docs/baseline_evaluation.md) ·
+  [Benchmark summary](docs/classifier_benchmark.md) ·
+  [Presentation metric audit](docs/slide_metric_audit.md)
 
 ```text
 .
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── .github/workflows/test.yml      # runs the tests and the sample on every push
-├── assets/portfolio/               # README figures, regenerated from data/output
-├── baselines/
-│   └── hybrid_final_exclusions.csv # ID lock for 391 unreproducible filter decisions
-├── data/output/                    # local generated data; ignored by Git
-├── outputs/                        # local presentation artifacts; ignored by Git
-├── sample_data/                    # synthetic posts; runnable without the dataset
-│   ├── sample_posts.csv
-│   ├── check_sample_output.py
-│   └── README.md
-├── docs/
-│   ├── README.md                   # documentation index and reading order
-│   ├── 01_PROJECT_TIMELINE.md
-│   ├── hybrid_rebuild.md
-│   ├── baseline_evaluation.md
-│   ├── classifier_benchmark.md
-│   ├── slide_metric_audit.md
-│   ├── slide_assets_regeneration.md
-│   ├── slide_plan_10-16.md
-│   ├── presentation_script_10-16_ja.md
-│   └── task0_total_count.md
-└── *.py                            # 23 scripts, listed by role below
+├── README.md, LICENSE, requirements.txt
+├── .github/workflows/test.yml    # tests and synthetic sample
+├── assets/portfolio/             # published figures
+├── baselines/                    # final-filter ID lock
+├── sample_data/                  # synthetic posts and checker
+├── docs/                         # documentation index and detailed reports
+└── *.py                          # pipeline, verification, tests and utilities
 ```
 
-### Scripts
-
-Every Python file in the repository root is listed here, so that no file is
-left ambiguous between current and legacy code.
-
-**Pipeline** — building and classifying the corpus.
-
-| File | Role |
-| --- | --- |
-| `filter_ads_202511_202604.py` | Advertising rules and monthly-export loading; the shared source of the filter definitions. |
-| `build_hybrid_corpus.py` | Rebuilds the 110,918-post hybrid corpus, applying the ID lock for the decisions whose original code is missing. |
-| `classify_sns_rule_based.py` | The v2.0.0 rule-based classifier. |
-| `normalize_gold_standard_192.py` | Produces the authoritative Gold 192 evaluation set from the 20-column source archive. |
-| `evaluate_v2_hybrid_192.py` | Scores the classifier against Gold 192 under both criteria. |
-| `slide_number_definitions.py` | Shared metric definitions used by the reporting and verification scripts. |
-
-**Verification** — checking that results still reproduce.
-
-| File | Role |
-| --- | --- |
-| `verify_hybrid_rebuild.py` | Row counts, ID sets and order, SHA-256 hashes, label preservation, and repeat-run determinism for the rebuild. |
-| `verify_slide_numbers.py` | Recomputes 96 slide figures from the data and compares them with expected values written into the script, transcribed from the 2026-07-30 specification. It does not read the specification, so later edits to it are not checked; see [the audit](docs/slide_metric_audit.md). |
-| `verify_slide_assets.py` | Checks the regenerated slide PNGs against their locked definitions. |
-| `audit_slide_number_definitions.py` | The one-off audit that produced [Presentation Metric Audit](docs/slide_metric_audit.md). |
-
-**Tests** — run in CI on every push.
-
-| File | Role |
-| --- | --- |
-| `test_sentiment_classifier.py` | 28 regression cases recording real misclassifications that were found and fixed. |
-| `test_slide_number_definitions.py` | Unit tests for the shared metric definitions. |
-| `test_evaluation_report.py` | Regression tests for the Gold 192 evaluation report, on a 192-row corpus it builds itself. |
-| `test_evaluation_inputs.py` | Runs the evaluation script on missing, duplicated, empty or invalid predictions and checks that it refuses them, while valid extra rows leave the report unchanged. |
-| `test_sample_output.py` | Checks the sample checker in `sample_data/` against altered copies of the sample output. |
-
-**Environment.**
-
-| File | Role |
-| --- | --- |
-| `research_environment.py` | Stops a research script at once, with a message, when it is run on Python older than 3.10. |
-
-**Figures and slides.**
-
-| File | Role |
-| --- | --- |
-| `make_portfolio_figures.py` | The four README figures, re-derived from `data/output` with a drift guard. The two guessing baselines in the evaluation figure are copied from [Classifier Benchmark](docs/classifier_benchmark.md), not re-derived. |
-| `regenerate_slide_assets.py` | Slide 13–16 PNG candidates from the locked definitions. |
-| `make_task3_exchange_accounts.py` | Produces `exchange_accounts.csv`, the per-account aggregation the exchange figure reads. |
-
-**Sampling and provenance.** These ran once. They are kept because they are the
-record of how the preserved inputs under `data/output/` were produced, not
-because the current pipeline calls them.
-
-| File | Produced |
-| --- | --- |
-| `make_gold_standard_200.py` | The original 200-post annotation sample. |
-| `make_task5_task6_files.py` | `gold_standard_192.csv`, the 20-column source archive that the normalizer reads, and a 30-row advertising-filter check sample. |
-| `sample_100_posts.py` | A 100-post random sample for manual review. |
-| `sample_negotiation_nonexchange_50.py` | The 50-post negotiation sample used by the slide 16 assets. |
-
-
-Important documentation, with a full index and reading order in
-[docs/README.md](docs/README.md):
-
-- [Project Timeline](docs/01_PROJECT_TIMELINE.md)
-- [Sentiment Analysis Methodology](sns_sentiment_analysis_guide.md)
-- [Hybrid Baseline Rebuild](docs/hybrid_rebuild.md)
-- [Classifier Baseline Evaluation](docs/baseline_evaluation.md)
-- [Classifier Benchmark](docs/classifier_benchmark.md)
-- [Presentation Metric Audit](docs/slide_metric_audit.md)
-
-## Team Project Context
-
-This research originated as a four-person university seminar project. The
-dataset preparation, the initial advertising removal, the exploratory analysis,
-and the seminar presentation were team work.
-
-This repository is maintained by the repository owner as a portfolio and
-reproducibility project. It documents both the original seminar workflow and
-the additional investigation, revision, validation, and reproducibility work.
-That work did not start after the seminar ended. The classifier evaluation and
-the corpus rebuild were done in the last days before the final presentation on
-2026-07-30, and the repository owner's own section of that presentation used
-them. The audit, documentation, publication, and further verification followed
-afterward.
-
-It should therefore not be read as claiming sole authorship of the original
-seminar project.
-
-The repository's own evidence sets the boundary between the two phases. Version
-control begins on 2026-07-30, so the earlier seminar work carries no per-file
-authorship record here; the [Project Timeline](docs/01_PROJECT_TIMELINE.md)
-marks that period accordingly rather than assigning it to an individual.
-
-## My Contributions
-
-This section covers the individual follow-up phase represented by the scripts,
-documents, and figures in this repository.
-
-**Who wrote the code.** The code, tests, CI, and documents in this repository
-were written by AI coding agents (Codex, later Claude Code) at the repository
-owner's direction and with the owner's approval.
-
-**The repository owner's own part** is the judgments that shaped the work:
-
-- Deciding to try an AI coding agent on the analysis
-- Labelling all 192 Gold rows by hand, one by one
-- Deciding which results to trust: checking the accuracy of the team's
-  advertising removal against random samples reviewed by hand
-  (`sample_100_posts.py`, and the filter-check extract in
-  `make_task5_task6_files.py`), then extending the corpus work on that basis
-- Deciding not to reconstruct by guesswork the 391 filter decisions whose
-  original implementation is missing, and to lock them by post ID instead
-- Deciding what this repository publishes and how the history of the work is handled
-
-**Work carried out by the agents under that direction:**
-
-- The advertising keyword filter (`filter_ads_202511_202604.py`) and the
-  rule-based classifier (`classify_sns_rule_based.py`) that the repository retains
-- Investigation of the existing notebooks, scripts, and data lineage
-- Audit of the advertising-filter workflow, which identified over-filtering
-  against `情報共有`, and revision and validation of the filtering logic
-- Reconstruction and validation of the 110,918-post hybrid corpus, with the 391
-  decisions above locked by post ID
-- The tooling around the human labels, from drawing the original 200-post sample
-  (`make_gold_standard_200.py`) through to normalizing Gold 192, and the scoring
-  of the classifier against those labels under both criteria
-- Classifier error analysis by category, tracing each error to a specific rule
-  defect
-- Exchange-activity and account-concentration analysis
-  (`make_task3_exchange_accounts.py`)
-- Audit of the presentation metrics, and regeneration of the analytical assets
-  from validated data
-- The reproducibility checks: deterministic rebuild verification, SHA-256
-  baselines, and the 28 regression cases in `test_sentiment_classifier.py`, each
-  recording a real misclassification that was found and fixed
-- The synthetic runnable sample and GitHub Actions CI
-- The documentation and the public repository
-
-**How the agents' output was checked.** The [Japanese section after Key Results](#ai-workflow)
-gives the full account; the facts are these.
-
-- The benchmark work began with a split of roles: Claude planned, Codex implemented,
-  and separate Codex sessions with no shared conversation context reviewed. Who set
-  up that split is not recorded. The first four reviews each found something the
-  planning model had missed; the reviewers found it, not the owner.
-- On 2026-08-29, because of Codex usage limits, the review moved to a separate Claude
-  session and Claude could stand in as implementer. The record calls this a retreat
-  forced by the limit, not an improvement. From then on most planning, implementation
-  and review was done by the same model family.
-- The owner had wanted a different model in the loop because the repository was going to
-  be public. Codex usage could not sustain the original split, so as an affordable form the
-  owner asked a different model (Codex) once, before the first TF-IDF run, to review that
-  stage (seven findings, all fixed; the owner decided not to have the fixes re-reviewed),
-  started a separate review session before the analysis (seven findings, one of which
-  had to be settled before the analysis could proceed; that session shares the model
-  family), approved each stage before it ran, and closed the benchmark at this step.
-- The scoring rules and TF-IDF settings were committed before the TF-IDF code was
-  written; the remaining bootstrap details were fixed after the point scores were seen.
-  "Fixed in advance" means the order of commits in this repository, not an external
-  registry.
-- All 192 Gold rows were labelled by hand by the owner, one annotator, with no
-  agreement measure; for three supplemental rows no record of when or how they were
-  labelled remains. Just before the final presentation, the owner found that the
-  information-sharing category scored about zero, told the team, decided to use only the highest-scoring
-  exchange/trade category's results in the owner's own section, and used the rebuilt corpus
-  (110,918 posts) and the Gold 192 evaluation only there.
-- A comparison with a large language model was planned but not run, because the local
-  model it depended on was retired.
-- The account of the split and the reviews comes from working records that are not
-  published, and those records were themselves written by AI, so it cannot be verified
-  from this repository. The published, checkable material is in
-  [Classifier Benchmark](docs/classifier_benchmark.md).
-
-The original seminar research, the initial data preparation, the initial
-advertising removal, and the seminar presentation were team work and are not
-claimed here. The owner's individual contribution to the filtering is the later
-accuracy check and the decision to redo the corpus on that basis, not the
-original removal decision; the rebuild itself was carried out by the AI coding
-agents.
-
-## Source Material and Contribution Boundaries
-
-The material here falls into three categories.
-
-**1. Lab- or seminar-provided reference notebooks.** Two notebooks used in the
-original workflow were supplied through a university seminar or lab and were not
-authored from scratch by the repository owner. One cleaned extracted post text
-with regular expressions; the other trained a Gensim Word2Vec model and exported
-`vector.tsv` and `metadata.tsv` for TensorFlow Embedding Projector. Their
-redistribution terms could not be verified, so the notebook files and their full
-source code or cell outputs are not included in the public Git history. This
-repository documents only their observed role in the historical workflow.
-
-**2. Four-person seminar team work.** The dataset preparation, the initial
-advertising removal, the exploratory analysis, and the seminar presentation were
-carried out by the team as a whole. The repository holds no record of who
-performed which task within that phase, and none is attributed here. One step
-from it left no source at all: the code that produced `2511-2604_final.csv` is
-missing, which is why its 391 remaining decisions are locked by post ID rather
-than reimplemented.
-Version control begins after that phase, so this repository holds no evidence of
-who performed any individual task within it, and it does not attribute those
-tasks to one person.
-
-**3. The later individual phase.** The advertising-filter audit, hybrid-corpus
-reconstruction, Gold 192 normalization and evaluation, classifier error
-analysis, exchange-account analysis, presentation-metric verification,
-reproducibility checks, regression tests, synthetic sample, CI, and public
-repository organization were not team work: they belong to the repository
-owner's later individual phase. In that phase AI coding agents wrote the
-scripts, tests, and documents retained here, and the owner's own part was the
-judgments listed under [My Contributions](#my-contributions).
-
-## Future Work
-
-- Rebuild the pipeline as explicit provenance-preserving tables, from raw posts through filtering, classification, evaluation, and exchange aggregation.
-- Replace shell-based CSV concatenation and field extraction with schema-aware parsing.
-- Create a representative evaluation sample directly from the hybrid corpus and document the annotation policy.
-- Improve Japanese linguistic coverage. One trained classifier has been compared with the rules ([Classifier Benchmark](docs/classifier_benchmark.md)); models that read the text, such as a large language model, have not.
-- Reconstruct and separately pin the historical MeCab and Word2Vec environment, and investigate the repeated corpus blocks.
-- Replace the legacy notebook-dependent cleaning and Word2Vec steps with independently authored, documented implementations if that workflow is continued.
-- Add a fully resolved lockfile for the current scripts if exact transitive dependency reproduction is required, and add a manifest for local, non-Git data assets.
+<a id="future-work"></a>
 
 ## License
 
-The code in this repository is released under the [MIT License](LICENSE). It does not cover the collected posts, which are not distributed here, or the lab-supplied notebooks described under Source Material and Contribution Boundaries.
+Code is released under the [MIT License](LICENSE). It does not cover the
+collected posts or the lab-provided notebooks, neither of which is distributed here.
